@@ -1,0 +1,546 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { useOrbitStore } from '../../store/useOrbitStore';
+import type {
+  CreatedTokenStatus,
+  ExternalWalletConnection,
+  ExternalWalletProvider,
+  SecurityStatus,
+  SupportedNetwork,
+  WalletAccount,
+  WalletAsset,
+} from '../types';
+import { createWallet } from '../services/wallet/createWallet';
+import { importWallet } from '../services/wallet/importWallet';
+import { devWarn } from '../utils/devLog';
+import {
+  clearSecureWallet,
+  getSecureWallet,
+  getWalletSecurityStatus,
+} from '../services/wallet/secureWalletStorage';
+import { maskAddress } from '../../utils/wallet';
+import { getWalletBalances } from '../services/wallet/walletBalances';
+
+interface SpotBalance {
+  symbol: string;
+  amount: number;
+}
+
+interface WalletHistoryEntry {
+  id: string;
+  title: string;
+  body: string;
+  createdAt: string;
+}
+
+interface WalletState {
+  hasHydrated: boolean;
+  walletAddress: string;
+  receiveAddresses: WalletAccount['receiveAddresses'];
+  mnemonicStored: boolean;
+  selectedNetwork: SupportedNetwork;
+  balances: WalletAsset[];
+  assets: WalletAsset[];
+  isWalletReady: boolean;
+  walletType: WalletAccount['walletType'] | null;
+  securityStatus: SecurityStatus;
+  externalWallet: ExternalWalletConnection;
+  spotBalances: SpotBalance[];
+  history: WalletHistoryEntry[];
+  createdTokens: CreatedTokenStatus[];
+  loading: boolean;
+  error: string | null;
+  hydrateWallet: () => Promise<void>;
+  createWallet: () => Promise<WalletAccount | null>;
+  importWallet: (seedPhrase: string) => Promise<WalletAccount | null>;
+  logoutWallet: () => Promise<void>;
+  refreshBalances: () => Promise<void>;
+  refreshSecurityStatus: () => Promise<void>;
+  connectExternalWallet: (
+    provider: ExternalWalletProvider,
+    address?: string,
+  ) => Promise<boolean>;
+  disconnectExternalWallet: () => void;
+  setSelectedNetwork: (network: SupportedNetwork) => void;
+  depositToSpot: (symbol: string, amount: number) => void;
+  withdrawFromSpot: (symbol: string, amount: number) => boolean;
+  upsertSpotAsset: (asset: WalletAsset) => void;
+  consumeSpotQuote: (symbol: string, amount: number) => boolean;
+  creditSpotBase: (asset: WalletAsset) => void;
+  debitSpotBase: (symbol: string, amount: number) => boolean;
+  syncCreatedTokens: () => void;
+}
+
+function buildHistoryEntry(title: string, body: string): WalletHistoryEntry {
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+    title,
+    body,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function mergeSpotBalance(items: SpotBalance[], symbol: string, amountDelta: number) {
+  const normalized = symbol.toUpperCase();
+  const next = [...items];
+  const index = next.findIndex((item) => item.symbol === normalized);
+
+  if (index === -1) {
+    if (amountDelta <= 0) {
+      return next;
+    }
+
+    next.push({ symbol: normalized, amount: amountDelta });
+    return next;
+  }
+
+  next[index] = {
+    ...next[index],
+    amount: Math.max(next[index].amount + amountDelta, 0),
+  };
+
+  return next;
+}
+
+function mapCreatedTokens(): CreatedTokenStatus[] {
+  const tokens = useOrbitStore.getState().tokens.filter((token) => token.isUserCreated);
+  return tokens.map((token) => ({
+    id: token.id,
+    name: token.name,
+    symbol: token.symbol,
+    network: (token.chain ?? 'ethereum') as SupportedNetwork,
+    status:
+      token.listingStatus === 'orbitx_listed'
+        ? 'orbitx'
+        : token.listingStatus === 'external_listing_selected'
+          ? 'listada'
+          : token.listingStatus === 'orbitx_listing_pending_liquidity'
+            ? 'pendiente'
+            : token.liquidity
+              ? 'con_liquidez'
+              : token.contractAddress
+                ? 'desplegada'
+                : 'creada',
+    contractAddress: token.contractAddress ?? undefined,
+    updatedAt: token.updatedAt,
+  }));
+}
+
+function mapExternalWalletState(): ExternalWalletConnection {
+  const externalWallet = useOrbitStore.getState().walletFuture.externalWallet;
+
+  return {
+    provider: externalWallet.provider,
+    address: externalWallet.address || '',
+    connectedAt: externalWallet.connectedAt,
+    signingReady: Boolean(externalWallet.signingReady),
+  };
+}
+
+function recordAstraWalletFlow(
+  guideId: 'create_wallet' | 'import_wallet' | 'connect_external_wallet',
+  status: 'started' | 'failed' | 'completed',
+  error?: string,
+) {
+  try {
+    const { useAstraStore } = require('./astraStore') as typeof import('./astraStore');
+    useAstraStore.getState().recordWalletFlow(guideId, status, error);
+  } catch (astraError) {
+    devWarn('[OrbitX][Wallet] Astra wallet flow bridge failed', astraError);
+  }
+}
+
+export const useWalletStore = create<WalletState>()(
+  persist(
+    (set, get) => ({
+      walletAddress: '',
+      receiveAddresses: {
+        ethereum: '',
+        base: '',
+        bnb: '',
+        solana: '',
+      },
+      mnemonicStored: false,
+      selectedNetwork: 'base',
+      balances: [],
+      assets: [],
+      isWalletReady: false,
+      walletType: null,
+      securityStatus: {
+        biometricsEnabled: false,
+        pinEnabled: false,
+      },
+      externalWallet: {
+        provider: null,
+        address: '',
+        signingReady: false,
+      },
+      hasHydrated: false,
+      spotBalances: [],
+      history: [],
+      createdTokens: mapCreatedTokens(),
+      loading: false,
+      error: null,
+
+      hydrateWallet: async () => {
+        if (get().hasHydrated) {
+          return;
+        }
+
+        set({ loading: true, error: null });
+        try {
+          const [wallet, securityStatus] = await Promise.all([
+            getSecureWallet(),
+            getWalletSecurityStatus(),
+          ]);
+          const externalWallet = mapExternalWalletState();
+
+          if (!wallet) {
+            set({
+              walletAddress: '',
+              receiveAddresses: {
+                ethereum: '',
+                base: '',
+                bnb: '',
+                solana: '',
+              },
+              mnemonicStored: false,
+              isWalletReady: false,
+              walletType: null,
+              securityStatus,
+              externalWallet,
+              createdTokens: mapCreatedTokens(),
+              hasHydrated: true,
+              loading: false,
+            });
+            return;
+          }
+
+          set({
+            walletAddress: wallet.address,
+            receiveAddresses: wallet.receiveAddresses,
+            mnemonicStored: wallet.mnemonicStored,
+            selectedNetwork: wallet.selectedNetwork,
+            isWalletReady: true,
+            walletType: wallet.walletType,
+            securityStatus,
+            externalWallet,
+            createdTokens: mapCreatedTokens(),
+            hasHydrated: true,
+            loading: false,
+          });
+
+          await get().refreshBalances();
+        } catch (error) {
+          devWarn('[OrbitX][Wallet] hydrateWallet failed', error);
+          set({
+            hasHydrated: true,
+            loading: false,
+            error: error instanceof Error ? error.message : 'No se pudo restaurar la billetera.',
+          });
+        }
+      },
+
+      createWallet: async () => {
+        set({ loading: true, error: null });
+        recordAstraWalletFlow('create_wallet', 'started');
+        try {
+          const wallet = await createWallet();
+          const securityStatus = await getWalletSecurityStatus();
+          set((state) => ({
+            walletAddress: wallet.address,
+            receiveAddresses: wallet.receiveAddresses,
+            mnemonicStored: wallet.mnemonicStored,
+            selectedNetwork: wallet.selectedNetwork,
+            isWalletReady: true,
+            walletType: wallet.walletType,
+            securityStatus,
+            externalWallet: state.externalWallet,
+            history: [
+              buildHistoryEntry('Billetera creada', 'Tu billetera OrbitX quedo lista para operar.'),
+              ...state.history,
+            ].slice(0, 24),
+            loading: false,
+          }));
+          recordAstraWalletFlow('create_wallet', 'completed');
+          await get().refreshBalances();
+          return wallet;
+        } catch (error) {
+          devWarn('[OrbitX][Wallet] createWallet failed', error);
+          const message =
+            error instanceof Error ? error.message : 'No se pudo crear la billetera.';
+          set({
+            loading: false,
+            error: message,
+          });
+          recordAstraWalletFlow('create_wallet', 'failed', message);
+          return null;
+        }
+      },
+
+      importWallet: async (seedPhrase) => {
+        set({ loading: true, error: null });
+        recordAstraWalletFlow('import_wallet', 'started');
+        try {
+          const wallet = await importWallet(seedPhrase);
+          const securityStatus = await getWalletSecurityStatus();
+          set((state) => ({
+            walletAddress: wallet.address,
+            receiveAddresses: wallet.receiveAddresses,
+            mnemonicStored: wallet.mnemonicStored,
+            selectedNetwork: wallet.selectedNetwork,
+            isWalletReady: true,
+            walletType: wallet.walletType,
+            securityStatus,
+            externalWallet: state.externalWallet,
+            history: [
+              buildHistoryEntry('Billetera importada', 'La frase semilla se guardo de forma segura.'),
+              ...state.history,
+            ].slice(0, 24),
+            loading: false,
+          }));
+          recordAstraWalletFlow('import_wallet', 'completed');
+          await get().refreshBalances();
+          return wallet;
+        } catch (error) {
+          devWarn('[OrbitX][Wallet] importWallet failed', error);
+          const message =
+            error instanceof Error ? error.message : 'No se pudo importar la billetera.';
+          set({
+            loading: false,
+            error: message,
+          });
+          recordAstraWalletFlow('import_wallet', 'failed', message);
+          return null;
+        }
+      },
+
+      logoutWallet: async () => {
+        await clearSecureWallet();
+        set({
+          walletAddress: '',
+          receiveAddresses: {
+            ethereum: '',
+            base: '',
+            bnb: '',
+            solana: '',
+          },
+          mnemonicStored: false,
+          isWalletReady: false,
+          walletType: null,
+          balances: [],
+          assets: [],
+          hasHydrated: true,
+          securityStatus: {
+            biometricsEnabled: false,
+            pinEnabled: false,
+          },
+        });
+      },
+
+      refreshBalances: async () => {
+        if (!get().isWalletReady) {
+          return;
+        }
+
+        set({ loading: true, error: null });
+        try {
+          const balances = await getWalletBalances();
+          set((state) => ({
+            balances,
+            assets: balances,
+            createdTokens: mapCreatedTokens(),
+            loading: false,
+            history:
+              balances.length && !state.history.some((entry) => entry.title === 'Balances actualizados')
+                ? [
+                    buildHistoryEntry('Balances actualizados', 'OrbitX refresco tus activos on-chain.'),
+                    ...state.history,
+                  ].slice(0, 24)
+                : state.history,
+          }));
+        } catch (error) {
+          devWarn('[OrbitX][Wallet] refreshBalances failed', error);
+          set({
+            loading: false,
+            error: error instanceof Error ? error.message : 'No se pudo leer el balance on-chain.',
+          });
+        }
+      },
+
+      refreshSecurityStatus: async () => {
+        try {
+          const securityStatus = await getWalletSecurityStatus();
+          set({ securityStatus, error: null });
+        } catch (error) {
+          devWarn('[OrbitX][Wallet] refreshSecurityStatus failed', error);
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : 'No se pudo actualizar el estado de seguridad.',
+          });
+        }
+      },
+
+      connectExternalWallet: async (provider, address) => {
+        set({ loading: true, error: null });
+        recordAstraWalletFlow('connect_external_wallet', 'started');
+
+        try {
+          const result = await useOrbitStore.getState().connectExternalWallet(provider, address);
+          if (!result.ok) {
+            const normalizedMessage =
+              result.message === 'WalletConnect not ready yet'
+                ? 'WalletConnect quedo desactivado hasta que la integracion de sesion este lista.'
+                : result.message === 'External wallet address required'
+                  ? 'Pega una direccion publica valida para continuar.'
+                  : result.message === 'Invalid external wallet address'
+                    ? 'La direccion publica no es valida para MetaMask.'
+                    : result.message || 'No se pudo vincular la billetera externa en este momento.';
+
+            set({
+              loading: false,
+              error: normalizedMessage,
+            });
+            recordAstraWalletFlow('connect_external_wallet', 'failed', normalizedMessage);
+            return false;
+          }
+
+          const externalWallet = mapExternalWalletState();
+          const addressLabel = maskAddress(externalWallet.address) || 'direccion lista para usar';
+          set((state) => ({
+            externalWallet,
+            loading: false,
+            history: [
+              buildHistoryEntry(
+                'Billetera externa vinculada',
+                `${externalWallet.provider === 'metamask' ? 'MetaMask' : 'WalletConnect'} quedo vinculada con ${addressLabel}.`,
+              ),
+              ...state.history,
+            ].slice(0, 24),
+          }));
+          recordAstraWalletFlow('connect_external_wallet', 'completed');
+          return true;
+        } catch (error) {
+          devWarn('[OrbitX][Wallet] connectExternalWallet failed', error);
+          const message =
+            error instanceof Error
+              ? error.message
+              : 'No se pudo vincular la billetera externa.';
+          set({
+            loading: false,
+            error: message,
+          });
+          recordAstraWalletFlow('connect_external_wallet', 'failed', message);
+          return false;
+        }
+      },
+
+      disconnectExternalWallet: () => {
+        useOrbitStore.getState().disconnectExternalWallet();
+        set((state) => ({
+          externalWallet: {
+            provider: null,
+            address: '',
+            signingReady: false,
+          },
+          history: [
+            buildHistoryEntry(
+              'Billetera externa desconectada',
+              'La conexion externa se elimino sin afectar tu billetera OrbitX.',
+            ),
+            ...state.history,
+          ].slice(0, 24),
+        }));
+      },
+
+      setSelectedNetwork: (selectedNetwork) => set({ selectedNetwork }),
+
+      depositToSpot: (symbol, amount) => {
+        if (amount <= 0) {
+          return;
+        }
+
+        set((state) => ({
+          spotBalances: mergeSpotBalance(state.spotBalances, symbol, amount),
+          history: [
+            buildHistoryEntry('Saldo Spot recibido', `${amount} ${symbol.toUpperCase()} ingresaron a tu cuenta Spot.`),
+            ...state.history,
+          ].slice(0, 24),
+        }));
+      },
+
+      withdrawFromSpot: (symbol, amount) => {
+        const current = get().spotBalances.find((item) => item.symbol === symbol.toUpperCase());
+        if (!current || current.amount < amount || amount <= 0) {
+          return false;
+        }
+
+        set((state) => ({
+          spotBalances: mergeSpotBalance(state.spotBalances, symbol, -amount),
+          history: [
+            buildHistoryEntry('Salida desde Spot', `${amount} ${symbol.toUpperCase()} salieron de tu cuenta Spot.`),
+            ...state.history,
+          ].slice(0, 24),
+        }));
+        return true;
+      },
+
+      upsertSpotAsset: (asset) => {
+        if (asset.amount <= 0) {
+          return;
+        }
+
+        set((state) => ({
+          spotBalances: mergeSpotBalance(state.spotBalances, asset.symbol, asset.amount),
+        }));
+      },
+
+      consumeSpotQuote: (symbol, amount) => {
+        const current = get().spotBalances.find((item) => item.symbol === symbol.toUpperCase());
+        if (!current || current.amount < amount) {
+          return false;
+        }
+
+        set((state) => ({
+          spotBalances: mergeSpotBalance(state.spotBalances, symbol, -amount),
+        }));
+        return true;
+      },
+
+      creditSpotBase: (asset) => {
+        set((state) => ({
+          spotBalances: mergeSpotBalance(state.spotBalances, asset.symbol, asset.amount),
+        }));
+      },
+
+      debitSpotBase: (symbol, amount) => {
+        const current = get().spotBalances.find((item) => item.symbol === symbol.toUpperCase());
+        if (!current || current.amount < amount) {
+          return false;
+        }
+
+        set((state) => ({
+          spotBalances: mergeSpotBalance(state.spotBalances, symbol, -amount),
+        }));
+        return true;
+      },
+
+      syncCreatedTokens: () => {
+        set({ createdTokens: mapCreatedTokens() });
+      },
+    }),
+    {
+      name: 'orbitx-wallet-store-v1',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        selectedNetwork: state.selectedNetwork,
+        spotBalances: state.spotBalances,
+        history: state.history,
+      }),
+    },
+  ),
+);

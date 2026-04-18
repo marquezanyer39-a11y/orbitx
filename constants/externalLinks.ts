@@ -1,0 +1,51 @@
+export const ORBIT_BROWSER_LINKS = [
+  {
+    id: 'coinmarketcap',
+    title: 'CoinMarketCap',
+    subtitle: 'Market caps, dominancia y ranking global',
+    url: 'https://coinmarketcap.com/',
+    icon: 'bar-chart-outline',
+  },
+  {
+    id: 'popcoin',
+    title: 'Popcoin',
+    subtitle: 'Sitio oficial del ecosistema Popcoin',
+    url: 'https://www.popcoin.co/',
+    icon: 'sparkles-outline',
+  },
+  {
+    id: 'dextools',
+    title: 'DEXTools',
+    subtitle: 'Pairs, hot pairs y discovery de mercado',
+    url: 'https://www.dextools.io/app/en',
+    icon: 'analytics-outline',
+  },
+  {
+    id: 'dexscreener',
+    title: 'Dexscreener',
+    subtitle: 'Tracking rapido de pools y volumen onchain',
+    url: 'https://dexscreener.com/',
+    icon: 'pulse-outline',
+  },
+  {
+    id: 'google',
+    title: 'Google',
+    subtitle: 'Busqueda rapida para noticias o research',
+    url: 'https://www.google.com/',
+    icon: 'search-outline',
+  },
+  {
+    id: 'trustwallet',
+    title: 'Trust Wallet',
+    subtitle: 'Wallet, swaps y acceso rapido a dApps',
+    url: 'https://trustwallet.com/browser-extension',
+    icon: 'shield-checkmark-outline',
+  },
+  {
+    id: 'jupiter',
+    title: 'Jupiter',
+    subtitle: 'Agregador de swaps y discovery en Solana',
+    url: 'https://jup.ag/',
+    icon: 'planet-outline',
+  },
+] as const;

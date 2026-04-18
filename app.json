@@ -1,0 +1,83 @@
+{
+  "expo": {
+    "name": "OrbitX",
+    "slug": "orbitx",
+    "scheme": "orbitx",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0B0F"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Allow OrbitX to transcribe your voice with Astra.",
+        "NSMicrophoneUsageDescription": "Allow OrbitX to use your microphone for Astra Voice conversations."
+      }
+    },
+    "android": {
+      "package": "com.anyer4050.orbitx",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0B0F",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-router",
+      "expo-screen-orientation",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow OrbitX to protect your account with Face ID."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow OrbitX to use your camera for live streaming.",
+          "microphonePermission": "Allow OrbitX to use your microphone during live content.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow OrbitX to use your microphone for Astra Voice conversations.",
+          "speechRecognitionPermission": "Allow OrbitX to transcribe your voice with Astra.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox",
+            "com.google.android.tts"
+          ]
+        }
+      ],
+      "expo-video",
+      "expo-image",
+      "expo-audio",
+      "expo-asset"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4b7cd937-15da-411b-a318-52ba7d53d9a8"
+      }
+    }
+  }
+}
