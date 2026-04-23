@@ -20,6 +20,7 @@ import {
   buildAstraUnavailableResponse,
   createAstraMessage,
 } from '../services/astra/astraCore';
+import { buildAstraContext } from '../services/astra/astraContext';
 import {
   hasAstraBrainBackend,
   requestAstraBrainResponse,
@@ -111,6 +112,7 @@ function contextKey(context: AstraSupportContext | null) {
     context.path,
     context.screenName,
     context.currentPairSymbol,
+    context.currentTask,
     context.rampMode,
     context.rampProviderLabel,
     context.errorTitle,
@@ -119,6 +121,9 @@ function contextKey(context: AstraSupportContext | null) {
     context.seedBackedUp,
     context.externalWalletConnected,
     context.emailVerified,
+    context.selectedEntity?.type,
+    context.selectedEntity?.id,
+    context.selectedEntity?.symbol,
   ].join('|');
 }
 
@@ -441,13 +446,21 @@ export const useAstraStore = create<AstraState>()(
       },
 
       rememberContext: (context) => {
+        const normalizedContext = buildAstraContext(context, {
+          pathname: context.path ?? get().context?.path ?? '/',
+          language: context.language ?? get().context?.language,
+          previousContext: get().context,
+        });
         const visitedAt = nowIso();
         const nextEntry = {
-          id: `${context.surface}-${context.path}-${visitedAt}`,
-          surface: context.surface,
-          path: context.path,
-          screenName: context.screenName ?? context.surfaceTitle ?? context.surface,
-          pairSymbol: context.currentPairSymbol,
+          id: `${normalizedContext.surface}-${normalizedContext.path}-${visitedAt}`,
+          surface: normalizedContext.surface,
+          path: normalizedContext.path,
+          screenName:
+            normalizedContext.screenName ??
+            normalizedContext.surfaceTitle ??
+            normalizedContext.surface,
+          pairSymbol: normalizedContext.currentPairSymbol,
           visitedAt,
         };
 
@@ -462,6 +475,7 @@ export const useAstraStore = create<AstraState>()(
           );
 
           return {
+            context: normalizedContext,
             memory: {
               ...state.memory,
               recentSurfaces: [nextEntry, ...filtered].slice(0, 6),

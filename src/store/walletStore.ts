@@ -73,6 +73,13 @@ interface WalletState {
   syncCreatedTokens: () => void;
 }
 
+const EMPTY_RECEIVE_ADDRESSES: WalletAccount['receiveAddresses'] = {
+  ethereum: '',
+  base: '',
+  bnb: '',
+  solana: '',
+};
+
 function buildHistoryEntry(title: string, body: string): WalletHistoryEntry {
   return {
     id: `${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
@@ -102,6 +109,25 @@ function mergeSpotBalance(items: SpotBalance[], symbol: string, amountDelta: num
   };
 
   return next;
+}
+
+function syncOrbitWalletFutureWallet(
+  wallet: Pick<WalletAccount, 'receiveAddresses'> | null,
+  options?: {
+    simulated?: boolean;
+  },
+) {
+  const receiveAddresses = wallet?.receiveAddresses ?? EMPTY_RECEIVE_ADDRESSES;
+  const simulated = options?.simulated ?? !wallet;
+
+  useOrbitStore.setState((state) => ({
+    walletFuture: {
+      ...state.walletFuture,
+      receiveAddresses,
+      simulated,
+      lastWalletInitAt: wallet ? new Date().toISOString() : state.walletFuture.lastWalletInitAt,
+    },
+  }));
 }
 
 function mapCreatedTokens(): CreatedTokenStatus[] {
@@ -198,14 +224,10 @@ export const useWalletStore = create<WalletState>()(
           const externalWallet = mapExternalWalletState();
 
           if (!wallet) {
+            syncOrbitWalletFutureWallet(null, { simulated: true });
             set({
               walletAddress: '',
-              receiveAddresses: {
-                ethereum: '',
-                base: '',
-                bnb: '',
-                solana: '',
-              },
+              receiveAddresses: EMPTY_RECEIVE_ADDRESSES,
               mnemonicStored: false,
               isWalletReady: false,
               walletType: null,
@@ -218,6 +240,7 @@ export const useWalletStore = create<WalletState>()(
             return;
           }
 
+          syncOrbitWalletFutureWallet(wallet, { simulated: false });
           set({
             walletAddress: wallet.address,
             receiveAddresses: wallet.receiveAddresses,
@@ -249,6 +272,7 @@ export const useWalletStore = create<WalletState>()(
         try {
           const wallet = await createWallet();
           const securityStatus = await getWalletSecurityStatus();
+          syncOrbitWalletFutureWallet(wallet, { simulated: false });
           set((state) => ({
             walletAddress: wallet.address,
             receiveAddresses: wallet.receiveAddresses,
@@ -286,6 +310,7 @@ export const useWalletStore = create<WalletState>()(
         try {
           const wallet = await importWallet(seedPhrase);
           const securityStatus = await getWalletSecurityStatus();
+          syncOrbitWalletFutureWallet(wallet, { simulated: false });
           set((state) => ({
             walletAddress: wallet.address,
             receiveAddresses: wallet.receiveAddresses,
@@ -319,14 +344,10 @@ export const useWalletStore = create<WalletState>()(
 
       logoutWallet: async () => {
         await clearSecureWallet();
+        syncOrbitWalletFutureWallet(null, { simulated: true });
         set({
           walletAddress: '',
-          receiveAddresses: {
-            ethereum: '',
-            base: '',
-            bnb: '',
-            solana: '',
-          },
+          receiveAddresses: EMPTY_RECEIVE_ADDRESSES,
           mnemonicStored: false,
           isWalletReady: false,
           walletType: null,

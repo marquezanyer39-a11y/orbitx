@@ -57,24 +57,10 @@ export default function WalletScreen() {
   }, [wallet.refreshSecurityStatus, wallet.syncCreatedTokens]);
 
   useEffect(() => {
-    rememberAstraContext({
-      surface: 'wallet',
-      path: '/wallet',
-      language,
-      screenName: language === 'en' ? 'Wallet' : 'Billetera',
-      walletReady: wallet.isWalletReady,
-      seedBackedUp: Boolean(wallet.securityStatus.seedPhraseConfirmedAt),
-      externalWalletConnected: Boolean(wallet.externalWallet.address),
-      errorBody: wallet.error ?? undefined,
-    });
-  }, [
-    language,
-    rememberAstraContext,
-    wallet.error,
-    wallet.externalWallet.address,
-    wallet.isWalletReady,
-    wallet.securityStatus.seedPhraseConfirmedAt,
-  ]);
+    if (!wallet.isWalletReady && activeTab === 'web3') {
+      setActiveTab('spot');
+    }
+  }, [activeTab, wallet.isWalletReady]);
 
   useEffect(() => {
     if (!wallet.error) {
@@ -152,6 +138,77 @@ export default function WalletScreen() {
   const totalSpot = spotAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
   const totalBalance = totalSpot + totalWeb3;
   const activeReceiveAddress = wallet.receiveAddresses[wallet.selectedNetwork] || wallet.walletAddress;
+  const astraWalletContext = useMemo(
+    () => ({
+      surface: 'wallet' as const,
+      path: '/wallet',
+      language,
+      screenName: language === 'en' ? 'Wallet' : 'Billetera',
+      summary: wallet.error
+        ? language === 'en'
+          ? `Wallet detected this issue: ${wallet.error}`
+          : `Billetera detecto este problema: ${wallet.error}`
+        : wallet.isWalletReady
+          ? language === 'en'
+            ? `Your Web3 space is ready on ${wallet.selectedNetwork.toUpperCase()} with ${wallet.assets.length} assets and ${wallet.externalWallet.address ? 'one external wallet connected.' : 'no external wallet connected.'}`
+            : `Tu espacio Web3 esta listo en ${wallet.selectedNetwork.toUpperCase()} con ${wallet.assets.length} activos y ${wallet.externalWallet.address ? 'una billetera externa conectada.' : 'sin billetera externa conectada.'}`
+          : language === 'en'
+            ? 'You still do not have a created or imported wallet.'
+            : 'Todavia no tienes una billetera creada o importada.',
+      currentTask: wallet.isWalletReady
+        ? activeTab === 'web3'
+          ? 'wallet_web3_management'
+          : 'wallet_spot_overview'
+        : 'wallet_setup',
+      selectedEntity: {
+        type: 'wallet_network',
+        network: wallet.selectedNetwork,
+        status: wallet.isWalletReady ? 'ready' : 'missing',
+      },
+      uiState: {
+        activeTab,
+        selectedNetwork: wallet.selectedNetwork,
+        assetsCount: wallet.assets.length,
+        spotAssetsCount: spotAssets.length,
+        createdTokensCount: wallet.createdTokens.length,
+        hasExternalWallet: Boolean(wallet.externalWallet.address),
+        walletError: wallet.error ?? null,
+      },
+      labels: {
+        networkLabel: wallet.selectedNetwork.toUpperCase(),
+        totalBalanceLabel: formatCurrency(totalBalance),
+        totalSpotLabel: formatCurrency(totalSpot),
+        totalWeb3Label: formatCurrency(totalWeb3),
+        activeTabLabel: activeTab,
+        externalWalletLabel: wallet.externalWallet.address
+          ? maskAddress(wallet.externalWallet.address)
+          : undefined,
+      },
+      walletReady: wallet.isWalletReady,
+      seedBackedUp: Boolean(wallet.securityStatus.seedPhraseConfirmedAt),
+      externalWalletConnected: Boolean(wallet.externalWallet.address),
+      errorBody: wallet.error ?? undefined,
+    }),
+    [
+      activeTab,
+      language,
+      spotAssets.length,
+      totalBalance,
+      totalSpot,
+      totalWeb3,
+      wallet.assets.length,
+      wallet.createdTokens.length,
+      wallet.error,
+      wallet.externalWallet.address,
+      wallet.isWalletReady,
+      wallet.securityStatus.seedPhraseConfirmedAt,
+      wallet.selectedNetwork,
+    ],
+  );
+
+  useEffect(() => {
+    rememberAstraContext(astraWalletContext);
+  }, [astraWalletContext, rememberAstraContext]);
 
   return (
     <ScreenContainer contentContainerStyle={styles.content} backgroundMode="plain">
@@ -161,19 +218,8 @@ export default function WalletScreen() {
         onRefresh={() => void wallet.refreshBalances()}
         onInfo={() =>
           openAstra({
-            surface: 'wallet',
+            ...astraWalletContext,
             surfaceTitle: language === 'en' ? 'Wallet' : 'Billetera',
-            summary: wallet.error
-              ? language === 'en'
-                ? `Wallet detected this issue: ${wallet.error}`
-                : `Billetera detecto este problema: ${wallet.error}`
-              : wallet.isWalletReady
-                ? language === 'en'
-                  ? `Your Web3 space is ready on ${wallet.selectedNetwork.toUpperCase()} with ${wallet.assets.length} assets and ${wallet.externalWallet.address ? 'one external wallet connected.' : 'no external wallet connected.'}`
-                  : `Tu espacio Web3 esta listo en ${wallet.selectedNetwork.toUpperCase()} con ${wallet.assets.length} activos y ${wallet.externalWallet.address ? 'una billetera externa conectada.' : 'sin billetera externa conectada.'}`
-                : language === 'en'
-                  ? 'You still do not have a created or imported wallet.'
-                  : 'Todavia no tienes una billetera creada o importada.',
           })
         }
       />
@@ -476,6 +522,10 @@ export default function WalletScreen() {
                   language === 'en'
                     ? 'Astra can help you recover the Wallet flow without losing context.'
                     : 'Astra puede ayudarte a recuperar el flujo de Billetera sin perder contexto.',
+                currentTask: astraWalletContext.currentTask,
+                selectedEntity: astraWalletContext.selectedEntity,
+                uiState: astraWalletContext.uiState,
+                labels: astraWalletContext.labels,
                 errorTitle: language === 'en' ? 'Wallet error' : 'Error de billetera',
                 errorBody: wallet.error ?? undefined,
               })

@@ -98,22 +98,80 @@ export default function TradeScreen() {
     [recentOrders, realtimeFeed.recentTrades],
   );
   const favorite = pair ? favoritePairIds.includes(pair.id) : false;
-
-  useEffect(() => {
+  const astraTradeContext = useMemo(() => {
     if (!pair) {
-      return;
+      return null;
     }
 
-    rememberAstraContext({
-      surface: 'trade',
+    const currentPriceLabel = `USD ${livePrice.toFixed(livePrice >= 100 ? 0 : 2)}`;
+    const summary = error
+      ? language === 'en'
+        ? `Trade detected this issue: ${error}`
+        : `Operar detecto este problema: ${error}`
+      : language === 'en'
+        ? `You are on ${pair.symbol} with live order book, chart and form ready to trade.`
+        : `Estas en ${pair.symbol} con libro en vivo, grafico y formulario listos para operar.`;
+
+    return {
+      surface: 'trade' as const,
       path: '/spot',
       language,
       screenName: language === 'en' ? 'Trade' : 'Operar',
+      summary,
+      currentTask: 'trade_pair_review',
       currentPairSymbol: pair.symbol,
-      currentPriceLabel: `USD ${livePrice.toFixed(livePrice >= 100 ? 0 : 2)}`,
-      walletReady: true,
-    });
-  }, [language, livePrice, pair, rememberAstraContext]);
+      currentPriceLabel,
+      selectedEntity: {
+        type: 'trading_pair',
+        id: pair.id,
+        pair: pair.symbol,
+        symbol: pair.baseSymbol,
+        name: pair.baseSymbol,
+      },
+      uiState: {
+        priceFeedStatus: realtimeTicker.status,
+        priceSourceLabel: realtimeTicker.sourceLabel,
+        orderBookStatus: realtimeFeed.status,
+        orderBookSourceLabel: realtimeFeed.sourceLabel,
+        chartFeedStatus: realtimeCandles.status,
+        chartSourceLabel: realtimeCandles.sourceLabel,
+        orderBookDepth: realtimeFeed.orderBook.length,
+        recentTradesCount: recentTrades.length,
+        tradeFormReady: true,
+        loading,
+      },
+      labels: {
+        currentPriceLabel,
+        pairLabel: pair.symbol,
+        priceFeedLabel: realtimeTicker.sourceLabel,
+        orderBookLabel: realtimeFeed.sourceLabel,
+        chartFeedLabel: realtimeCandles.sourceLabel,
+      },
+      errorBody: error ?? undefined,
+    };
+  }, [
+    error,
+    language,
+    livePrice,
+    loading,
+    pair,
+    recentTrades.length,
+    realtimeCandles.sourceLabel,
+    realtimeCandles.status,
+    realtimeFeed.orderBook.length,
+    realtimeFeed.sourceLabel,
+    realtimeFeed.status,
+    realtimeTicker.sourceLabel,
+    realtimeTicker.status,
+  ]);
+
+  useEffect(() => {
+    if (!astraTradeContext) {
+      return;
+    }
+
+    rememberAstraContext(astraTradeContext);
+  }, [astraTradeContext, rememberAstraContext]);
 
   useEffect(() => {
     if (!error) {
@@ -175,18 +233,8 @@ export default function TradeScreen() {
         onOpenChart={() => router.push({ pathname: '/trade/chart', params: { pairId: pair.id } })}
         onOpenAstra={() =>
           openAstra({
-            surface: 'trade',
+            ...(astraTradeContext ?? {}),
             surfaceTitle: language === 'en' ? 'Trade' : 'Operar',
-            summary: error
-              ? language === 'en'
-                ? `Trade detected this issue: ${error}`
-                : `Operar detecto este problema: ${error}`
-              : language === 'en'
-                ? `You are on ${pair.symbol} with live order book, chart and form ready to trade.`
-                : `Estas en ${pair.symbol} con libro en vivo, grafico y formulario listos para operar.`,
-            currentPairSymbol: pair.symbol,
-            currentPriceLabel: `USD ${livePrice.toFixed(livePrice >= 100 ? 0 : 2)}`,
-            errorBody: error ?? undefined,
           })
         }
       />

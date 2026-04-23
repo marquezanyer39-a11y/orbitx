@@ -111,6 +111,30 @@ export interface AstraCapabilities {
   hasRampPay: boolean;
 }
 
+export type AstraContextPrimitive = string | number | boolean | null;
+
+export interface AstraSelectedEntity {
+  type?: string;
+  id?: string;
+  symbol?: string;
+  name?: string;
+  pair?: string;
+  network?: string;
+  provider?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+
+export interface AstraUiState {
+  [key: string]: unknown;
+}
+
+export interface AstraUserState {
+  [key: string]: unknown;
+}
+
+export type AstraContextLabels = Record<string, AstraContextPrimitive | undefined>;
+
 export interface AstraSupportContext {
   surface: AstraSurface;
   path: string;
@@ -118,8 +142,14 @@ export interface AstraSupportContext {
   surfaceTitle?: string;
   screenName?: string;
   summary?: string;
+  currentTask?: string;
   currentPairSymbol?: string;
   currentPriceLabel?: string;
+  selectedEntity?: AstraSelectedEntity;
+  uiState?: AstraUiState;
+  userState?: AstraUserState;
+  capabilities?: Partial<AstraCapabilities>;
+  labels?: AstraContextLabels;
   poolStatusLabel?: string;
   poolAmountLabel?: string;
   poolTargetLabel?: string;

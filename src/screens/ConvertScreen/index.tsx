@@ -178,10 +178,9 @@ export default function ConvertScreen() {
         .map((asset) => asset.symbol),
     [assets],
   );
-
-  useEffect(() => {
-    rememberAstraContext({
-      surface: 'ramp',
+  const astraConvertContext = useMemo(
+    () => ({
+      surface: 'ramp' as const,
       path: '/convert',
       language,
       screenName: copy.headerTitle,
@@ -190,27 +189,63 @@ export default function ConvertScreen() {
         sourceAsset && targetAsset
           ? `${sourceAsset.symbol} -> ${targetAsset.symbol}. ${quote?.message ?? copy.headerBody}`
           : copy.headerBody,
+      currentTask:
+        quote?.status === 'ready'
+          ? 'convert_review_quote'
+          : quote?.status === 'error' || quote?.status === 'unavailable'
+            ? 'convert_issue'
+            : 'convert_setup',
       currentPairSymbol:
         sourceAsset && targetAsset ? `${sourceAsset.symbol}/${targetAsset.symbol}` : undefined,
       currentPriceLabel:
         parsedAmount > 0 ? formatConvertAmount(language, parsedAmount, sourceAsset?.symbol) : undefined,
+      selectedEntity:
+        sourceAsset && targetAsset
+          ? {
+              type: 'conversion_pair',
+              pair: `${sourceAsset.symbol}/${targetAsset.symbol}`,
+              symbol: sourceAsset.symbol,
+              provider: quote?.providerLabel ?? undefined,
+            }
+          : undefined,
+      uiState: {
+        convertStatus: quote?.status ?? 'idle',
+        quoteLoading,
+        providerLabel: quote?.providerLabel ?? null,
+        sourceAssetId: sourceAsset?.id ?? null,
+        targetAssetId: targetAsset?.id ?? null,
+        estimatedBalanceAfter,
+      },
+      labels: {
+        providerLabel: quote?.providerLabel,
+        sourceAssetLabel: sourceAsset?.symbol,
+        targetAssetLabel: targetAsset?.symbol,
+        amountLabel:
+          parsedAmount > 0 ? formatConvertAmount(language, parsedAmount, sourceAsset?.symbol) : undefined,
+      },
       rampMode: copy.headerTitle,
       rampProviderLabel: quote?.providerLabel,
       errorBody:
         quote?.status === 'error' || quote?.status === 'unavailable' ? quote.message : undefined,
-    });
-  }, [
-    copy.headerBody,
-    copy.headerTitle,
-    language,
-    parsedAmount,
-    quote?.message,
-    quote?.providerLabel,
-    quote?.status,
-    rememberAstraContext,
-    sourceAsset,
-    targetAsset,
-  ]);
+    }),
+    [
+      copy.headerBody,
+      copy.headerTitle,
+      estimatedBalanceAfter,
+      language,
+      parsedAmount,
+      quote?.message,
+      quote?.providerLabel,
+      quote?.status,
+      quoteLoading,
+      sourceAsset,
+      targetAsset,
+    ],
+  );
+
+  useEffect(() => {
+    rememberAstraContext(astraConvertContext);
+  }, [astraConvertContext, rememberAstraContext]);
 
   useEffect(() => {
     if (!quote?.message || (quote.status !== 'error' && quote.status !== 'unavailable')) {
@@ -250,21 +285,7 @@ export default function ConvertScreen() {
 
   const handleOpenAstra = () => {
     openAstra({
-      surface: 'ramp',
-      screenName: copy.headerTitle,
-      surfaceTitle: copy.headerTitle,
-      summary:
-        sourceAsset && targetAsset
-          ? `${sourceAsset.symbol} -> ${targetAsset.symbol}. ${quote?.message ?? copy.headerBody}`
-          : copy.headerBody,
-      currentPairSymbol:
-        sourceAsset && targetAsset ? `${sourceAsset.symbol}/${targetAsset.symbol}` : undefined,
-      currentPriceLabel:
-        parsedAmount > 0 ? formatConvertAmount(language, parsedAmount, sourceAsset?.symbol) : undefined,
-      rampMode: copy.headerTitle,
-      rampProviderLabel: quote?.providerLabel,
-      errorBody:
-        quote?.status === 'error' || quote?.status === 'unavailable' ? quote.message : undefined,
+      ...astraConvertContext,
     });
   };
 

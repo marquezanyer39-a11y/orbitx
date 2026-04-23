@@ -13,12 +13,30 @@ import {
 } from './astra-schemas.js';
 import { generateGeminiStructuredJson } from './gemini-client.js';
 
+function normalizeOptionalText(value, maxLength = 240) {
+  const text = `${value ?? ''}`.replace(/\s+/g, ' ').trim();
+  return text ? text.slice(0, maxLength) : null;
+}
+
+function normalizeContextMap(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  return value;
+}
+
 function normalizeInput(input) {
   return {
     userId: `${input.userId ?? input.username ?? 'guest'}`.trim() || 'guest',
     sessionId: `${input.sessionId ?? 'default'}`.trim() || 'default',
     message: `${input.message ?? ''}`.replace(/\s+/g, ' ').trim().slice(0, 900),
     screen: input.screen ?? 'general',
+    surface: input.surface ?? input.screen ?? 'general',
+    path: input.path ?? input.lastRoute ?? 'unknown',
+    screenName: normalizeOptionalText(input.screenName, 160),
+    summary: normalizeOptionalText(input.summary, 800),
+    currentTask: normalizeOptionalText(input.currentTask, 240),
     language: input.language ?? 'ES',
     channel: input.channel === 'voice' ? 'voice' : 'text',
     username: input.username ?? 'Usuario',
@@ -27,6 +45,13 @@ function normalizeInput(input) {
     hasFunds: Boolean(input.hasFunds),
     portfolioValue: Number(input.portfolioValue ?? 0),
     selectedToken: input.selectedToken ?? null,
+    currentPairSymbol: normalizeOptionalText(input.currentPairSymbol, 80),
+    currentPriceLabel: normalizeOptionalText(input.currentPriceLabel, 80),
+    selectedEntity: normalizeContextMap(input.selectedEntity),
+    uiState: normalizeContextMap(input.uiState),
+    userState: normalizeContextMap(input.userState),
+    capabilities: normalizeContextMap(input.capabilities),
+    labels: normalizeContextMap(input.labels),
     recentIntent: input.recentIntent ?? null,
     lastRoute: input.lastRoute ?? 'unknown',
     errorTitle: input.errorTitle ?? null,
@@ -34,10 +59,49 @@ function normalizeInput(input) {
     twoFactorEnabled: input.twoFactorEnabled ?? null,
     activeSessionsCount: input.activeSessionsCount ?? null,
     autoLockMinutes: input.autoLockMinutes ?? null,
+    walletReady:
+      input.walletReady == null ? Boolean(input.hasWallet) : Boolean(input.walletReady),
+    walletStatusLabel: normalizeOptionalText(input.walletStatusLabel, 120),
+    seedBackedUp:
+      input.seedBackedUp == null ? null : Boolean(input.seedBackedUp),
+    externalWalletConnected:
+      input.externalWalletConnected == null
+        ? null
+        : Boolean(input.externalWalletConnected),
+    emailVerified:
+      input.emailVerified == null ? Boolean(input.isVerified) : Boolean(input.emailVerified),
+    accountStatusLabel: normalizeOptionalText(input.accountStatusLabel, 120),
+    balanceLabel: normalizeOptionalText(input.balanceLabel, 120),
+    spotBalanceLabel: normalizeOptionalText(input.spotBalanceLabel, 120),
+    web3BalanceLabel: normalizeOptionalText(input.web3BalanceLabel, 120),
+    botEnabled:
+      input.botEnabled == null ? null : Boolean(input.botEnabled),
+    botRiskLabel: normalizeOptionalText(input.botRiskLabel, 80),
+    botTokenLabel: normalizeOptionalText(input.botTokenLabel, 80),
+    botAllocationLabel: normalizeOptionalText(input.botAllocationLabel, 120),
+    botDailyPnlLabel: normalizeOptionalText(input.botDailyPnlLabel, 120),
+    botStatusLabel: normalizeOptionalText(input.botStatusLabel, 80),
+    botMaxTradesLabel: normalizeOptionalText(input.botMaxTradesLabel, 80),
+    rampMode: normalizeOptionalText(input.rampMode, 120),
+    rampProviderLabel: normalizeOptionalText(input.rampProviderLabel, 120),
+    usageMode: normalizeOptionalText(input.usageMode, 80),
+    currentThemeLabel: normalizeOptionalText(input.currentThemeLabel, 120),
+    poolStatusLabel: normalizeOptionalText(input.poolStatusLabel, 120),
+    poolAmountLabel: normalizeOptionalText(input.poolAmountLabel, 120),
+    poolTargetLabel: normalizeOptionalText(input.poolTargetLabel, 120),
+    poolTimeRemainingLabel: normalizeOptionalText(input.poolTimeRemainingLabel, 120),
+    poolUserParticipationLabel: normalizeOptionalText(
+      input.poolUserParticipationLabel,
+      120,
+    ),
+    poolEstimatedPositionLabel: normalizeOptionalText(
+      input.poolEstimatedPositionLabel,
+      120,
+    ),
   };
 }
 
-function detectIntent(message) {
+function detectIntent(message, input = {}) {
   const text = `${message ?? ''}`.toLowerCase();
 
   if (text.includes('hola') || text.includes('buenas') || text.includes('hello')) {
@@ -88,6 +152,34 @@ function detectIntent(message) {
     return 'bot_futures';
   }
 
+  if (input.screen === 'create_token') {
+    return 'memecoin';
+  }
+
+  if (input.screen === 'wallet') {
+    return 'wallet';
+  }
+
+  if (input.screen === 'trade') {
+    return 'trade';
+  }
+
+  if (input.screen === 'market') {
+    return 'market';
+  }
+
+  if (input.screen === 'social') {
+    return 'social';
+  }
+
+  if (input.screen === 'bot_futures') {
+    return 'bot_futures';
+  }
+
+  if (input.screen === 'security') {
+    return 'security';
+  }
+
   return 'general';
 }
 
@@ -125,27 +217,14 @@ function isConceptQuestion(text) {
 }
 
 function shouldPreferDeterministicResponse(input, intent) {
-  const normalized = `${input.message ?? ''}`
-    .toLowerCase()
-    .replace(/quã©|quÃ©/g, 'que')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-  const operationalTerms =
-    /crear|create|import|importar|deposit|depositar|retir|withdraw|abrir|open|conectar|connect|problema|error|falla|bug|comprar|buy|vender|sell|operar|trade now|mercado ahora|precio de/;
-
-  if (isConceptQuestion(input.message) && ['wallet', 'trade', 'market'].includes(intent)) {
+  if (
+    isConceptQuestion(input.message) &&
+    ['wallet', 'trade', 'market', 'security'].includes(intent)
+  ) {
     return true;
   }
 
-  if (intent === 'wallet' && /(wallet|billetera)/.test(normalized) && !operationalTerms.test(normalized)) {
-    return true;
-  }
-
-  if (intent === 'trade' && /(trade|trading|spot)/.test(normalized) && !operationalTerms.test(normalized)) {
-    return true;
-  }
-
-  if (intent === 'market' && /(mercado|markets|market)/.test(normalized) && !operationalTerms.test(normalized)) {
+  if (intent === 'user_id') {
     return true;
   }
 
@@ -207,10 +286,12 @@ function buildConceptExplanation(input, conceptKey) {
 }
 
 function buildDeterministicResponse(input, tools) {
-  const intent = detectIntent(input.message);
+  const intent = detectIntent(input.message, input);
   const normalizedMessage = `${input.message ?? ''}`.toLowerCase();
   const walletSummary = tools.walletSummary;
   const marketSnapshot = tools.marketSnapshot;
+  const createTokenState = tools.createTokenState;
+  const rampState = tools.rampState;
   const securityRisk = tools.securityRisk;
   const uiDiagnosis = tools.uiDiagnosis;
   const currentModule = tools.orbitxKnowledge.currentModule;
@@ -251,8 +332,8 @@ function buildDeterministicResponse(input, tools) {
         input,
         t(
           input.language,
-          `En crear token puedes seguir por dos rutas: subir tu imagen manualmente o usar "Crear imagen con Astra". ${creativeImageGeneration.stateLabel} Si quieres avanzar rapido, Astra puede proponerte prompts visuales y luego dejarte elegir la imagen resultante como base del token.`,
-          `Inside create token you have two paths: upload your image manually or use "Create image with Astra". ${creativeImageGeneration.stateLabel} If you want to move faster, Astra can suggest visual prompts and then let you choose the resulting image as the token base.`,
+          `En crear token puedes seguir por dos rutas: subir tu imagen manualmente o usar "Crear imagen con Astra". ${createTokenState?.summary ?? ''} ${creativeImageGeneration.stateLabel} Si quieres avanzar rapido, Astra puede proponerte prompts visuales y luego dejarte elegir la imagen resultante como base del token.`,
+          `Inside create token you have two paths: upload your image manually or use "Create image with Astra". ${createTokenState?.summary ?? ''} ${creativeImageGeneration.stateLabel} If you want to move faster, Astra can suggest visual prompts and then let you choose the resulting image as the token base.`,
         ),
         t(
           input.language,
@@ -388,8 +469,8 @@ function buildDeterministicResponse(input, tools) {
         walletSummary.hasWallet
           ? t(
               input.language,
-              `Puedes crear tu memecoin en minutos dentro de OrbitX. Primero conviene confirmar tu wallet y luego abrir el flujo de creacion de token. Dentro de ese flujo puedes subir tu imagen manualmente o usar "Crear imagen con Astra" para preparar el recurso visual.`,
-              `You can create your memecoin in minutes inside OrbitX. It is best to confirm your wallet first and then open the token creation flow. Inside that flow you can upload your image manually or use "Create image with Astra" to prepare the visual asset.`,
+              `Puedes crear tu memecoin en minutos dentro de OrbitX. Primero conviene confirmar tu wallet y luego abrir el flujo de creacion de token. ${createTokenState?.summary ?? 'Dentro de ese flujo puedes subir tu imagen manualmente o usar "Crear imagen con Astra" para preparar el recurso visual.'}`,
+              `You can create your memecoin in minutes inside OrbitX. It is best to confirm your wallet first and then open the token creation flow. ${createTokenState?.summary ?? 'Inside that flow you can upload your image manually or use "Create image with Astra" to prepare the visual asset.'}`,
             )
           : t(
               input.language,
@@ -425,7 +506,17 @@ function buildDeterministicResponse(input, tools) {
               'I can help you with market context inside OrbitX. If you want to review pairs or move to Spot, I can take you to the right module.',
             ),
         marketSnapshot?.asset
-          ? t(input.language, `No veo feed en tiempo real para ${marketSnapshot.asset}, pero te llevo al mercado.`, `I do not see a live feed for ${marketSnapshot.asset}, but I can take you to Markets.`)
+          ? marketSnapshot?.hasRealtimeFeed
+            ? t(
+                input.language,
+                `Tengo contexto live para ${marketSnapshot.asset}${marketSnapshot.currentPriceLabel ? ` en ${marketSnapshot.currentPriceLabel}` : ''}. Si quieres, te llevo a Trade o a Markets.`,
+                `I have live context for ${marketSnapshot.asset}${marketSnapshot.currentPriceLabel ? ` at ${marketSnapshot.currentPriceLabel}` : ''}. If you want, I can take you to Trade or Markets.`,
+              )
+            : t(
+                input.language,
+                `No tengo un feed confirmado en vivo para ${marketSnapshot.asset}, pero si contexto suficiente para llevarte al mercado.`,
+                `I do not have a confirmed live feed for ${marketSnapshot.asset}, but I do have enough context to take you to Markets.`,
+              )
           : t(input.language, 'Te llevo a Mercados o a Spot.', 'I can take you to Markets or Spot.'),
       ),
       actions: ['view_market', 'go_trade', 'wallet_open'],
@@ -558,8 +649,8 @@ function buildDeterministicResponse(input, tools) {
       input,
       t(
         input.language,
-        `Ahora mismo estoy tomando como contexto ${currentModule.title}. Puedo ayudarte a moverte dentro de OrbitX de forma clara y segura si me dices si quieres wallet, mercado, trade, Social o Bot Futures.`,
-        `Right now I am using ${currentModule.title} as context. I can help you move through OrbitX clearly and safely if you tell me whether you want wallet, markets, trade, Social or Bot Futures.`,
+        `Ahora mismo estoy tomando como contexto ${currentModule.title}${input.currentTask ? ` en ${input.currentTask}` : ''}${rampState?.summary ? `. ${rampState.summary}` : ''}. Puedo ayudarte a moverte dentro de OrbitX de forma clara y segura si me dices si quieres wallet, mercado, trade, Social o Bot Futures.`,
+        `Right now I am using ${currentModule.title}${input.currentTask ? ` in ${input.currentTask}` : ''}${rampState?.summary ? `. ${rampState.summary}` : ''}. I can help you move through OrbitX clearly and safely if you tell me whether you want wallet, markets, trade, Social or Bot Futures.`,
       ),
       t(
         input.language,
@@ -574,7 +665,7 @@ function buildDeterministicResponse(input, tools) {
 
 export async function orchestrateAstraChat({ config, input }) {
   const safeInput = normalizeInput(input);
-  const intent = detectIntent(safeInput.message);
+  const intent = detectIntent(safeInput.message, safeInput);
 
   if (!safeInput.message) {
     throw new AstraSystemError('Astra necesita un mensaje para responder.', {
@@ -608,6 +699,8 @@ export async function orchestrateAstraChat({ config, input }) {
       lastToolNames: ['guards'],
       walletCreated: safeInput.hasWallet,
       identityVerified: safeInput.isVerified,
+      lastScreen: safeInput.screen,
+      lastTask: safeInput.currentTask,
     });
     return guardResult.response;
   }
@@ -627,6 +720,8 @@ export async function orchestrateAstraChat({ config, input }) {
       lastToolNames: tools.toolsUsed,
       walletCreated: safeInput.hasWallet,
       identityVerified: safeInput.isVerified,
+      lastScreen: safeInput.screen,
+      lastTask: safeInput.currentTask,
     });
     console.info('[OrbitX][AstraCore] deterministic response preferred', {
       intent,
@@ -667,6 +762,8 @@ export async function orchestrateAstraChat({ config, input }) {
       lastToolNames: tools.toolsUsed,
       walletCreated: safeInput.hasWallet,
       identityVerified: safeInput.isVerified,
+      lastScreen: safeInput.screen,
+      lastTask: safeInput.currentTask,
     });
     console.info('[OrbitX][AstraCore] model response ready', {
       intent,
@@ -692,6 +789,8 @@ export async function orchestrateAstraChat({ config, input }) {
       lastToolNames: tools.toolsUsed,
       walletCreated: safeInput.hasWallet,
       identityVerified: safeInput.isVerified,
+      lastScreen: safeInput.screen,
+      lastTask: safeInput.currentTask,
     });
     console.warn('[OrbitX][AstraCore] fallback response used', {
       intent,

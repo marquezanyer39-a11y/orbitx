@@ -75,11 +75,10 @@ function mapScreen(surface: AstraSupportContext['surface']) {
     case 'market':
     case 'social':
     case 'security':
+    case 'settings':
       return surface;
     case 'bot_futures':
       return 'bot_futures';
-    case 'settings':
-      return 'general';
     case 'error':
       return 'general';
     default:
@@ -435,13 +434,44 @@ export async function requestAstraBrainResponse(
       autoLockMinutes: input.context.autoLockMinutes,
       message: input.question,
       context: {
+        surface: input.context.surface,
+        path: input.context.path,
         screenName: input.context.screenName,
         summary: input.context.summary,
+        currentTask: input.context.currentTask,
+        currentPairSymbol: input.context.currentPairSymbol,
+        currentPriceLabel: input.context.currentPriceLabel,
+        selectedEntity: input.context.selectedEntity,
+        uiState: input.context.uiState,
+        userState: input.context.userState,
+        capabilities: input.context.capabilities,
+        labels: input.context.labels,
+        walletReady: input.context.walletReady,
+        walletStatusLabel: input.context.walletStatusLabel,
+        seedBackedUp: input.context.seedBackedUp,
+        externalWalletConnected: input.context.externalWalletConnected,
+        emailVerified: input.context.emailVerified,
+        accountStatusLabel: input.context.accountStatusLabel,
+        balanceLabel: input.context.balanceLabel,
+        spotBalanceLabel: input.context.spotBalanceLabel,
+        web3BalanceLabel: input.context.web3BalanceLabel,
         botEnabled: input.context.botEnabled,
         botRiskLabel: input.context.botRiskLabel,
         botTokenLabel: input.context.botTokenLabel,
         botStatusLabel: input.context.botStatusLabel,
         botAllocationLabel: input.context.botAllocationLabel,
+        botDailyPnlLabel: input.context.botDailyPnlLabel,
+        botMaxTradesLabel: input.context.botMaxTradesLabel,
+        rampMode: input.context.rampMode,
+        rampProviderLabel: input.context.rampProviderLabel,
+        currentThemeLabel: input.context.currentThemeLabel,
+        usageMode: input.context.usageMode,
+        poolStatusLabel: input.context.poolStatusLabel,
+        poolAmountLabel: input.context.poolAmountLabel,
+        poolTargetLabel: input.context.poolTargetLabel,
+        poolTimeRemainingLabel: input.context.poolTimeRemainingLabel,
+        poolUserParticipationLabel: input.context.poolUserParticipationLabel,
+        poolEstimatedPositionLabel: input.context.poolEstimatedPositionLabel,
       },
     },
     {

@@ -23,6 +23,7 @@ import {
   getAstraImageAvailability,
   type AstraGeneratedImage,
 } from '../../src/services/astra/astraImageStudio';
+import { useAstraStore } from '../../src/store/astraStore';
 import {
   deployRealMemecoin,
   estimateRealMemecoinDeployment,
@@ -33,6 +34,7 @@ import {
   supportsRealLiquidityCreation,
   type LiquidityPairKind,
 } from '../../services/liquidity/evmLiquidity';
+import { useWalletStore } from '../../src/store/walletStore';
 import { useOrbitStore } from '../../store/useOrbitStore';
 import type {
   DexLaunchNetwork,
@@ -108,6 +110,15 @@ function getOrbitxSourceAddress(
   return receiveAddresses.base;
 }
 
+function hasCompleteReceiveAddresses(addresses: {
+  ethereum: string;
+  base: string;
+  bnb: string;
+  solana: string;
+}) {
+  return Boolean(addresses.ethereum && addresses.base && addresses.bnb && addresses.solana);
+}
+
 function getNativeTokenId(chain: LaunchChain) {
   return chain === 'bnb' ? 'bnb' : 'eth';
 }
@@ -126,12 +137,15 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
   const profile = useOrbitStore((state) => state.profile);
   const tokens = useOrbitStore((state) => state.tokens);
   const walletFuture = useOrbitStore((state) => state.walletFuture);
+  const primaryWalletReady = useWalletStore((state) => state.isWalletReady);
+  const primaryReceiveAddresses = useWalletStore((state) => state.receiveAddresses);
   const createToken = useOrbitStore((state) => state.createToken);
   const markTokenReadyToList = useOrbitStore((state) => state.markTokenReadyToList);
   const updateTokenRecord = useOrbitStore((state) => state.updateTokenRecord);
   const launchToken = useOrbitStore((state) => state.launchToken);
   const showToast = useOrbitStore((state) => state.showToast);
   const connectExternalWallet = useOrbitStore((state) => state.connectExternalWallet);
+  const rememberAstraContext = useAstraStore((state) => state.rememberContext);
 
   const [step, setStep] = useState<WizardStep>('wallet');
   const [chain, setChain] = useState<LaunchChain>('base');
@@ -181,13 +195,12 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
   const [deploymentResult, setDeploymentResult] = useState<DeploymentResultState | null>(null);
   const [resultTokenId, setResultTokenId] = useState<string | null>(null);
 
-  const walletReady = Boolean(
-    walletFuture.receiveAddresses.ethereum &&
-      walletFuture.receiveAddresses.base &&
-      walletFuture.receiveAddresses.bnb &&
-      walletFuture.receiveAddresses.solana &&
-      !walletFuture.simulated,
-  );
+  const orbitWalletFutureReady =
+    hasCompleteReceiveAddresses(walletFuture.receiveAddresses) && !walletFuture.simulated;
+  const orbitxReceiveAddresses = hasCompleteReceiveAddresses(primaryReceiveAddresses)
+    ? primaryReceiveAddresses
+    : walletFuture.receiveAddresses;
+  const walletReady = primaryWalletReady || orbitWalletFutureReady;
   const externalConnected = Boolean(
     walletFuture.externalWallet.provider && walletFuture.externalWallet.address,
   );
@@ -215,7 +228,7 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
   );
   const sourceAddress =
     walletSource === 'orbitx'
-      ? getOrbitxSourceAddress(chain, walletFuture.receiveAddresses)
+      ? getOrbitxSourceAddress(chain, orbitxReceiveAddresses)
       : walletFuture.externalWallet.address;
   const astraPromptSuggestions = useMemo(
     () =>
@@ -227,6 +240,71 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
       }),
     [appLanguage, description, previewName, previewSymbol],
   );
+  const astraCreateTokenContext = useMemo(
+    () => ({
+      surface: 'create_token' as const,
+      path: '/create-token',
+      language: appLanguage,
+      screenName: appLanguage === 'en' ? 'Create token' : 'Crear token',
+      summary: walletReady
+        ? `Create token wizard in step ${steps[currentStepIndex]?.label ?? step} on ${getNetworkLabel(chain)}.`
+        : 'Create token wizard is waiting for a ready wallet before launch.',
+      currentTask: `create_token_${step}`,
+      selectedEntity: {
+        type: 'token_draft',
+        name: previewName,
+        symbol: previewSymbol,
+        network: chain,
+        provider: walletSource,
+      },
+      uiState: {
+        createTokenStage: step,
+        imageSourceMode,
+        astraImageStatus,
+        astraAvailability: astraAvailabilityState,
+        generatedImagesCount: generatedImages.length,
+        walletSource,
+        walletReady,
+        externalConnected,
+        canCreateRealOnChain,
+        estimateReady: Boolean(estimate),
+        deployStatus,
+        listingStage,
+      },
+      labels: {
+        stepLabel: steps[currentStepIndex]?.label,
+        networkLabel: getNetworkLabel(chain),
+        walletSourceLabel: walletSource,
+        astraAvailabilityLabel: astraAvailabilityState,
+        imageModeLabel: imageSourceMode,
+      },
+      walletReady,
+      externalWalletConnected: externalConnected,
+    }),
+    [
+      appLanguage,
+      astraAvailabilityState,
+      astraImageStatus,
+      canCreateRealOnChain,
+      chain,
+      currentStepIndex,
+      deployStatus,
+      estimate,
+      externalConnected,
+      generatedImages.length,
+      imageSourceMode,
+      listingStage,
+      previewName,
+      previewSymbol,
+      step,
+      walletReady,
+      walletSource,
+    ],
+  );
+
+  useEffect(() => {
+    rememberAstraContext(astraCreateTokenContext);
+  }, [astraCreateTokenContext, rememberAstraContext]);
 
   useEffect(() => {
     if (chain === 'ethereum') {
@@ -457,7 +535,7 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
   }
 
   async function handleGenerateAstraImage() {
-    if (astraAvailabilityState !== 'available') {
+    if (astraAvailabilityState === 'unavailable') {
       const message =
         astraAvailabilityMessage ||
         'La generacion visual con Astra no esta disponible en este entorno.';
@@ -517,16 +595,29 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
   function handleWalletReady() {
     setWalletSetupVisible(false);
     setWalletSource('orbitx');
+    if (step === 'wallet') {
+      setStep('network');
+      showToast('Wallet OrbitX lista. Continuamos con la red del token.', 'success');
+    }
   }
 
   function moveToNextStep() {
     if (step === 'wallet') {
-      if (walletSource === 'orbitx' && !walletReady) {
-        openWalletSetup('create');
-        return;
+      if (walletSource === 'external') {
+        setWalletSource('orbitx');
+        showToast(
+          'La creacion real de memecoins funciona ahora con OrbitX Wallet. Continuamos con tu wallet interna.',
+          'info',
+        );
+
+        if (!walletReady) {
+          openWalletSetup('create');
+          return;
+        }
       }
-      if (walletSource === 'external' && !externalConnected) {
-        setConnectorVisible(true);
+
+      if (!walletReady) {
+        openWalletSetup('create');
         return;
       }
     }
@@ -910,11 +1001,13 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
           >
             <Text style={[styles.choiceTitle, { color: colors.text }]}>Wallet interna de OrbitX</Text>
             <Text style={[styles.choiceBody, { color: colors.textMuted }]}>
-              Crea tu billetera, guarda tu seed phrase y firma el deploy real sin salir de la app.
+              {walletReady
+                ? 'Tu OrbitX Wallet ya esta lista para firmar y continuar con el deploy real sin salir de la app.'
+                : 'Crea tu billetera, guarda tu seed phrase y firma el deploy real sin salir de la app.'}
             </Text>
             <Text style={[styles.choiceHint, { color: walletReady ? colors.profit : colors.textSoft }]}>
               {walletReady
-                ? `Lista · ${maskAddress(getOrbitxSourceAddress(chain, walletFuture.receiveAddresses))}`
+                ? `Lista - ${maskAddress(getOrbitxSourceAddress(chain, orbitxReceiveAddresses))}`
                 : 'Crear wallet -> ver seed phrase -> confirmar'}
             </Text>
           </Pressable>
@@ -931,10 +1024,12 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
           >
             <Text style={[styles.choiceTitle, { color: colors.text }]}>Wallet externa</Text>
             <Text style={[styles.choiceBody, { color: colors.textMuted }]}>
-              MetaMask sigue visible como opcion avanzada. La firma real de deploy in-app queda en la siguiente fase.
+              Puedes conectarla como referencia, pero el deploy real dentro de este wizard se hace hoy con OrbitX Wallet.
             </Text>
             <Text style={[styles.choiceHint, { color: externalConnected ? colors.profit : colors.textSoft }]}>
-              {externalConnected ? maskAddress(walletFuture.externalWallet.address) : 'Conectar wallet'}
+              {externalConnected
+                ? `${maskAddress(walletFuture.externalWallet.address)} - Solo visual por ahora`
+                : 'Conectar wallet - Proximamente para deploy real'}
             </Text>
           </Pressable>
         </View>
@@ -1190,10 +1285,14 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
                       ? 'Generando imagen...'
                       : astraAvailabilityState === 'available'
                         ? 'Generar imagen con Astra'
-                        : 'No disponible en este entorno'
+                        : astraAvailabilityState === 'unavailable'
+                          ? 'No disponible en este entorno'
+                          : 'Intentar generar con Astra'
                   }
                   onPress={() => void handleGenerateAstraImage()}
-                  disabled={astraImageStatus === 'loading' || astraAvailabilityState !== 'available'}
+                  disabled={
+                    astraImageStatus === 'loading' || astraAvailabilityState === 'unavailable'
+                  }
                 />
 
                 <Text
@@ -1218,12 +1317,14 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
                     : astraImageStatus === 'ready'
                       ? 'Imagen lista. Puedes elegir una como base del token.'
                       : astraAvailabilityState === 'checking'
-                            ? 'Verificando si Astra + Gemini Nano Banana esta disponible...'
+                        ? 'Verificando si Astra + Gemini Nano Banana esta disponible...'
+                        : astraAvailabilityState === 'unknown'
+                          ? 'No pudimos confirmarlo ahora mismo, pero puedes intentar generar igualmente.'
                         : astraImageStatus === 'error'
-                        ? astraImageError || 'No pudimos generar la imagen ahora mismo.'
-                        : astraAvailabilityState === 'available'
-                          ? 'Puedes usar uno de los prompts sugeridos o escribir el tuyo.'
-                          : astraAvailabilityMessage}
+                          ? astraImageError || 'No pudimos generar la imagen ahora mismo.'
+                          : astraAvailabilityState === 'available'
+                            ? 'Puedes usar uno de los prompts sugeridos o escribir el tuyo.'
+                            : astraAvailabilityMessage}
                 </Text>
 
               {generatedImages.length ? (
@@ -1586,7 +1687,11 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
 
   const primaryLabel =
     step === 'wallet'
-      ? 'Continuar'
+      ? walletSource === 'external'
+        ? 'Usar OrbitX Wallet'
+        : walletReady
+          ? 'Continuar'
+          : 'Crear wallet y continuar'
       : step === 'network'
         ? 'Configurar token'
         : step === 'config'

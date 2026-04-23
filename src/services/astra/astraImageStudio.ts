@@ -53,9 +53,36 @@ interface AstraHealthEnvelope {
   };
 }
 
+const HEALTH_TIMEOUT_MS = 15_000;
+const GENERATION_TIMEOUT_MS = 45_000;
+
 function safeText(value: string | undefined, fallback: string) {
   const cleaned = `${value ?? ''}`.trim();
   return cleaned || fallback;
+}
+
+async function fetchJsonWithTimeout<TPayload>(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<{ ok: boolean; payload: TPayload | null }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+    const payload = (await response.json().catch(() => null)) as TPayload | null;
+
+    return {
+      ok: response.ok,
+      payload,
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export function buildAstraImagePromptSuggestions(input: {
@@ -109,34 +136,49 @@ export async function generateAstraImage(input: AstraImageGenerationInput) {
     );
   }
 
-  const response = await fetch(`${baseUrl}/api/astra/generate-image`, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      prompt: input.prompt,
-      context: {
-        language: input.language,
-        tokenName: input.tokenName,
-        tokenSymbol: input.tokenSymbol,
-        description: input.description,
+  try {
+    const { ok, payload } = await fetchJsonWithTimeout<AstraImageEnvelope>(
+      `${baseUrl}/api/astra/generate-image`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: input.prompt,
+          context: {
+            language: input.language,
+            tokenName: input.tokenName,
+            tokenSymbol: input.tokenSymbol,
+            description: input.description,
+          },
+        }),
       },
-    }),
-  });
-
-  const payload = (await response.json().catch(() => null)) as AstraImageEnvelope | null;
-  if (!response.ok || !payload?.success || !payload.data) {
-    throw new Error(
-      payload?.error?.message ??
-        (input.language === 'es'
-          ? 'No pudimos generar la imagen con Astra.'
-          : 'We could not generate the image with Astra.'),
+      GENERATION_TIMEOUT_MS,
     );
-  }
 
-  return payload.data;
+    if (!ok || !payload?.success || !payload.data) {
+      throw new Error(
+        payload?.error?.message ??
+          (input.language === 'es'
+            ? 'No pudimos generar la imagen con Astra.'
+            : 'We could not generate the image with Astra.'),
+      );
+    }
+
+    return payload.data;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(
+        input.language === 'es'
+          ? 'Astra tardo demasiado en generar la imagen. Intenta de nuevo en unos segundos.'
+          : 'Astra took too long to generate the image. Please try again in a few seconds.',
+      );
+    }
+
+    throw error;
+  }
 }
 
 export async function getAstraImageAvailability(
@@ -157,15 +199,18 @@ export async function getAstraImageAvailability(
   }
 
   try {
-    const response = await fetch(`${baseUrl}/health`, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
+    const { ok, payload } = await fetchJsonWithTimeout<AstraHealthEnvelope>(
+      `${baseUrl}/health`,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
       },
-    });
+      HEALTH_TIMEOUT_MS,
+    );
 
-    const payload = (await response.json().catch(() => null)) as AstraHealthEnvelope | null;
-    if (!response.ok || !payload) {
+    if (!ok || !payload) {
       return {
         state: 'unknown',
         providerLabel,
@@ -208,7 +253,7 @@ export async function getAstraImageAvailability(
       providerLabel,
       message:
         language === 'es'
-          ? 'No pudimos verificar la disponibilidad de Astra + Gemini Nano Banana.'
+          ? 'No pudimos verificar la disponibilidad de Astra + Gemini Nano Banana. Puedes intentar generar igualmente.'
           : 'We could not verify Astra + Gemini Nano Banana availability.',
     };
   }

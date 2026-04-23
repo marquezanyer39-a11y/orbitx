@@ -7,23 +7,35 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_ORBITX_BACKEND_URL": "https://orbitx-b3i2.onrender.com"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "apk": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_ORBITX_BACKEND_URL": "https://orbitx-b3i2.onrender.com"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_ORBITX_BACKEND_URL": "https://orbitx-b3i2.onrender.com"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "env": {
+        "EXPO_PUBLIC_ORBITX_BACKEND_URL": "https://orbitx-b3i2.onrender.com"
+      },
       "android": {
         "buildType": "app-bundle"
       }

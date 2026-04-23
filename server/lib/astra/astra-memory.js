@@ -26,6 +26,8 @@ export function getAstraMemorySession(identity) {
         lastToolNames: [],
         walletCreated: false,
         identityVerified: false,
+        lastScreen: null,
+        lastTask: null,
       },
     });
   }

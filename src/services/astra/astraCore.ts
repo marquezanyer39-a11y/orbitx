@@ -282,8 +282,8 @@ export function buildAstraUnavailableResponse(options: {
   const shortText = isConfigIssue
     ? t(
         language,
-        'Astra no esta configurada por completo en este entorno.',
-        'Astra is not fully configured in this environment.',
+        'Esta version de OrbitX no tiene Astra activa por completo.',
+        'This OrbitX build does not have Astra fully enabled yet.',
       )
     : t(
         language,
@@ -293,8 +293,8 @@ export function buildAstraUnavailableResponse(options: {
   const longText = isConfigIssue
     ? t(
         language,
-        'Astra no esta configurada por completo en este entorno. Revisa la configuracion del backend y vuelve a intentarlo.',
-        'Astra is not fully configured in this environment. Review the backend configuration and try again.',
+        'Esta version de OrbitX no tiene Astra activa por completo. Instala la build mas reciente o revisa la URL publica del backend.',
+        'This OrbitX build does not have Astra fully enabled yet. Install the latest build or review the public backend URL.',
       )
     : t(
         language,

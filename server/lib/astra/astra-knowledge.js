@@ -398,6 +398,37 @@ function buildModulesCatalog() {
   }));
 }
 
+function buildRuntimeContext(input, currentModule) {
+  return {
+    screenName: input.screenName ?? null,
+    summary: input.summary ?? null,
+    currentTask: input.currentTask ?? null,
+    selectedEntity: input.selectedEntity ?? null,
+    uiState: input.uiState ?? null,
+    userState: input.userState ?? null,
+    labels: input.labels ?? null,
+    capabilities: input.capabilities ?? null,
+    rampState:
+      input.rampMode || input.rampProviderLabel
+        ? {
+            mode: input.rampMode ?? null,
+            provider: input.rampProviderLabel ?? null,
+          }
+        : null,
+    botState:
+      input.botEnabled == null && !input.botStatusLabel && !input.botTokenLabel
+        ? null
+        : {
+            enabled: input.botEnabled ?? null,
+            statusLabel: input.botStatusLabel ?? null,
+            tokenLabel: input.botTokenLabel ?? null,
+            riskLabel: input.botRiskLabel ?? null,
+            allocationLabel: input.botAllocationLabel ?? null,
+          },
+    currentModuleLabel: currentModule.title,
+  };
+}
+
 export function getOrbitxKnowledge(input) {
   const currentModule = pickModule(input.screen);
   const nanobananaAvailability = getNanobananaAvailability();
@@ -407,6 +438,7 @@ export function getOrbitxKnowledge(input) {
     product: PRODUCT_IDENTITY,
     statusLegend: STATUS_LEGEND,
     currentModule,
+    runtimeContext: buildRuntimeContext(input, currentModule),
     modulesCatalog: buildModulesCatalog(),
     relevantFlows: pickRelevantFlows(currentModule.id),
     commonIssues: pickRelevantIssues(currentModule.id, input.message),
