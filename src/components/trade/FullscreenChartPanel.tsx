@@ -10,6 +10,7 @@ import type {
   TradePriceAlert,
   TradePriceAlertDirection,
 } from '../../types';
+import { getTradeRealtimeStatusCopy, getTradeRealtimeStatusLabel } from '../../utils/tradeRealtimeUi';
 
 export type FullscreenChartPanelTab = 'book' | 'trades' | 'info';
 
@@ -85,6 +86,8 @@ export function FullscreenChartPanel({
 }: Props) {
   const { colors } = useAppTheme();
   const { asks, bids, bestAsk, spread } = getBestPrices(orderBookRows);
+  const marketStatusLabel = getTradeRealtimeStatusLabel(orderBookStatus);
+  const marketStatusCopy = getTradeRealtimeStatusCopy(orderBookStatus);
 
   return (
     <>
@@ -228,8 +231,8 @@ export function FullscreenChartPanel({
                 <Text style={[styles.infoValue, { color: colors.text }]}>{formatCompactVolume(volume24h)}</Text>
               </View>
               <View style={styles.infoCell}>
-                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Fuente</Text>
-                <Text style={[styles.infoValue, { color: colors.text }]}>{sourceLabel} / {chartSourceLabel}</Text>
+                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Mercado</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{marketStatusLabel}</Text>
               </View>
             </View>
 
@@ -244,7 +247,7 @@ export function FullscreenChartPanel({
             >
               <Text style={[styles.alertTitle, { color: colors.text }]}>Alertas de precio</Text>
               <Text style={[styles.alertSubtitle, { color: colors.textMuted }]}>
-                Guarda un nivel y OrbitX disparara la alerta cuando el precio lo cruce.
+                {marketStatusCopy}. Guarda un nivel y OrbitX disparara la alerta cuando el precio lo cruce.
               </Text>
 
               <TextInput

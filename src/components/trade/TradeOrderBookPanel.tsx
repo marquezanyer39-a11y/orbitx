@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import type { MarketRealtimeStatus, OrderBookRow } from '../../types';
+import { getTradeRealtimeStatusLabel } from '../../utils/tradeRealtimeUi';
 
 const BUY = '#00FFA3';
 const SELL = '#FF4D4D';
@@ -14,6 +15,7 @@ interface Props {
   rows: OrderBookRow[];
   status: MarketRealtimeStatus;
   statusLabel?: string;
+  statusCopy?: string;
   error?: string | null;
   currentPrice?: number;
   preview?: boolean;
@@ -48,6 +50,7 @@ export function TradeOrderBookPanel({
   rows,
   status,
   statusLabel,
+  statusCopy,
   error,
   currentPrice,
   preview = false,
@@ -66,6 +69,7 @@ export function TradeOrderBookPanel({
   const spread =
     asks.length && bids.length ? Math.max(asks[0].price - bids[0].price, 0) : 0;
   const statusTone = getStatusTone(status);
+  const displayStatusLabel = statusLabel || getTradeRealtimeStatusLabel(status);
 
   return (
     <View style={styles.card}>
@@ -74,7 +78,7 @@ export function TradeOrderBookPanel({
           <Text style={styles.title}>Libro de ordenes</Text>
           <Text style={styles.subtitle}>
             {rows.length
-              ? statusLabel || 'Mercado sincronizado'
+              ? statusCopy || displayStatusLabel
               : error || 'Esperando profundidad del mercado'}
           </Text>
         </View>
@@ -85,7 +89,7 @@ export function TradeOrderBookPanel({
           ]}
         >
           <View style={[styles.statusDot, { backgroundColor: statusTone }]} />
-          <Text style={styles.statusLabel}>{status}</Text>
+          <Text style={styles.statusLabel}>{displayStatusLabel}</Text>
         </View>
       </View>
 

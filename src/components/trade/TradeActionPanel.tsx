@@ -220,7 +220,7 @@ export function TradeActionPanel({
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <Text style={styles.actionTextDark}>Comprar / Long</Text>
+          <Text style={styles.actionTextDark}>Comprar</Text>
         </Pressable>
 
         <Pressable onPress={() => onSubmitSide('sell')} style={styles.actionButton}>
@@ -230,7 +230,7 @@ export function TradeActionPanel({
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <Text style={styles.actionTextLight}>Vender / Short</Text>
+          <Text style={styles.actionTextLight}>Vender</Text>
         </Pressable>
       </View>
     </View>
