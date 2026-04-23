@@ -21,6 +21,7 @@ import {
 } from './chartData';
 import {
   buildLightweightChartHtml,
+  type OrbitChartHtmlColors,
   type OrbitLightweightChartRuntimeConfig,
 } from './lightweightChartHtml';
 
@@ -36,6 +37,7 @@ export interface OrbitLightweightChartProps {
   showVolume?: boolean;
   attribution?: boolean;
   style?: StyleProp<ViewStyle>;
+  colorOverrides?: Partial<OrbitChartHtmlColors>;
   emptyTitle?: string;
   emptyBody?: string;
 }
@@ -52,6 +54,7 @@ function OrbitLightweightChartComponent({
   showVolume = false,
   attribution = false,
   style,
+  colorOverrides,
   emptyTitle = 'Grafico no disponible',
   emptyBody = 'OrbitX mostrara el grafico cuando reciba datos verificables del mercado.',
 }: OrbitLightweightChartProps) {
@@ -119,6 +122,7 @@ function OrbitLightweightChartComponent({
         primary: colors.primary,
         profit: colors.profit,
         loss: colors.loss,
+        ...colorOverrides,
       },
     }),
     [
@@ -132,6 +136,7 @@ function OrbitLightweightChartComponent({
       colors.profit,
       colors.text,
       colors.textMuted,
+      colorOverrides,
       height,
       interactive,
       payload,

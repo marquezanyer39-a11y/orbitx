@@ -27,6 +27,9 @@ export interface OrbitChartPayload {
   line: OrbitChartPoint[];
   volume: OrbitChartHistogramPoint[];
   ma: OrbitChartPoint[];
+  maFast: OrbitChartPoint[];
+  maMid: OrbitChartPoint[];
+  maSlow: OrbitChartPoint[];
   ema: OrbitChartPoint[];
   bollingerUpper: OrbitChartPoint[];
   bollingerLower: OrbitChartPoint[];
@@ -403,6 +406,9 @@ export function buildOrbitChartPayload(
       line: [],
       volume: [],
       ma: [],
+      maFast: [],
+      maMid: [],
+      maSlow: [],
       ema: [],
       bollingerUpper: [],
       bollingerLower: [],
@@ -425,7 +431,9 @@ export function buildOrbitChartPayload(
   const closes = timeline.map((point) => point.value);
   const candles = buildCandles(timeline);
   const volume = buildVolume(candles, positiveColor, negativeColor);
-  const ma = toLinePoints(times, movingAverage(closes, 7));
+  const maFast = toLinePoints(times, movingAverage(closes, 5));
+  const maMid = toLinePoints(times, movingAverage(closes, 10));
+  const maSlow = toLinePoints(times, movingAverage(closes, 30));
   const ema = toLinePoints(times, exponentialMovingAverage(closes, 9));
   const bollinger = buildBollingerBands(closes, 20, 2);
   const bollingerUpper = toLinePoints(times, bollinger.upper);
@@ -443,7 +451,10 @@ export function buildOrbitChartPayload(
     candles,
     line: timeline,
     volume,
-    ma,
+    ma: maFast,
+    maFast,
+    maMid,
+    maSlow,
     ema,
     bollingerUpper,
     bollingerLower,
@@ -482,6 +493,9 @@ export function buildOrbitChartPayloadFromHistory(
       line: [],
       volume: [],
       ma: [],
+      maFast: [],
+      maMid: [],
+      maSlow: [],
       ema: [],
       bollingerUpper: [],
       bollingerLower: [],
@@ -499,7 +513,9 @@ export function buildOrbitChartPayloadFromHistory(
   }
 
   const times = normalized.line.map((point) => point.time);
-  const ma = toLinePoints(times, movingAverage(closes, 7));
+  const maFast = toLinePoints(times, movingAverage(closes, 5));
+  const maMid = toLinePoints(times, movingAverage(closes, 10));
+  const maSlow = toLinePoints(times, movingAverage(closes, 30));
   const ema = toLinePoints(times, exponentialMovingAverage(closes, 9));
   const bollinger = buildBollingerBands(closes, 20, 2);
   const bollingerUpper = toLinePoints(times, bollinger.upper);
@@ -527,7 +543,10 @@ export function buildOrbitChartPayloadFromHistory(
     candles: normalized.candles,
     line: normalized.line,
     volume,
-    ma,
+    ma: maFast,
+    maFast,
+    maMid,
+    maSlow,
     ema,
     bollingerUpper,
     bollingerLower,

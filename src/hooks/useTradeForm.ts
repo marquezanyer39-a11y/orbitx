@@ -117,95 +117,123 @@ export function useTradeForm() {
     [availableBase, availableQuote, priceValue, tradeStore],
   );
 
-  const submitOrderSimulation = useCallback(() => {
-    const resolvedPrice =
-      tradeStore.orderType === 'market'
-        ? Math.max(priceValue || totalValue / Math.max(quantityValue, 1), 0)
-        : priceValue;
+  const submitOrderSimulation = useCallback(
+    (sideOverride?: TradeSide) => {
+      const liveTradeState = useTradeStore.getState();
+      const liveWalletState = useWalletStore.getState();
+      const side = sideOverride ?? liveTradeState.buySellSide;
+      const livePriceValue = safeNumber(liveTradeState.price);
+      const liveQuantityValue = safeNumber(liveTradeState.quantity);
+      const liveTotalValue = safeNumber(liveTradeState.total);
+      const livePairSymbols = normalizeSymbolFromPairId(liveTradeState.selectedPairId);
+      const liveAvailableQuote =
+        liveWalletState.spotBalances.find(
+          (balance) => balance.symbol === livePairSymbols.quote,
+        )?.amount ?? 0;
+      const liveAvailableBase =
+        liveWalletState.spotBalances.find(
+          (balance) => balance.symbol === livePairSymbols.base,
+        )?.amount ?? 0;
+      const resolvedPrice =
+        liveTradeState.orderType === 'market'
+          ? Math.max(
+              livePriceValue || liveTotalValue / Math.max(liveQuantityValue, 1),
+              0,
+            )
+          : livePriceValue;
 
-    const result = simulateSwapOrder({
-      side: tradeStore.buySellSide,
-      price: resolvedPrice,
-      quantity: quantityValue,
-      availableQuote,
-      availableBase,
-    });
-
-    if (!result.ok) {
-      showToast(result.message, 'error');
-      return result;
-    }
-
-    const baseAsset = {
-      id: pairSymbols.base.toLowerCase(),
-      symbol: pairSymbols.base,
-      name: pairSymbols.base,
-      amount: quantityValue,
-      usdValue: result.total,
-      network: 'spot' as const,
-      environment: 'spot' as const,
-    };
-
-    if (tradeStore.orderType === 'market') {
-      if (tradeStore.buySellSide === 'buy') {
-        if (!walletStore.consumeSpotQuote(pairSymbols.quote, result.total + result.fee)) {
-          showToast('No tienes saldo suficiente para comprar.', 'error');
-          return { ...result, ok: false, message: 'No tienes saldo suficiente para comprar.' };
-        }
-
-        walletStore.creditSpotBase(baseAsset);
-      } else {
-        if (!walletStore.debitSpotBase(pairSymbols.base, quantityValue)) {
-          showToast('No tienes saldo suficiente para vender.', 'error');
-          return { ...result, ok: false, message: 'No tienes saldo suficiente para vender.' };
-        }
-
-        walletStore.depositToSpot(pairSymbols.quote, result.total - result.fee);
-      }
-    } else {
-      tradeStore.addOpenOrder({
-        id: `order-${Date.now()}`,
-        side: tradeStore.buySellSide,
-        type: tradeStore.orderType,
-        pairId: tradeStore.selectedPairId,
+      const result = simulateSwapOrder({
+        side,
         price: resolvedPrice,
-        quantity: quantityValue,
-        total: result.total,
-        createdAt: new Date().toISOString(),
+        quantity: liveQuantityValue,
+        availableQuote: liveAvailableQuote,
+        availableBase: liveAvailableBase,
       });
-    }
 
-    tradeStore.addRecentOrder({
-      id: `trade-${Date.now()}`,
-      side: tradeStore.buySellSide,
-      price: resolvedPrice,
-      quantity: quantityValue,
-      time: new Date().toISOString(),
-    });
+      if (!result.ok) {
+        showToast(result.message, 'error');
+        return result;
+      }
 
-    tradeStore.resetForm();
-    showToast(
-      tradeStore.orderType === 'market'
-        ? tradeStore.buySellSide === 'buy'
-          ? `Compra ejecutada: ${pairSymbols.base}`
-          : `Venta ejecutada: ${pairSymbols.base}`
-        : `Orden ${tradeStore.orderType} registrada`,
-      'success',
-    );
+      const baseAsset = {
+        id: livePairSymbols.base.toLowerCase(),
+        symbol: livePairSymbols.base,
+        name: livePairSymbols.base,
+        amount: liveQuantityValue,
+        usdValue: result.total,
+        network: 'spot' as const,
+        environment: 'spot' as const,
+      };
 
-    return result;
-  }, [
-    availableBase,
-    availableQuote,
-    pairSymbols.base,
-    pairSymbols.quote,
-    priceValue,
-    quantityValue,
-    showToast,
-    totalValue,
-    tradeStore,
-    walletStore,
-  ]);
+      if (liveTradeState.orderType === 'market') {
+        if (side === 'buy') {
+          if (
+            !liveWalletState.consumeSpotQuote(
+              livePairSymbols.quote,
+              result.total + result.fee,
+            )
+          ) {
+            showToast('No tienes saldo suficiente para comprar.', 'error');
+            return {
+              ...result,
+              ok: false,
+              message: 'No tienes saldo suficiente para comprar.',
+            };
+          }
+
+          liveWalletState.creditSpotBase(baseAsset);
+        } else {
+          if (!liveWalletState.debitSpotBase(livePairSymbols.base, liveQuantityValue)) {
+            showToast('No tienes saldo suficiente para vender.', 'error');
+            return {
+              ...result,
+              ok: false,
+              message: 'No tienes saldo suficiente para vender.',
+            };
+          }
+
+          liveWalletState.depositToSpot(livePairSymbols.quote, result.total - result.fee);
+        }
+      } else {
+        liveTradeState.addOpenOrder({
+          id: `order-${Date.now()}`,
+          side,
+          type: liveTradeState.orderType,
+          pairId: liveTradeState.selectedPairId,
+          price: resolvedPrice,
+          quantity: liveQuantityValue,
+          total: result.total,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      liveTradeState.addRecentOrder({
+        id: `trade-${Date.now()}`,
+        side,
+        price: resolvedPrice,
+        quantity: liveQuantityValue,
+        time: new Date().toISOString(),
+      });
+
+      liveTradeState.resetForm();
+      showToast(
+        liveTradeState.orderType === 'market'
+          ? side === 'buy'
+            ? `Compra ejecutada: ${livePairSymbols.base}`
+            : `Venta ejecutada: ${livePairSymbols.base}`
+          : `Orden ${liveTradeState.orderType} registrada`,
+        'success',
+      );
+
+      return result;
+    },
+    [showToast],
+  );
+
+  const submitOrderSimulationForSide = useCallback(
+    (side: TradeSide) => submitOrderSimulation(side),
+    [submitOrderSimulation],
+  );
 
   return {
     ...tradeStore,
@@ -220,5 +248,6 @@ export function useTradeForm() {
     calculateTotal,
     applyPercent,
     submitOrderSimulation,
+    submitOrderSimulationForSide,
   };
 }

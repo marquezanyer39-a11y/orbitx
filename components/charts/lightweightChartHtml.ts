@@ -73,8 +73,8 @@ export function buildLightweightChartHtml({
         min-height: 180px;
         isolation: isolate;
         background:
-          radial-gradient(circle at 50% 10%, rgba(123, 63, 228, 0.14) 0%, transparent 38%),
-          linear-gradient(180deg, #12101a 0%, #0b0b0f 100%);
+          radial-gradient(circle at 50% 6%, rgba(123, 63, 228, 0.08) 0%, transparent 34%),
+          linear-gradient(180deg, #101015 0%, #0b0b0f 100%);
       }
 
       #chart-shell::before {
@@ -83,8 +83,8 @@ export function buildLightweightChartHtml({
         inset: 0;
         pointer-events: none;
         background:
-          radial-gradient(circle at 84% 18%, rgba(123, 63, 228, 0.12) 0%, transparent 18%),
-          radial-gradient(circle at 18% 82%, rgba(123, 63, 228, 0.1) 0%, transparent 20%);
+          radial-gradient(circle at 84% 18%, rgba(123, 63, 228, 0.06) 0%, transparent 18%),
+          radial-gradient(circle at 18% 82%, rgba(123, 63, 228, 0.05) 0%, transparent 20%);
         z-index: 0;
       }
 
@@ -342,21 +342,44 @@ export function buildLightweightChartHtml({
           mainSeries.setData(payload.line);
         }
 
-        if (indicators.includes('MA') && payload.ma.length) {
-          const maSeries = chart.addSeries(
-            LineSeries,
+        if (indicators.includes('MA')) {
+          const maSeriesConfigs = [
             {
-              priceFormat,
+              data: Array.isArray(payload.maFast) && payload.maFast.length ? payload.maFast : payload.ma,
               color: '#F6D365',
-              lineWidth: 1.25,
-              crosshairMarkerVisible: false,
-              lastValueVisible: false,
-              priceLineVisible: false,
+              lineWidth: 1.2,
               lineStyle: 0,
             },
-            0
-          );
-          maSeries.setData(payload.ma);
+            {
+              data: Array.isArray(payload.maMid) ? payload.maMid : [],
+              color: '#58A6FF',
+              lineWidth: 1.15,
+              lineStyle: 2,
+            },
+            {
+              data: Array.isArray(payload.maSlow) ? payload.maSlow : [],
+              color: '#C58BFF',
+              lineWidth: 1.05,
+              lineStyle: 1,
+            },
+          ].filter((item) => Array.isArray(item.data) && item.data.length);
+
+          maSeriesConfigs.forEach((seriesConfig) => {
+            const maSeries = chart.addSeries(
+              LineSeries,
+              {
+                priceFormat,
+                color: seriesConfig.color,
+                lineWidth: seriesConfig.lineWidth,
+                crosshairMarkerVisible: false,
+                lastValueVisible: false,
+                priceLineVisible: false,
+                lineStyle: seriesConfig.lineStyle,
+              },
+              0
+            );
+            maSeries.setData(seriesConfig.data);
+          });
         }
 
         if (indicators.includes('EMA') && payload.ema.length) {
