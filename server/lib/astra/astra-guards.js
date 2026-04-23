@@ -1,6 +1,6 @@
 import { buildStructuredResponse } from './astra-schemas.js';
 
-function normalizeMessage(message) {
+export function normalizeMessage(message) {
   return `${message ?? ''}`
     .toLowerCase()
     .normalize('NFD')
@@ -11,6 +11,22 @@ function normalizeMessage(message) {
 
 function containsPattern(message, patterns) {
   return patterns.some((pattern) => pattern.test(message));
+}
+
+function getSensitiveCredentialPatterns() {
+  return [
+    /\bseed\b/,
+    /\bseed phrase\b/,
+    /\bfrase semilla\b/,
+    /\brecovery phrase\b/,
+    /\bfrase de recuperacion\b/,
+    /\bmnemonic\b/,
+    /\bprivate key\b/,
+    /\bclave privada\b/,
+    /\bsecret key\b/,
+    /\bapi secret\b/,
+    /\bapi key\b/,
+  ];
 }
 
 function buildSensitiveBlockResponse(reason) {
@@ -40,7 +56,7 @@ function looksLikeSeedPhraseOrKey(message) {
   return mnemonicPattern.test(normalized) || hexKeyPattern.test(normalized);
 }
 
-function isSensitiveConceptQuestion(message) {
+export function isSensitiveConceptQuestion(message) {
   const normalized = normalizeMessage(message);
   const explanationTerms = [
     /\bque es\b/,
@@ -57,21 +73,21 @@ function isSensitiveConceptQuestion(message) {
   return containsPattern(normalized, explanationTerms);
 }
 
+export function mentionsSensitiveCredentialConcept(message) {
+  const normalized = normalizeMessage(message);
+  return containsPattern(normalized, getSensitiveCredentialPatterns());
+}
+
+export function isSensitiveCredentialEducationQuestion(message) {
+  return (
+    mentionsSensitiveCredentialConcept(message) &&
+    isSensitiveConceptQuestion(message)
+  );
+}
+
 function isCredentialRevealRequest(message) {
   const normalized = normalizeMessage(message);
-  const sensitiveTerms = [
-    /\bseed\b/,
-    /\bseed phrase\b/,
-    /\bfrase semilla\b/,
-    /\brecovery phrase\b/,
-    /\bfrase de recuperacion\b/,
-    /\bmnemonic\b/,
-    /\bprivate key\b/,
-    /\bclave privada\b/,
-    /\bsecret key\b/,
-    /\bapi secret\b/,
-    /\bapi key\b/,
-  ];
+  const sensitiveTerms = getSensitiveCredentialPatterns();
   const revealTerms = [
     /\bshow\b/,
     /\bdisplay\b/,

@@ -92,9 +92,26 @@ export function getWalletSummary(input) {
     portfolioValue,
     seedBackedUp,
     externalWalletConnected,
+    networkLabel:
+      input.userState?.selectedNetwork ??
+      getContextState(input, 'selectedNetwork') ??
+      getContextLabel(input, 'networkLabel') ??
+      null,
+    activeTab:
+      getContextState(input, 'activeTab') ??
+      getContextLabel(input, 'activeTabLabel') ??
+      null,
     walletStatusLabel:
       input.walletStatusLabel ?? getContextLabel(input, 'walletStatusLabel'),
     balanceLabel,
+    totalBalanceLabel:
+      input.balanceLabel ??
+      getContextLabel(input, 'totalBalanceLabel') ??
+      balanceLabel,
+    spotBalanceLabel:
+      input.spotBalanceLabel ?? getContextLabel(input, 'totalSpotLabel'),
+    web3BalanceLabel:
+      input.web3BalanceLabel ?? getContextLabel(input, 'totalWeb3Label'),
     summary: hasWallet
       ? `La wallet esta lista con balance reportado ${balanceLabel}.${posture.length ? ` Estado adicional: ${posture.join(', ')}.` : ''}`
       : 'Todavia no hay una wallet creada en OrbitX.',
@@ -152,10 +169,17 @@ export function getMarketSnapshot(input) {
 }
 
 export function getCreateTokenState(input) {
+  const inCreateTokenFlow =
+    input.screen === 'create_token' ||
+    input.surface === 'create_token' ||
+    input.selectedEntity?.type === 'token_draft';
+
+  if (!inCreateTokenFlow) {
+    return null;
+  }
+
   const stage =
-    normalizeText(
-      getContextState(input, 'createTokenStage') ?? input.currentTask,
-    ) || null;
+    normalizeText(getContextState(input, 'createTokenStage')) || null;
   const imageMode =
     normalizeText(getContextState(input, 'imageSourceMode')) || null;
   const imageStatus =
@@ -163,10 +187,6 @@ export function getCreateTokenState(input) {
   const availability =
     normalizeText(getContextState(input, 'astraAvailability')) || null;
   const selectedEntity = input.selectedEntity ?? null;
-
-  if (input.screen !== 'create_token' && !stage && selectedEntity?.type !== 'token_draft') {
-    return null;
-  }
 
   return {
     stage,
@@ -199,19 +219,35 @@ export function getRampState(input) {
   const provider = normalizeText(
     input.rampProviderLabel ?? getContextLabel(input, 'rampProviderLabel'),
   );
+  const status = normalizeText(getContextState(input, 'convertStatus')) || null;
+  const pair =
+    normalizeText(
+      input.currentPairSymbol ??
+        input.selectedEntity?.pair ??
+        (input.selectedEntity?.symbol ? `${input.selectedEntity.symbol}` : null),
+    ) || null;
+  const amountLabel =
+    getContextLabel(input, 'amountLabel') ??
+    getContextLabel(input, 'quoteLabel') ??
+    null;
 
-  if (input.screen !== 'ramp' && !mode && !provider) {
+  if (input.screen !== 'ramp' && !mode && !provider && !status) {
     return null;
   }
 
   return {
     mode: mode || null,
     provider: provider || null,
+    status,
+    pair,
+    amountLabel,
     summary: provider
-      ? `El flujo activo usa ${provider}${mode ? ` para ${mode}` : ''}.`
+      ? `El flujo activo usa ${provider}${mode ? ` para ${mode}` : ''}${status ? ` con estado ${status}` : ''}${pair ? ` sobre ${pair}` : ''}.`
       : mode
-        ? `Hay un flujo ramp activo en modo ${mode}.`
-        : 'Hay un flujo ramp abierto sin proveedor confirmado.',
+        ? `Hay un flujo ramp activo en modo ${mode}${status ? ` con estado ${status}` : ''}${pair ? ` sobre ${pair}` : ''}.`
+        : status
+          ? `Hay un flujo ramp abierto con estado ${status}${pair ? ` sobre ${pair}` : ''}.`
+          : 'Hay un flujo ramp abierto sin proveedor confirmado.',
   };
 }
 
