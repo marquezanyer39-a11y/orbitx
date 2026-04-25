@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { useOrbitStore } from '../../store/useOrbitStore';
+import { useAuthStore } from './authStore';
 import type {
   CreatedTokenStatus,
   ExternalWalletConnection,
@@ -21,7 +22,13 @@ import {
   getWalletSecurityStatus,
 } from '../services/wallet/secureWalletStorage';
 import { maskAddress } from '../../utils/wallet';
-import { getWalletBalances } from '../services/wallet/walletBalances';
+import { getWalletBalancesForAddresses } from '../services/wallet/walletBalances';
+import {
+  buildWalletAccountFromRemoteProfile,
+  getRemoteWalletProfile,
+  syncRemoteWalletProfile,
+  walletAccountMatchesRemoteProfile,
+} from '../services/wallet/walletProfile';
 
 interface SpotBalance {
   symbol: string;
@@ -35,11 +42,14 @@ interface WalletHistoryEntry {
   createdAt: string;
 }
 
+type WalletSource = 'empty' | 'local' | 'remote';
+
 interface WalletState {
   hasHydrated: boolean;
   walletAddress: string;
   receiveAddresses: WalletAccount['receiveAddresses'];
   mnemonicStored: boolean;
+  walletSource: WalletSource;
   selectedNetwork: SupportedNetwork;
   balances: WalletAsset[];
   assets: WalletAsset[];
@@ -58,6 +68,7 @@ interface WalletState {
   logoutWallet: () => Promise<void>;
   refreshBalances: () => Promise<void>;
   refreshSecurityStatus: () => Promise<void>;
+  clearSessionWalletState: () => void;
   connectExternalWallet: (
     provider: ExternalWalletProvider,
     address?: string,
@@ -130,6 +141,21 @@ function syncOrbitWalletFutureWallet(
   }));
 }
 
+function syncOrbitWalletFutureExternalWallet(connection: ExternalWalletConnection) {
+  useOrbitStore.setState((state) => ({
+    walletFuture: {
+      ...state.walletFuture,
+      externalWallet: {
+        provider: connection.provider,
+        address: connection.address,
+        simulated: !connection.address,
+        connectedAt: connection.connectedAt,
+        signingReady: connection.signingReady,
+      },
+    },
+  }));
+}
+
 function mapCreatedTokens(): CreatedTokenStatus[] {
   const tokens = useOrbitStore.getState().tokens.filter((token) => token.isUserCreated);
   return tokens.map((token) => ({
@@ -189,6 +215,7 @@ export const useWalletStore = create<WalletState>()(
         solana: '',
       },
       mnemonicStored: false,
+      walletSource: 'empty',
       selectedNetwork: 'base',
       balances: [],
       assets: [],
@@ -217,11 +244,59 @@ export const useWalletStore = create<WalletState>()(
 
         set({ loading: true, error: null });
         try {
-          const [wallet, securityStatus] = await Promise.all([
+          const authState = useAuthStore.getState();
+          const isAuthenticated = authState.session.status === 'authenticated';
+          const [localWallet, securityStatus, remoteWalletProfile] = await Promise.all([
             getSecureWallet(),
             getWalletSecurityStatus(),
+            isAuthenticated ? getRemoteWalletProfile() : Promise.resolve(null),
           ]);
-          const externalWallet = mapExternalWalletState();
+          const localExternalWallet = mapExternalWalletState();
+
+          if (
+            isAuthenticated &&
+            localWallet &&
+            !remoteWalletProfile
+          ) {
+            try {
+              await syncRemoteWalletProfile({
+                wallet: localWallet,
+                externalWallet: localExternalWallet,
+              });
+            } catch (syncError) {
+              devWarn('[OrbitX][Wallet] remote wallet association sync failed', syncError);
+            }
+          }
+
+          const resolvedRemoteWalletProfile =
+            isAuthenticated ? (await getRemoteWalletProfile()) ?? remoteWalletProfile : null;
+
+          const useLocalWallet =
+            localWallet !== null &&
+            (!resolvedRemoteWalletProfile ||
+              walletAccountMatchesRemoteProfile(localWallet, resolvedRemoteWalletProfile));
+
+          const wallet = useLocalWallet
+            ? localWallet
+            : resolvedRemoteWalletProfile
+              ? buildWalletAccountFromRemoteProfile(resolvedRemoteWalletProfile)
+              : null;
+
+          const externalWallet = resolvedRemoteWalletProfile?.externalWallet ??
+            (wallet
+              ? localExternalWallet
+              : {
+                  provider: null,
+                  address: '',
+                  signingReady: false,
+                });
+          const walletSource: WalletSource = wallet
+            ? useLocalWallet
+              ? 'local'
+              : 'remote'
+            : 'empty';
+
+          syncOrbitWalletFutureExternalWallet(externalWallet);
 
           if (!wallet) {
             syncOrbitWalletFutureWallet(null, { simulated: true });
@@ -229,6 +304,7 @@ export const useWalletStore = create<WalletState>()(
               walletAddress: '',
               receiveAddresses: EMPTY_RECEIVE_ADDRESSES,
               mnemonicStored: false,
+              walletSource,
               isWalletReady: false,
               walletType: null,
               securityStatus,
@@ -245,6 +321,7 @@ export const useWalletStore = create<WalletState>()(
             walletAddress: wallet.address,
             receiveAddresses: wallet.receiveAddresses,
             mnemonicStored: wallet.mnemonicStored,
+            walletSource,
             selectedNetwork: wallet.selectedNetwork,
             isWalletReady: true,
             walletType: wallet.walletType,
@@ -272,22 +349,33 @@ export const useWalletStore = create<WalletState>()(
         try {
           const wallet = await createWallet();
           const securityStatus = await getWalletSecurityStatus();
+          const externalWallet = get().externalWallet;
           syncOrbitWalletFutureWallet(wallet, { simulated: false });
           set((state) => ({
             walletAddress: wallet.address,
             receiveAddresses: wallet.receiveAddresses,
             mnemonicStored: wallet.mnemonicStored,
+            walletSource: 'local',
             selectedNetwork: wallet.selectedNetwork,
             isWalletReady: true,
             walletType: wallet.walletType,
             securityStatus,
-            externalWallet: state.externalWallet,
+            externalWallet,
             history: [
               buildHistoryEntry('Billetera creada', 'Tu billetera OrbitX quedo lista para operar.'),
               ...state.history,
             ].slice(0, 24),
+            hasHydrated: true,
             loading: false,
           }));
+          try {
+            await syncRemoteWalletProfile({
+              wallet,
+              externalWallet,
+            });
+          } catch (syncError) {
+            devWarn('[OrbitX][Wallet] remote wallet sync after create failed', syncError);
+          }
           recordAstraWalletFlow('create_wallet', 'completed');
           await get().refreshBalances();
           return wallet;
@@ -310,22 +398,33 @@ export const useWalletStore = create<WalletState>()(
         try {
           const wallet = await importWallet(seedPhrase);
           const securityStatus = await getWalletSecurityStatus();
+          const externalWallet = get().externalWallet;
           syncOrbitWalletFutureWallet(wallet, { simulated: false });
           set((state) => ({
             walletAddress: wallet.address,
             receiveAddresses: wallet.receiveAddresses,
             mnemonicStored: wallet.mnemonicStored,
+            walletSource: 'local',
             selectedNetwork: wallet.selectedNetwork,
             isWalletReady: true,
             walletType: wallet.walletType,
             securityStatus,
-            externalWallet: state.externalWallet,
+            externalWallet,
             history: [
               buildHistoryEntry('Billetera importada', 'La frase semilla se guardo de forma segura.'),
               ...state.history,
             ].slice(0, 24),
+            hasHydrated: true,
             loading: false,
           }));
+          try {
+            await syncRemoteWalletProfile({
+              wallet,
+              externalWallet,
+            });
+          } catch (syncError) {
+            devWarn('[OrbitX][Wallet] remote wallet sync after import failed', syncError);
+          }
           recordAstraWalletFlow('import_wallet', 'completed');
           await get().refreshBalances();
           return wallet;
@@ -345,10 +444,16 @@ export const useWalletStore = create<WalletState>()(
       logoutWallet: async () => {
         await clearSecureWallet();
         syncOrbitWalletFutureWallet(null, { simulated: true });
+        syncOrbitWalletFutureExternalWallet({
+          provider: null,
+          address: '',
+          signingReady: false,
+        });
         set({
           walletAddress: '',
           receiveAddresses: EMPTY_RECEIVE_ADDRESSES,
           mnemonicStored: false,
+          walletSource: 'empty',
           isWalletReady: false,
           walletType: null,
           balances: [],
@@ -358,17 +463,22 @@ export const useWalletStore = create<WalletState>()(
             biometricsEnabled: false,
             pinEnabled: false,
           },
+          externalWallet: {
+            provider: null,
+            address: '',
+            signingReady: false,
+          },
         });
       },
 
       refreshBalances: async () => {
-        if (!get().isWalletReady) {
+        if (!get().isWalletReady || !Object.values(get().receiveAddresses).some(Boolean)) {
           return;
         }
 
         set({ loading: true, error: null });
         try {
-          const balances = await getWalletBalances();
+          const balances = await getWalletBalancesForAddresses(get().receiveAddresses);
           set((state) => ({
             balances,
             assets: balances,
@@ -406,6 +516,39 @@ export const useWalletStore = create<WalletState>()(
         }
       },
 
+      clearSessionWalletState: () => {
+        syncOrbitWalletFutureWallet(null, { simulated: true });
+        syncOrbitWalletFutureExternalWallet({
+          provider: null,
+          address: '',
+          signingReady: false,
+        });
+        set((state) => ({
+          walletAddress: '',
+          receiveAddresses: EMPTY_RECEIVE_ADDRESSES,
+          mnemonicStored: false,
+          walletSource: 'empty',
+          balances: [],
+          assets: [],
+          isWalletReady: false,
+          walletType: null,
+          externalWallet: {
+            provider: null,
+            address: '',
+            signingReady: false,
+          },
+          loading: false,
+          error: null,
+          hasHydrated: false,
+          createdTokens: mapCreatedTokens(),
+          securityStatus: {
+            biometricsEnabled: false,
+            pinEnabled: false,
+          },
+          history: state.history,
+        }));
+      },
+
       connectExternalWallet: async (provider, address) => {
         set({ loading: true, error: null });
         recordAstraWalletFlow('connect_external_wallet', 'started');
@@ -432,6 +575,7 @@ export const useWalletStore = create<WalletState>()(
 
           const externalWallet = mapExternalWalletState();
           const addressLabel = maskAddress(externalWallet.address) || 'direccion lista para usar';
+          syncOrbitWalletFutureExternalWallet(externalWallet);
           set((state) => ({
             externalWallet,
             loading: false,
@@ -443,6 +587,23 @@ export const useWalletStore = create<WalletState>()(
               ...state.history,
             ].slice(0, 24),
           }));
+          if (get().isWalletReady) {
+            try {
+              await syncRemoteWalletProfile({
+                wallet: {
+                  address: get().walletAddress,
+                  mnemonicStored: get().mnemonicStored,
+                  walletType:
+                    get().walletType === 'imported' ? 'imported' : 'orbitx',
+                  receiveAddresses: get().receiveAddresses,
+                  selectedNetwork: get().selectedNetwork,
+                },
+                externalWallet,
+              });
+            } catch (syncError) {
+              devWarn('[OrbitX][Wallet] remote external wallet sync failed', syncError);
+            }
+          }
           recordAstraWalletFlow('connect_external_wallet', 'completed');
           return true;
         } catch (error) {
@@ -462,12 +623,14 @@ export const useWalletStore = create<WalletState>()(
 
       disconnectExternalWallet: () => {
         useOrbitStore.getState().disconnectExternalWallet();
+        const emptyExternalWallet: ExternalWalletConnection = {
+          provider: null,
+          address: '',
+          signingReady: false,
+        };
+        syncOrbitWalletFutureExternalWallet(emptyExternalWallet);
         set((state) => ({
-          externalWallet: {
-            provider: null,
-            address: '',
-            signingReady: false,
-          },
+          externalWallet: emptyExternalWallet,
           history: [
             buildHistoryEntry(
               'Billetera externa desconectada',
@@ -476,6 +639,20 @@ export const useWalletStore = create<WalletState>()(
             ...state.history,
           ].slice(0, 24),
         }));
+        if (get().isWalletReady) {
+          void syncRemoteWalletProfile({
+            wallet: {
+              address: get().walletAddress,
+              mnemonicStored: get().mnemonicStored,
+              walletType: get().walletType === 'imported' ? 'imported' : 'orbitx',
+              receiveAddresses: get().receiveAddresses,
+              selectedNetwork: get().selectedNetwork,
+            },
+            externalWallet: emptyExternalWallet,
+          }).catch((syncError) => {
+            devWarn('[OrbitX][Wallet] remote external wallet disconnect sync failed', syncError);
+          });
+        }
       },
 
       setSelectedNetwork: (selectedNetwork) => set({ selectedNetwork }),

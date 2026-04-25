@@ -204,9 +204,13 @@ async function fetchAssetAmount(
   );
 }
 
-export async function fetchOnchainPortfolio(): Promise<OnchainPortfolioSnapshot> {
-  const bundle = await getStoredWalletBundle();
-  if (!bundle) {
+export async function fetchOnchainPortfolio(
+  receiveAddressesOverride?: Record<WalletNetwork, string>,
+): Promise<OnchainPortfolioSnapshot> {
+  const bundle = receiveAddressesOverride ? null : await getStoredWalletBundle();
+  const receiveAddresses = receiveAddressesOverride ?? bundle?.receiveAddresses;
+
+  if (!receiveAddresses) {
     throw new Error('No hay una billetera activa para sincronizar.');
   }
 
@@ -214,7 +218,7 @@ export async function fetchOnchainPortfolio(): Promise<OnchainPortfolioSnapshot>
     ONCHAIN_ASSET_SPECS.map(async (spec) => ({
       tokenId: spec.tokenId,
       network: spec.network,
-      amount: await fetchAssetAmount(spec, bundle.receiveAddresses),
+      amount: await fetchAssetAmount(spec, receiveAddresses),
     })),
   );
 
@@ -236,7 +240,7 @@ export async function fetchOnchainPortfolio(): Promise<OnchainPortfolioSnapshot>
   return {
     assets,
     fetchedAt: new Date().toISOString(),
-    receiveAddresses: bundle.receiveAddresses,
+    receiveAddresses,
     supportedTokenIds: REAL_WALLET_TOKEN_IDS,
   };
 }

@@ -172,6 +172,26 @@ function syncLegacyProfile(nextProfile: UserProfile) {
   }));
 }
 
+function clearWalletSessionView() {
+  try {
+    const { useWalletStore } = require('./walletStore') as typeof import('./walletStore');
+    useWalletStore.getState().clearSessionWalletState();
+  } catch {
+    // Ignore circular bootstrap timing errors.
+  }
+}
+
+function hydrateWalletForCurrentSession() {
+  try {
+    const { useWalletStore } = require('./walletStore') as typeof import('./walletStore');
+    const walletStore = useWalletStore.getState();
+    walletStore.clearSessionWalletState();
+    void walletStore.hydrateWallet();
+  } catch {
+    // Ignore circular bootstrap timing errors.
+  }
+}
+
 function getLanguage() {
   return useOrbitStore.getState().settings.language;
 }
@@ -207,6 +227,7 @@ export const useAuthStore = create<AuthStore>()(
               emailConfirmed: false,
             },
           }));
+          clearWalletSessionView();
           return;
         }
 
@@ -218,6 +239,7 @@ export const useAuthStore = create<AuthStore>()(
           profile: nextProfile,
           session: buildSessionFromSupabaseSession(state.session, session),
         }));
+        hydrateWalletForCurrentSession();
       },
 
       signIn: async (email, password) => {
@@ -264,6 +286,7 @@ export const useAuthStore = create<AuthStore>()(
               profile: nextProfile,
               session: nextSession,
             });
+            hydrateWalletForCurrentSession();
             showToast(translate(language, 'toast.loginReadyReal'), 'success');
             return buildResult(true, 'Sign in completed', 'signed_in');
           } catch (error) {
@@ -308,6 +331,7 @@ export const useAuthStore = create<AuthStore>()(
             lastAuthAt: new Date().toISOString(),
           },
         }));
+        hydrateWalletForCurrentSession();
         showToast(translate(language, 'toast.loginReady'), 'success');
         return buildResult(true, 'Sign in simulated', 'signed_in');
       },
@@ -377,6 +401,11 @@ export const useAuthStore = create<AuthStore>()(
               profile: nextProfile,
               session: nextSession,
             });
+            if (result.session) {
+              hydrateWalletForCurrentSession();
+            } else {
+              clearWalletSessionView();
+            }
 
             showToast(
               result.requiresEmailConfirmation
@@ -423,6 +452,7 @@ export const useAuthStore = create<AuthStore>()(
             lastAuthAt: new Date().toISOString(),
           },
         }));
+        hydrateWalletForCurrentSession();
         showToast(translate(language, 'toast.registerReady'), 'success');
         return buildResult(true, 'Sign up simulated', 'signed_in');
       },
@@ -650,6 +680,7 @@ export const useAuthStore = create<AuthStore>()(
             passwordResetPending: result.code === 'password_recovery',
           }),
         }));
+        hydrateWalletForCurrentSession();
 
         showToast(
           result.code === 'password_recovery'
@@ -679,6 +710,7 @@ export const useAuthStore = create<AuthStore>()(
             provider: getOrbitAuthMeta().provider,
           },
         });
+        clearWalletSessionView();
         showToast(translate(language, 'toast.logoutDone'), 'info');
       },
     }),

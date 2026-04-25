@@ -18,8 +18,8 @@ export function BalanceCard({ title, value, body, icon }: Props) {
       style={[
         styles.card,
         {
-          backgroundColor: withOpacity(colors.surfaceElevated, 0.92),
-          borderColor: withOpacity(colors.borderStrong, 0.75),
+          backgroundColor: withOpacity(colors.surfaceElevated, 0.36),
+          borderColor: withOpacity(colors.borderStrong, 0.4),
         },
       ]}
     >
@@ -29,8 +29,8 @@ export function BalanceCard({ title, value, body, icon }: Props) {
           style={[
             styles.iconWrap,
             {
-              backgroundColor: withOpacity(colors.primary, 0.05),
-              borderColor: withOpacity(colors.borderStrong, 0.58),
+              backgroundColor: withOpacity(colors.primary, 0.04),
+              borderColor: withOpacity(colors.borderStrong, 0.18),
             },
           ]}
         >
@@ -47,10 +47,10 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 18,
-    minHeight: 108,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 14,
+    minHeight: 96,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
     gap: 8,
   },
   headerRow: {

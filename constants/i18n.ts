@@ -15,6 +15,8 @@ export interface LanguageOption {
   direction: LocaleDirection;
 }
 
+export type LocalizedTextMap = Partial<Record<LanguageCode, string>>;
+
 const LANGUAGE_META: Record<LanguageCode, LanguageOption> = {
   en: {
     value: 'en',
@@ -26,42 +28,42 @@ const LANGUAGE_META: Record<LanguageCode, LanguageOption> = {
   es: {
     value: 'es',
     label: 'Spanish',
-    nativeLabel: 'Español',
+    nativeLabel: 'Espa\u00f1ol',
     localeTag: 'es-419',
     direction: 'ltr',
   },
   pt: {
     value: 'pt',
     label: 'Portuguese',
-    nativeLabel: 'Português',
+    nativeLabel: 'Portugu\u00eas',
     localeTag: 'pt-BR',
     direction: 'ltr',
   },
   'zh-Hans': {
     value: 'zh-Hans',
     label: 'Simplified Chinese',
-    nativeLabel: '简体中文',
+    nativeLabel: '\u7b80\u4f53\u4e2d\u6587',
     localeTag: 'zh-CN',
     direction: 'ltr',
   },
   hi: {
     value: 'hi',
     label: 'Hindi',
-    nativeLabel: 'हिन्दी',
+    nativeLabel: '\u0939\u093f\u0928\u094d\u0926\u0940',
     localeTag: 'hi-IN',
     direction: 'ltr',
   },
   ru: {
     value: 'ru',
     label: 'Russian',
-    nativeLabel: 'Русский',
+    nativeLabel: '\u0420\u0443\u0441\u0441\u043a\u0438\u0439',
     localeTag: 'ru-RU',
     direction: 'ltr',
   },
   ar: {
     value: 'ar',
     label: 'Arabic',
-    nativeLabel: 'العربية',
+    nativeLabel: '\u0627\u0644\u0639\u0631\u0628\u064a\u0629',
     localeTag: 'ar-SA',
     direction: 'rtl',
   },
@@ -140,6 +142,20 @@ export function isRtlLanguage(language: LanguageCode) {
 
 export function getLocaleDirection(language: LanguageCode): LocaleDirection {
   return isRtlLanguage(language) ? 'rtl' : 'ltr';
+}
+
+export function pickLanguageText(
+  language: LanguageCode,
+  values: LocalizedTextMap,
+  fallbackLanguage: LanguageCode = 'en',
+) {
+  return (
+    values[language] ??
+    values[normalizeLanguageCode(language)] ??
+    values[fallbackLanguage] ??
+    Object.values(values).find((value) => Boolean(value)) ??
+    ''
+  );
 }
 
 export function translate(

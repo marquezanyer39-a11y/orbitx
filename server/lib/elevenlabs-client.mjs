@@ -208,6 +208,23 @@ export async function synthesizeAstraSpeech({ config, text, context, presetId })
 
   const primaryProfile = resolvePreset(config, presetId);
   const fallbackProfile = resolveFallbackPreset(config, config.fallbackPresetId);
+  const shouldUseFallbackProfileFirst =
+    !primaryProfile?.voiceId &&
+    Boolean(fallbackProfile?.voiceId) &&
+    (fallbackProfile.voiceId !== primaryProfile?.voiceId ||
+      fallbackProfile.modelId !== primaryProfile?.modelId);
+
+  if (shouldUseFallbackProfileFirst) {
+    console.warn('[OrbitX][AstraVoiceServer] voice preset missing, using fallback profile', {
+      requestedPresetId: presetId,
+      primaryVoiceId: primaryProfile?.voiceId ?? null,
+      primaryModelId: primaryProfile?.modelId ?? null,
+      fallbackVoiceId: fallbackProfile?.voiceId ?? null,
+      fallbackModelId: fallbackProfile?.modelId ?? null,
+    });
+
+    return requestSpeech(config, fallbackProfile, text, context);
+  }
 
   try {
     return await requestSpeech(config, primaryProfile, text, context);

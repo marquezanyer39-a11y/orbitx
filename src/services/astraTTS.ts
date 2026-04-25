@@ -45,6 +45,7 @@ export class AstraTTSBackendError extends Error {
 const MAX_TEXT_LENGTH = 520;
 const DEFAULT_TIMEOUT_MS = 25_000;
 const FILE_PREFIX = 'orbitx-astra-tts';
+const TRANSIENT_RETRY_DELAY_MS = 700;
 
 function createInitialState(): AstraTTSState {
   return {
@@ -306,60 +307,75 @@ class AstraTTSService {
       );
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, DEFAULT_TIMEOUT_MS);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, DEFAULT_TIMEOUT_MS);
 
-    try {
-      const response = await fetch(`${baseUrl}/api/voice/astra/speak`, {
-        method: 'POST',
-        headers: {
-          Accept: 'audio/mpeg',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text, context, presetId }),
-        signal: controller.signal,
-      });
+      try {
+        const response = await fetch(`${baseUrl}/api/voice/astra/speak`, {
+          method: 'POST',
+          headers: {
+            Accept: 'audio/mpeg',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text, context, presetId }),
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
-        const errorPayload = await readResponseError(response);
-        throw new AstraTTSBackendError(
-          errorPayload.message,
-          errorPayload.code,
-          errorPayload.retryable,
-        );
+        if (!response.ok) {
+          const errorPayload = await readResponseError(response);
+          throw new AstraTTSBackendError(
+            errorPayload.message,
+            errorPayload.code,
+            errorPayload.retryable,
+          );
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        if (!arrayBuffer.byteLength) {
+          throw new Error('Astra no recibio audio desde el servidor.');
+        }
+
+        const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+        const directory = FileSystem.cacheDirectory ?? FileSystem.documentDirectory;
+        if (!directory) {
+          throw new Error('No pudimos preparar el cache de audio en este dispositivo.');
+        }
+
+        const fileUri = `${directory}${FILE_PREFIX}-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}.mp3`;
+
+        await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        return fileUri;
+      } catch (error) {
+        const isAbortError = error instanceof Error && error.name === 'AbortError';
+        const isNetworkError = error instanceof TypeError;
+        const canRetry = attempt === 0 && (isAbortError || isNetworkError);
+
+        if (canRetry) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, TRANSIENT_RETRY_DELAY_MS);
+          });
+          continue;
+        }
+
+        if (isAbortError) {
+          throw new Error('La voz de Astra tardo demasiado. Intenta otra vez.');
+        }
+
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
       }
-
-      const arrayBuffer = await response.arrayBuffer();
-      if (!arrayBuffer.byteLength) {
-        throw new Error('Astra no recibio audio desde el servidor.');
-      }
-
-      const base64Audio = Buffer.from(arrayBuffer).toString('base64');
-      const directory = FileSystem.cacheDirectory ?? FileSystem.documentDirectory;
-      if (!directory) {
-        throw new Error('No pudimos preparar el cache de audio en este dispositivo.');
-      }
-
-      const fileUri = `${directory}${FILE_PREFIX}-${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2, 8)}.mp3`;
-
-      await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      return fileUri;
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('La voz de Astra tardo demasiado. Intenta otra vez.');
-      }
-
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
     }
+
+    throw new Error('No pudimos generar la voz de Astra.');
   }
 
   private async deleteFileIfExists(fileUri: string) {

@@ -276,26 +276,44 @@ export function buildAstraUnavailableResponse(options: {
   const { context, channel = 'text', reason, retryQuestion } = options;
   const language = context.language;
   const safeReason = `${reason ?? ''}`.trim();
-  const isConfigIssue =
+  const normalizedReason = safeReason.toLowerCase();
+  const isClientBackendMissing =
+    normalizedReason.includes('orbitx backend is not configured') ||
+    normalizedReason.includes('astra backend is not configured') ||
+    normalizedReason.includes('astra voice backend is not configured');
+  const isServerConfigIssue =
     safeReason.includes('GEMINI_API_KEY') ||
-    safeReason.toLowerCase().includes('not configured');
-  const shortText = isConfigIssue
+    safeReason.includes('ELEVENLABS_API_KEY') ||
+    safeReason.includes('NANOBANANA_API_KEY');
+  const shortText = isClientBackendMissing
     ? t(
         language,
         'Esta version de OrbitX no tiene Astra activa por completo.',
         'This OrbitX build does not have Astra fully enabled yet.',
       )
+    : isServerConfigIssue
+      ? t(
+          language,
+          'Astra esta configurada de forma parcial en el backend. Intenta de nuevo en unos segundos.',
+          'Astra is only partially configured in the backend. Try again in a few seconds.',
+        )
     : t(
         language,
         'Astra no esta disponible ahora mismo. Intenta de nuevo en unos segundos.',
         'Astra is not available right now. Try again in a few seconds.',
       );
-  const longText = isConfigIssue
+  const longText = isClientBackendMissing
     ? t(
         language,
         'Esta version de OrbitX no tiene Astra activa por completo. Instala la build mas reciente o revisa la URL publica del backend.',
         'This OrbitX build does not have Astra fully enabled yet. Install the latest build or review the public backend URL.',
       )
+    : isServerConfigIssue
+      ? t(
+          language,
+          'Astra encontro un problema temporal de configuracion en el backend. Puedes reintentar en unos segundos mientras recuperamos el servicio.',
+          'Astra found a temporary backend configuration issue. You can retry in a few seconds while the service recovers.',
+        )
     : t(
         language,
         'Astra no esta disponible ahora mismo. Puedes reintentar en unos segundos o seguir usando el modulo actual mientras recuperamos la conexion.',

@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
-import type { MarketRealtimeStatus, OrderBookRow } from '../../types';
+import type { MarketRealtimeStatus, OrderBookRow, TradeSide } from '../../types';
 
 interface Props {
   rows: OrderBookRow[];
@@ -10,7 +10,7 @@ interface Props {
   status: MarketRealtimeStatus;
   statusLabel: string;
   error?: string | null;
-  onPickPrice: (price: number) => void;
+  onPickPrice: (price: number, side: TradeSide) => void;
 }
 
 export function OrderBook({ rows, baseSymbol, status, statusLabel, error, onPickPrice }: Props) {
@@ -59,7 +59,11 @@ export function OrderBook({ rows, baseSymbol, status, statusLabel, error, onPick
       </View>
 
       {asks.map((row) => (
-        <Pressable key={row.id} onPress={() => onPickPrice(row.price)} style={styles.rowShell}>
+        <Pressable
+          key={row.id}
+          onPress={() => onPickPrice(row.price, row.side)}
+          style={styles.rowShell}
+        >
           <View
             style={[
               styles.depthFill,
@@ -88,7 +92,11 @@ export function OrderBook({ rows, baseSymbol, status, statusLabel, error, onPick
       </View>
 
       {bids.map((row) => (
-        <Pressable key={row.id} onPress={() => onPickPrice(row.price)} style={styles.rowShell}>
+        <Pressable
+          key={row.id}
+          onPress={() => onPickPrice(row.price, row.side)}
+          style={styles.rowShell}
+        >
           <View
             style={[
               styles.depthFill,

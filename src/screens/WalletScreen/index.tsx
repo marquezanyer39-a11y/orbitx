@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ExternalWalletConnectSheet } from '../../../components/wallet/ExternalWalletConnectSheet';
+import { pickLanguageText } from '../../../constants/i18n';
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { AddressCard } from '../../components/wallet/AddressCard';
@@ -69,7 +70,20 @@ export default function WalletScreen() {
 
     recordAstraError({
       surface: 'wallet',
-      title: language === 'en' ? 'Wallet issue' : 'Problema de billetera',
+      title: pickLanguageText(
+        language,
+        {
+          en: 'Wallet issue',
+          es: 'Problema de billetera',
+          pt: 'Problema na carteira',
+          'zh-Hans': '\u94b1\u5305\u95ee\u9898',
+          hi: 'Wallet \u0938\u092e\u0938\u094d\u092f\u093e',
+          ru: '\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0430 \u043a\u043e\u0448\u0435\u043b\u044c\u043a\u0430',
+          ar: '\u0645\u0634\u0643\u0644\u0629 \u0641\u064a \u0627\u0644\u0645\u062d\u0641\u0638\u0629',
+          id: 'Masalah wallet',
+        },
+        'en',
+      ),
       body: wallet.error,
       linkedGuideId: 'resolve_error',
     });
@@ -138,12 +152,44 @@ export default function WalletScreen() {
   const totalSpot = spotAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
   const totalBalance = totalSpot + totalWeb3;
   const activeReceiveAddress = wallet.receiveAddresses[wallet.selectedNetwork] || wallet.walletAddress;
+  const walletHeaderSubtitle = useMemo(() => {
+    if (wallet.loading && !wallet.isWalletReady) {
+      return 'Buscando la wallet vinculada a tu cuenta...';
+    }
+
+    if (wallet.error) {
+      return wallet.error;
+    }
+
+    if (wallet.isWalletReady && wallet.walletSource === 'remote') {
+      return 'Wallet encontrada y vinculada a tu cuenta. Este dispositivo esta en modo seguro de consulta.';
+    }
+
+    if (wallet.isWalletReady) {
+      return 'Wallet activa en este dispositivo.';
+    }
+
+    return 'Crea o importa tu billetera para comenzar';
+  }, [wallet.error, wallet.isWalletReady, wallet.loading, wallet.walletSource]);
   const astraWalletContext = useMemo(
     () => ({
       surface: 'wallet' as const,
       path: '/wallet',
       language,
-      screenName: language === 'en' ? 'Wallet' : 'Billetera',
+      screenName: pickLanguageText(
+        language,
+        {
+          en: 'Wallet',
+          es: 'Billetera',
+          pt: 'Carteira',
+          'zh-Hans': '\u94b1\u5305',
+          hi: 'Wallet',
+          ru: '\u041a\u043e\u0448\u0435\u043b\u0435\u043a',
+          ar: '\u0627\u0644\u0645\u062d\u0641\u0638\u0629',
+          id: 'Wallet',
+        },
+        'en',
+      ),
       summary: wallet.error
         ? language === 'en'
           ? `Wallet detected this issue: ${wallet.error}`
@@ -214,13 +260,26 @@ export default function WalletScreen() {
     <ScreenContainer contentContainerStyle={styles.content} backgroundMode="plain">
       <WalletHeader
         totalBalanceLabel={formatCurrency(totalBalance)}
-        subtitle="Crea o importa tu billetera para comenzar"
+        subtitle={walletHeaderSubtitle}
         onRefresh={() => void wallet.refreshBalances()}
         onInfo={() =>
-          openAstra({
-            ...astraWalletContext,
-            surfaceTitle: language === 'en' ? 'Wallet' : 'Billetera',
-          })
+            openAstra({
+              ...astraWalletContext,
+              surfaceTitle: pickLanguageText(
+                language,
+                {
+                  en: 'Wallet',
+                  es: 'Billetera',
+                  pt: 'Carteira',
+                  'zh-Hans': '\u94b1\u5305',
+                  hi: 'Wallet',
+                  ru: '\u041a\u043e\u0448\u0435\u043b\u0435\u043a',
+                  ar: '\u0627\u0644\u0645\u062d\u0641\u0638\u0629',
+                  id: 'Wallet',
+                },
+                'en',
+              ),
+            })
         }
       />
 
@@ -253,8 +312,8 @@ export default function WalletScreen() {
         style={[
           styles.transakCard,
           {
-            backgroundColor: withOpacity(colors.surfaceElevated, 0.92),
-            borderColor: withOpacity(colors.borderStrong, 0.76),
+            backgroundColor: withOpacity(colors.surfaceElevated, 0.24),
+            borderColor: withOpacity(colors.borderStrong, 0.42),
           },
         ]}
       >
@@ -300,10 +359,14 @@ export default function WalletScreen() {
       ) : (
         <>
           <SectionHeader
-            title="Espacio Web3"
-            subtitle="Billetera real, seguridad y seguimiento on-chain."
-            rightSlot={
-              wallet.isWalletReady ? null : (
+              title="Espacio Web3"
+              subtitle={
+                wallet.walletSource === 'remote'
+                  ? 'Wallet encontrada en tu cuenta. Puedes ver direcciones y balances sin exponer secretos.'
+                  : 'Billetera real, seguridad y seguimiento on-chain.'
+              }
+              rightSlot={
+              wallet.isWalletReady || wallet.loading ? null : (
                 <PrimaryButton label="Crear billetera" onPress={() => void wallet.createWallet()} />
               )
             }
@@ -353,10 +416,31 @@ export default function WalletScreen() {
 
               <AssetList assets={wallet.assets} />
 
-              <SeedRevealCard
-                body="Tu frase semilla da acceso total a tu billetera. Nunca la compartas."
-                onReveal={() => router.push('/security')}
-              />
+              {wallet.mnemonicStored ? (
+                <SeedRevealCard
+                  body="Tu frase semilla da acceso total a tu billetera. Nunca la compartas."
+                  onReveal={() => router.push('/security')}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.tokenRow,
+                    {
+                      backgroundColor: withOpacity(colors.fieldBackground, 0.18),
+                      borderColor: withOpacity(colors.border, 0.54),
+                    },
+                  ]}
+                >
+                  <View style={styles.tokenCopy}>
+                    <Text style={[styles.tokenTitle, { color: colors.text }]}>
+                      Wallet encontrada
+                    </Text>
+                    <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
+                      Esta instalacion puede consultar direcciones, saldos e historial publico, pero no contiene tu seed phrase ni tu clave privada.
+                    </Text>
+                  </View>
+                </View>
+              )}
 
               <View style={styles.section}>
                 <SectionHeader
@@ -372,13 +456,13 @@ export default function WalletScreen() {
                 />
 
                 <View
-                  style={[
-                    styles.tokenRow,
-                    {
-                      backgroundColor: colors.fieldBackground,
-                      borderColor: colors.border,
-                    },
-                  ]}
+                    style={[
+                      styles.tokenRow,
+                      {
+                        backgroundColor: withOpacity(colors.fieldBackground, 0.18),
+                        borderColor: withOpacity(colors.border, 0.54),
+                      },
+                    ]}
                 >
                   <View style={styles.tokenCopy}>
                     <Text style={[styles.tokenTitle, { color: colors.text }]}>
@@ -412,13 +496,13 @@ export default function WalletScreen() {
                   wallet.createdTokens.map((token) => (
                     <View
                       key={token.id}
-                      style={[
-                        styles.tokenRow,
-                        {
-                          backgroundColor: colors.fieldBackground,
-                          borderColor: colors.border,
-                        },
-                      ]}
+                    style={[
+                      styles.tokenRow,
+                      {
+                        backgroundColor: withOpacity(colors.fieldBackground, 0.18),
+                        borderColor: withOpacity(colors.border, 0.54),
+                      },
+                    ]}
                     >
                       <View style={styles.tokenCopy}>
                         <Text style={[styles.tokenTitle, { color: colors.text }]}>{token.symbol}</Text>
@@ -440,9 +524,13 @@ export default function WalletScreen() {
             </>
           ) : (
             <View style={styles.importCard}>
-              <Text style={[styles.importTitle, { color: colors.text }]}>Importar billetera</Text>
+              <Text style={[styles.importTitle, { color: colors.text }]}>
+                {wallet.loading ? 'Buscando wallet...' : 'Importar billetera'}
+              </Text>
               <Text style={[styles.importBody, { color: colors.textMuted }]}>
-                Pega tu frase semilla para restaurar una billetera existente.
+                {wallet.loading
+                  ? 'Estamos revisando si tu cuenta ya tiene una wallet publica vinculada.'
+                  : 'Pega tu frase semilla para restaurar una billetera existente.'}
               </Text>
               <TextInput
                 value={seedPhraseInput}
@@ -512,21 +600,70 @@ export default function WalletScreen() {
         >
           <Text style={[styles.errorText, { color: colors.loss }]}>{wallet.error}</Text>
           <PrimaryButton
-            label="Preguntar a Astra"
+            label={pickLanguageText(
+              language,
+              {
+                en: 'Ask Astra',
+                es: 'Preguntar a Astra',
+                pt: 'Perguntar para Astra',
+                'zh-Hans': '\u95ee Astra',
+                hi: 'Astra se puchho',
+                ru: '\u0421\u043f\u0440\u043e\u0441\u0438\u0442\u044c Astra',
+                ar: '\u0627\u0633\u0623\u0644 Astra',
+                id: 'Tanya Astra',
+              },
+              'en',
+            )}
             tone="secondary"
             onPress={() =>
               openAstra({
                 surface: 'error',
-                surfaceTitle: language === 'en' ? 'Wallet' : 'Billetera',
-                summary:
-                  language === 'en'
-                    ? 'Astra can help you recover the Wallet flow without losing context.'
-                    : 'Astra puede ayudarte a recuperar el flujo de Billetera sin perder contexto.',
+                surfaceTitle: pickLanguageText(
+                  language,
+                  {
+                    en: 'Wallet',
+                    es: 'Billetera',
+                    pt: 'Carteira',
+                    'zh-Hans': '\u94b1\u5305',
+                    hi: 'Wallet',
+                    ru: '\u041a\u043e\u0448\u0435\u043b\u0435\u043a',
+                    ar: '\u0627\u0644\u0645\u062d\u0641\u0638\u0629',
+                    id: 'Wallet',
+                  },
+                  'en',
+                ),
+                summary: pickLanguageText(
+                  language,
+                  {
+                    en: 'Astra can help you recover the Wallet flow without losing context.',
+                    es: 'Astra puede ayudarte a recuperar el flujo de Billetera sin perder contexto.',
+                    pt: 'A Astra pode ajudar voce a recuperar o fluxo da carteira sem perder contexto.',
+                    'zh-Hans': 'Astra \u53ef\u4ee5\u5e2e\u4f60\u5728\u4e0d\u4e22\u5931\u4e0a\u4e0b\u6587\u7684\u60c5\u51b5\u4e0b\u6062\u590d Wallet \u6d41\u7a0b\u3002',
+                    hi: 'Astra context khoye bina Wallet flow recover karne mein madad kar sakti hai.',
+                    ru: 'Astra \u043f\u043e\u043c\u043e\u0436\u0435\u0442 \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u043f\u043e\u0442\u043e\u043a Wallet \u0431\u0435\u0437 \u043f\u043e\u0442\u0435\u0440\u0438 \u043a\u043e\u043d\u0442\u0435\u043a\u0441\u0442\u0430.',
+                    ar: '\u064a\u0645\u0643\u0646 Astra \u0623\u0646 \u062a\u0633\u0627\u0639\u062f\u0643 \u0639\u0644\u0649 \u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u062a\u062f\u0641\u0642 Wallet \u062f\u0648\u0646 \u0641\u0642\u062f\u0627\u0646 \u0627\u0644\u0633\u064a\u0627\u0642.',
+                    id: 'Astra bisa membantumu memulihkan alur Wallet tanpa kehilangan konteks.',
+                  },
+                  'en',
+                ),
                 currentTask: astraWalletContext.currentTask,
                 selectedEntity: astraWalletContext.selectedEntity,
                 uiState: astraWalletContext.uiState,
                 labels: astraWalletContext.labels,
-                errorTitle: language === 'en' ? 'Wallet error' : 'Error de billetera',
+                errorTitle: pickLanguageText(
+                  language,
+                  {
+                    en: 'Wallet error',
+                    es: 'Error de billetera',
+                    pt: 'Erro da carteira',
+                    'zh-Hans': '\u94b1\u5305\u9519\u8bef',
+                    hi: 'Wallet error',
+                    ru: '\u041e\u0448\u0438\u0431\u043a\u0430 wallet',
+                    ar: '\u062e\u0637\u0623 \u0641\u064a wallet',
+                    id: 'Error wallet',
+                  },
+                  'en',
+                ),
                 errorBody: wallet.error ?? undefined,
               })
             }
@@ -556,18 +693,18 @@ export default function WalletScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 18,
+    gap: 14,
   },
   balanceRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   transakCard: {
-    borderWidth: 1,
-    borderRadius: 22,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    gap: 14,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 12,
+    gap: 12,
   },
   transakHeaderRow: {
     flexDirection: 'row',
@@ -653,13 +790,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   section: {
-    gap: 10,
+    gap: 8,
   },
   tokenRow: {
     borderWidth: 1,
-    borderRadius: RADII.md,
+    borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 9,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

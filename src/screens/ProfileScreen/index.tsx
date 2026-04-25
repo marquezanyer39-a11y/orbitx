@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 
+import { pickLanguageText } from '../../../constants/i18n';
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { useOrbitStore } from '../../../store/useOrbitStore';
@@ -450,12 +451,36 @@ export default function ProfileScreen() {
           onPress={() =>
             openAstra({
               surface: 'profile',
-              surfaceTitle: language === 'en' ? 'Profile' : 'Perfil',
+              surfaceTitle: pickLanguageText(
+                language,
+                {
+                  en: 'Profile',
+                  es: 'Perfil',
+                  pt: 'Perfil',
+                  'zh-Hans': '\u4e2a\u4eba\u8d44\u6599',
+                  hi: '\u092a\u094d\u0930\u094b\u092b\u093e\u0907\u0932',
+                  ru: '\u041f\u0440\u043e\u0444\u0438\u043b\u044c',
+                  ar: '\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a',
+                  id: 'Profil',
+                },
+                'en',
+              ),
               summary:
-                language === 'en'
-                  ? `Profile centralizes your identity, security, favorites and personalization. Active theme: ${labels.accent}.`
-                  : `Perfil centraliza tu identidad, seguridad, favoritos y personalizacion. Tema actual: ${labels.accent}.`,
-              currentThemeLabel: `${labels.accent} | ${settings.orbitMotionEnabled ? (language === 'en' ? 'Active' : 'Activo') : language === 'en' ? 'Paused' : 'Pausado'}`,
+                pickLanguageText(
+                  language,
+                  {
+                    en: `Profile centralizes your identity, security, favorites and personalization. Active theme: ${labels.accent}.`,
+                    es: `Perfil centraliza tu identidad, seguridad, favoritos y personalizacion. Tema actual: ${labels.accent}.`,
+                    pt: `O perfil centraliza sua identidade, seguranca, favoritos e personalizacao. Tema ativo: ${labels.accent}.`,
+                    'zh-Hans': `\u4e2a\u4eba\u8d44\u6599\u96c6\u4e2d\u4f60\u7684\u8eab\u4efd\u3001\u5b89\u5168\u3001\u6536\u85cf\u548c\u4e2a\u6027\u5316\u3002\u5f53\u524d\u4e3b\u9898\uff1a${labels.accent}\u3002`,
+                    hi: `Profile tumhari identity, security, favorites aur personalization ko ek jagah rakhta hai. Active theme: ${labels.accent}.`,
+                    ru: `\u041f\u0440\u043e\u0444\u0438\u043b\u044c \u0441\u043e\u0431\u0438\u0440\u0430\u0435\u0442 \u0442\u0432\u043e\u044e \u0438\u0434\u0435\u043d\u0442\u0438\u0447\u043d\u043e\u0441\u0442\u044c, \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c, \u0438\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u0435 \u0438 \u043f\u0435\u0440\u0441\u043e\u043d\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044e. \u0410\u043a\u0442\u0438\u0432\u043d\u0430\u044f \u0442\u0435\u043c\u0430: ${labels.accent}.`,
+                    ar: `\u064a\u062c\u0645\u0639 \u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a \u0647\u0648\u064a\u062a\u0643 \u0648\u0623\u0645\u0627\u0646\u0643 \u0648\u0645\u0641\u0636\u0644\u0627\u062a\u0643 \u0648\u0627\u0644\u062a\u062e\u0635\u064a\u0635. \u0627\u0644\u0633\u0645\u0629 \u0627\u0644\u0646\u0634\u0637\u0629: ${labels.accent}.`,
+                    id: `Profil memusatkan identitas, keamanan, favorit, dan personalisasi kamu. Tema aktif: ${labels.accent}.`,
+                  },
+                  'en',
+                ),
+              currentThemeLabel: `${labels.accent} | ${settings.orbitMotionEnabled ? pickLanguageText(language, { en: 'Active', es: 'Activo', pt: 'Ativo', 'zh-Hans': '\u6d3b\u52a8', hi: '\u0938\u0915\u094d\u0930\u093f\u092f', ru: '\u0410\u043a\u0442\u0438\u0432\u0435\u043d', ar: '\u0646\u0634\u0637', id: 'Aktif' }, 'en') : pickLanguageText(language, { en: 'Paused', es: 'Pausado', pt: 'Pausado', 'zh-Hans': '\u5df2\u6682\u505c', hi: '\u0930\u0941\u0915\u093e \u0939\u0941\u0906', ru: '\u041d\u0430 \u043f\u0430\u0443\u0437\u0435', ar: '\u0645\u062a\u0648\u0642\u0641', id: 'Dijeda' }, 'en')}`,
               usageMode: settings.usageMode,
             })
           }

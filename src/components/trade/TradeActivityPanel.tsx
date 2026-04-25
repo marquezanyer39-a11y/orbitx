@@ -43,7 +43,15 @@ export function TradeActivityPanel({
   );
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: 'transparent',
+          borderColor: withOpacity(colors.border, 0.64),
+        },
+      ]}
+    >
       <View style={styles.tabRow}>
         {TAB_ITEMS.map((item) => {
           const active = item.key === tab;
@@ -77,7 +85,10 @@ export function TradeActivityPanel({
           <View
             style={[
               styles.balanceShell,
-              { backgroundColor: withOpacity(colors.fieldBackground, 0.88), borderColor: colors.border },
+              {
+                backgroundColor: withOpacity(colors.fieldBackground, 0.26),
+                borderColor: withOpacity(colors.border, 0.36),
+              },
             ]}
           >
             <View style={styles.balanceBlock}>
@@ -163,7 +174,10 @@ export function TradeActivityPanel({
         <View
           style={[
             styles.balanceShell,
-            { backgroundColor: withOpacity(colors.fieldBackground, 0.88), borderColor: colors.border },
+            {
+              backgroundColor: withOpacity(colors.fieldBackground, 0.26),
+              borderColor: withOpacity(colors.border, 0.36),
+            },
           ]}
         >
           <View style={styles.balanceBlock}>
@@ -182,11 +196,10 @@ export function TradeActivityPanel({
 
 const styles = StyleSheet.create({
   card: {
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 12,
+    borderTopWidth: 1,
+    paddingHorizontal: 2,
     paddingTop: 10,
-    paddingBottom: 12,
+    paddingBottom: 10,
     gap: 12,
   },
   tabRow: {
@@ -215,11 +228,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   balanceShell: {
-    minHeight: 88,
-    borderRadius: 14,
+    minHeight: 78,
+    borderRadius: 10,
     borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
@@ -260,7 +273,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   historyList: {
-    gap: 2,
+    gap: 0,
   },
   historyRow: {
     minHeight: 34,

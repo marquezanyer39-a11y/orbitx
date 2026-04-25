@@ -1,3 +1,5 @@
+import Constants from 'expo-constants';
+
 import { DEFAULT_ASTRA_VOICE_PRESET_ID } from './astraVoiceProfiles';
 
 export type AstraVoiceProvider = 'elevenlabs' | 'device';
@@ -38,10 +40,32 @@ function normalizeBaseUrl(value?: string | null) {
   return normalized;
 }
 
+function getExpoExtra() {
+  const constantsWithLegacyManifest = Constants as typeof Constants & {
+    manifest?: { extra?: Record<string, unknown> };
+    manifest2?: { extra?: Record<string, unknown> };
+  };
+
+  return (
+    (Constants.expoConfig?.extra as Record<string, unknown> | undefined) ??
+    constantsWithLegacyManifest.manifest2?.extra ??
+    constantsWithLegacyManifest.manifest?.extra ??
+    {}
+  );
+}
+
+function readExpoExtraValue(key: string) {
+  const extra = getExpoExtra();
+  const value = extra[key];
+  return typeof value === 'string' ? value : '';
+}
+
 export function getAstraBackendBaseUrl() {
   return normalizeBaseUrl(
-    process.env[ORBITX_BACKEND_URL_ENV_NAME] ??
-      process.env[LEGACY_ASTRA_BACKEND_URL_ENV_NAME] ??
+    process.env.EXPO_PUBLIC_ORBITX_BACKEND_URL ??
+      process.env.EXPO_PUBLIC_ASTRA_VOICE_API_URL ??
+      readExpoExtraValue('orbitxBackendUrl') ??
+      readExpoExtraValue('astraBackendUrl') ??
       '',
   );
 }

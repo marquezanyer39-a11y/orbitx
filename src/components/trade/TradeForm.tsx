@@ -49,8 +49,8 @@ function FieldRow({ label, value, onChangeText, suffix, placeholder, disabled }:
       style={[
         styles.fieldRow,
         {
-          backgroundColor: withOpacity(colors.fieldBackground, 0.9),
-          borderColor: colors.border,
+          backgroundColor: withOpacity(colors.fieldBackground, 0.36),
+          borderColor: withOpacity(colors.border, 0.5),
         },
       ]}
     >
@@ -126,7 +126,10 @@ export function TradeForm(props: Props) {
         <Pressable
           style={[
             styles.quoteButton,
-            { backgroundColor: withOpacity(colors.fieldBackground, 0.9), borderColor: colors.border },
+            {
+              backgroundColor: withOpacity(colors.fieldBackground, 0.3),
+              borderColor: withOpacity(colors.border, 0.5),
+            },
           ]}
         >
           <Text style={[styles.quoteText, { color: colors.text }]}>{props.quoteSymbol}</Text>
@@ -233,7 +236,7 @@ const styles = StyleSheet.create({
   quoteButton: {
     minWidth: 86,
     minHeight: 34,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     paddingHorizontal: 12,
     flexDirection: 'row',
@@ -251,7 +254,7 @@ const styles = StyleSheet.create({
   },
   fieldRow: {
     minHeight: 38,
-    borderRadius: 11,
+    borderRadius: 9,
     borderWidth: 1,
     paddingHorizontal: 10,
     flexDirection: 'row',

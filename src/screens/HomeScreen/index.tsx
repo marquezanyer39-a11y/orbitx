@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { HomeNewsSection } from '../../../components/home/HomeNewsSection';
-import { formatCurrencyByLanguage, translate } from '../../../constants/i18n';
+import { formatCurrencyByLanguage, pickLanguageText, translate } from '../../../constants/i18n';
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useI18n } from '../../../hooks/useI18n';
 import { useAppTheme } from '../../../hooks/useAppTheme';
@@ -49,10 +49,10 @@ function QuickAction({
         {
           backgroundColor: featured
             ? withOpacity(colors.primary, 0.12)
-            : withOpacity(colors.surfaceElevated, 0.84),
+            : withOpacity(colors.surfaceElevated, 0.2),
           borderColor: featured
             ? withOpacity(colors.primary, 0.24)
-            : withOpacity(colors.borderStrong, 0.4),
+            : withOpacity(colors.borderStrong, 0.18),
         },
       ]}
     >
@@ -62,10 +62,10 @@ function QuickAction({
           {
             backgroundColor: featured
               ? withOpacity(colors.primary, 0.12)
-              : withOpacity(colors.text, 0.035),
+              : withOpacity(colors.text, 0.02),
             borderColor: featured
               ? withOpacity(colors.primary, 0.24)
-              : withOpacity(colors.borderStrong, 0.18),
+              : withOpacity(colors.borderStrong, 0.12),
           },
         ]}
       >
@@ -190,6 +190,76 @@ export default function HomeScreen() {
       : language === 'pt'
         ? 'Bot Trader'
         : 'Bot Trader';
+  const greetingPrefixText = pickLanguageText(
+    language,
+    {
+      en: 'Hello',
+      es: 'Hola',
+      pt: 'Ola',
+      'zh-Hans': '\u4f60\u597d',
+      hi: '\u0928\u092e\u0938\u094d\u0924\u0947',
+      ru: '\u041f\u0440\u0438\u0432\u0435\u0442',
+      ar: '\u0645\u0631\u062d\u0628\u0627',
+      id: 'Halo',
+    },
+    'en',
+  );
+  const tradeLabelText = pickLanguageText(
+    language,
+    {
+      en: 'Trade',
+      es: 'Operar',
+      pt: 'Operar',
+      'zh-Hans': '\u4ea4\u6613',
+      hi: '\u091f\u094d\u0930\u0947\u0921',
+      ru: '\u0422\u043e\u0440\u0433\u043e\u0432\u043b\u044f',
+      ar: '\u0627\u0644\u062a\u062f\u0627\u0648\u0644',
+      id: 'Trade',
+    },
+    'en',
+  );
+  const marketsLabelText = pickLanguageText(
+    language,
+    {
+      en: 'Markets',
+      es: 'Mercados',
+      pt: 'Mercados',
+      'zh-Hans': '\u5e02\u573a',
+      hi: '\u092c\u093e\u091c\u093e\u0930',
+      ru: '\u0420\u044b\u043d\u043a\u0438',
+      ar: '\u0627\u0644\u0623\u0633\u0648\u0627\u0642',
+      id: 'Pasar',
+    },
+    'en',
+  );
+  const portfolioLabelText = pickLanguageText(
+    language,
+    {
+      en: 'Total balance',
+      es: 'Balance total',
+      pt: 'Saldo total',
+      'zh-Hans': '\u603b\u8d44\u4ea7',
+      hi: '\u0915\u0941\u0932 \u092c\u0948\u0932\u0947\u0902\u0938',
+      ru: '\u041e\u0431\u0449\u0438\u0439 \u0431\u0430\u043b\u0430\u043d\u0441',
+      ar: '\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0631\u0635\u064a\u062f',
+      id: 'Saldo total',
+    },
+    'en',
+  );
+  const homeSurfaceTitleText = pickLanguageText(
+    language,
+    {
+      en: 'Home',
+      es: 'Inicio',
+      pt: 'Inicio',
+      'zh-Hans': '\u9996\u9875',
+      hi: '\u0939\u094b\u092e',
+      ru: '\u0413\u043b\u0430\u0432\u043d\u0430\u044f',
+      ar: '\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629',
+      id: 'Beranda',
+    },
+    'en',
+  );
 
   const openExplore = () => {
     if (disclaimerAccepted) {
@@ -206,7 +276,7 @@ export default function HomeScreen() {
         <View style={styles.heroHeader}>
           <View style={styles.heroCopy}>
             <Text style={[styles.greeting, { color: colors.text }]}>
-              {greetingPrefix}, {firstName}
+              {greetingPrefixText}, {firstName}
             </Text>
             <Text style={[styles.subcopy, { color: colors.textMuted }]}>
               {t('home.heroSubtitle')}
@@ -215,19 +285,19 @@ export default function HomeScreen() {
 
           <View
             style={[
-              styles.headerActionWrap,
-              {
-                backgroundColor: withOpacity(colors.surfaceElevated, 0.76),
-                borderColor: withOpacity(colors.borderStrong, 0.28),
-              },
-            ]}
-          >
+            styles.headerActionWrap,
+            {
+              backgroundColor: withOpacity(colors.surfaceElevated, 0.26),
+              borderColor: withOpacity(colors.borderStrong, 0.16),
+            },
+          ]}
+        >
             <AstraLauncherButton
               size={48}
               onPress={() =>
                 openAstra({
                   surface: 'home',
-                  surfaceTitle: homeSurfaceTitle,
+                  surfaceTitle: homeSurfaceTitleText,
                   summary: error
                     ? `${t('errors.astraSummary')} ${error}`
                     : loading
@@ -240,7 +310,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.balanceBlock}>
-          <Text style={[styles.balanceLabel, { color: colors.textMuted }]}>{portfolioLabel}</Text>
+          <Text style={[styles.balanceLabel, { color: colors.textMuted }]}>{portfolioLabelText}</Text>
           <Text style={[styles.balanceValue, { color: colors.text }]}>
             {homeMarkets.length
               ? formatCurrencyByLanguage(language, liveTotal, 'USD')
@@ -281,12 +351,12 @@ export default function HomeScreen() {
 
         <View style={styles.quickRow}>
           <QuickAction
-            label={tradeLabel}
+            label={tradeLabelText}
             icon="swap-horizontal"
             onPress={() => navigateToTrade(router)}
           />
           <QuickAction
-            label={marketsLabel}
+            label={marketsLabelText}
             icon="stats-chart"
             onPress={() => router.push('/(tabs)/market')}
           />
@@ -432,7 +502,7 @@ const styles = StyleSheet.create({
     minWidth: '48.6%',
     minHeight: 52,
     borderWidth: 1,
-    borderRadius: 18,
+    borderRadius: 14,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',

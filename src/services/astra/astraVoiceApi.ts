@@ -4,7 +4,8 @@ import type {
 } from '../../types/astraVoice';
 import { getAstraBackendBaseUrl, hasAstraBackend } from './astraRuntimeConfig';
 
-const DEFAULT_TIMEOUT_MS = 18_000;
+const DEFAULT_TIMEOUT_MS = 20_000;
+const TRANSIENT_RETRY_DELAY_MS = 700;
 
 function isJsonResponse(response: Response) {
   const contentType = response.headers.get('content-type') ?? '';
@@ -32,30 +33,51 @@ async function postJson<TResponse>(
     throw new Error('Astra Voice backend is not configured.');
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, timeoutMs);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, timeoutMs);
 
-  try {
-    const response = await fetch(`${baseUrl}${path}`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
+    try {
+      const response = await fetch(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      throw new Error(await readErrorMessage(response));
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response));
+      }
+
+      return (await response.json()) as TResponse;
+    } catch (error) {
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
+      const isNetworkError = error instanceof TypeError;
+      const canRetry = attempt === 0 && (isAbortError || isNetworkError);
+
+      if (canRetry) {
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, TRANSIENT_RETRY_DELAY_MS);
+        });
+        continue;
+      }
+
+      if (isAbortError) {
+        throw new Error('Astra Voice backend request timed out.');
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return (await response.json()) as TResponse;
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+  throw new Error('Voice request failed.');
 }
 
 export async function createAstraVoiceSession(context: AstraVoiceContextPayload) {

@@ -1,4 +1,4 @@
-import { formatCurrencyByLanguage, translate } from '../../../constants/i18n';
+import { formatCurrencyByLanguage, pickLanguageText, translate } from '../../../constants/i18n';
 import { useOrbitStore } from '../../../store/useOrbitStore';
 import { useAuthStore } from '../../store/authStore';
 import { useSecurityCenterStore } from '../../store/securityCenterStore';
@@ -24,6 +24,10 @@ interface BuildAstraContextOptions {
 
 function formatUsd(language: AstraLanguage, value: number) {
   return formatCurrencyByLanguage(language, value, 'USD');
+}
+
+function contextText(language: AstraLanguage, values: Partial<Record<AstraLanguage, string>>) {
+  return pickLanguageText(language, values, 'en');
 }
 
 function normalizePathname(value: string | null | undefined) {
@@ -246,16 +250,37 @@ export function buildAstraContext(
     input.botRiskLabel ??
     previousContext?.botRiskLabel ??
     (orbitState.bot.risk === 'conservative'
-      ? language === 'es'
-        ? 'Conservador'
-        : 'Conservative'
+      ? contextText(language, {
+          en: 'Conservative',
+          es: 'Conservador',
+          pt: 'Conservador',
+          'zh-Hans': '\u4fdd\u5b88',
+          hi: '\u0930\u0942\u095d\u093f\u0935\u093e\u0926\u0940',
+          ru: '\u041a\u043e\u043d\u0441\u0435\u0440\u0432\u0430\u0442\u0438\u0432\u043d\u044b\u0439',
+          ar: '\u062a\u062d\u0641\u0638\u064a',
+          id: 'Konservatif',
+        })
       : orbitState.bot.risk === 'aggressive'
-        ? language === 'es'
-          ? 'Agresivo'
-          : 'Aggressive'
-        : language === 'es'
-          ? 'Moderado'
-          : 'Balanced');
+        ? contextText(language, {
+            en: 'Aggressive',
+            es: 'Agresivo',
+            pt: 'Agressivo',
+            'zh-Hans': '\u6fc0\u8fdb',
+            hi: '\u0906\u0915\u094d\u0930\u093e\u092e\u0915',
+            ru: '\u0410\u0433\u0440\u0435\u0441\u0441\u0438\u0432\u043d\u044b\u0439',
+            ar: '\u0639\u062f\u0648\u0627\u0646\u064a',
+            id: 'Agresif',
+          })
+        : contextText(language, {
+            en: 'Balanced',
+            es: 'Moderado',
+            pt: 'Equilibrado',
+            'zh-Hans': '\u5747\u8861',
+            hi: '\u0938\u0902\u0924\u0941\u0932\u093f\u0924',
+            ru: '\u0421\u0431\u0430\u043b\u0430\u043d\u0441\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439',
+            ar: '\u0645\u062a\u0648\u0627\u0632\u0646',
+            id: 'Seimbang',
+          }));
   const botTokenLabel =
     input.botTokenLabel ??
     previousContext?.botTokenLabel ??
@@ -268,7 +293,16 @@ export function buildAstraContext(
     (orbitState.bot.allocatedUsd > 0
       ? `${formatUsd(language, orbitState.bot.allocatedUsd)} · ${orbitState.bot.allocationPct}%`
       : selectedQuoteAsset
-        ? `${orbitState.bot.allocationPct}% ${language === 'es' ? 'del saldo' : 'of balance'}`
+        ? `${orbitState.bot.allocationPct}% ${contextText(language, {
+            en: 'of balance',
+            es: 'del saldo',
+            pt: 'do saldo',
+            'zh-Hans': '\u7684\u4f59\u989d',
+            hi: '\u092c\u0948\u0932\u0947\u0902\u0938 \u0915\u093e',
+            ru: '\u043e\u0442 \u0431\u0430\u043b\u0430\u043d\u0441\u0430',
+            ar: '\u0645\u0646 \u0627\u0644\u0631\u0635\u064a\u062f',
+            id: 'dari saldo',
+          })}`
         : undefined);
   const botDailyPnlLabel =
     input.botDailyPnlLabel ??
@@ -282,18 +316,39 @@ export function buildAstraContext(
     input.botStatusLabel ??
     previousContext?.botStatusLabel ??
     (orbitState.bot.enabled
-      ? language === 'es'
-        ? 'Bot activo'
-        : 'Bot enabled'
-      : language === 'es'
-        ? 'Bot en pausa'
-        : 'Bot paused');
+      ? contextText(language, {
+          en: 'Bot enabled',
+          es: 'Bot activo',
+          pt: 'Bot ativo',
+          'zh-Hans': 'Bot \u5df2\u542f\u7528',
+          hi: 'Bot \u0938\u0915\u094d\u0930\u093f\u092f',
+          ru: '\u0411\u043e\u0442 \u0430\u043a\u0442\u0438\u0432\u0435\u043d',
+          ar: '\u0627\u0644\u0628\u0648\u062a \u0646\u0634\u0637',
+          id: 'Bot aktif',
+        })
+      : contextText(language, {
+          en: 'Bot paused',
+          es: 'Bot en pausa',
+          pt: 'Bot pausado',
+          'zh-Hans': 'Bot \u5df2\u6682\u505c',
+          hi: 'Bot \u0930\u0941\u0915\u093e \u0939\u0948',
+          ru: '\u0411\u043e\u0442 \u043d\u0430 \u043f\u0430\u0443\u0437\u0435',
+          ar: '\u0627\u0644\u0628\u0648\u062a \u0645\u062a\u0648\u0642\u0641',
+          id: 'Bot dijeda',
+        }));
   const botMaxTradesLabel =
     input.botMaxTradesLabel ??
     previousContext?.botMaxTradesLabel ??
-    (language === 'es'
-      ? `${orbitState.bot.maxDailyTrades} trades max/dia`
-      : `${orbitState.bot.maxDailyTrades} max trades/day`);
+    `${orbitState.bot.maxDailyTrades} ${contextText(language, {
+      en: 'max trades/day',
+      es: 'trades max/dia',
+      pt: 'trades max/dia',
+      'zh-Hans': '\u7b14/\u65e5\u6700\u5927\u4ea4\u6613',
+      hi: '\u092a\u094d\u0930\u0924\u093f \u0926\u093f\u0928 \u0905\u0927\u093f\u0915\u0924\u092e trades',
+      ru: '\u043c\u0430\u043a\u0441. \u0441\u0434\u0435\u043b\u043e\u043a/\u0434\u0435\u043d\u044c',
+      ar: '\u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649 \u0644\u0644\u0635\u0641\u0642\u0627\u062a/\u0627\u0644\u064a\u0648\u0645',
+      id: 'maks trade/hari',
+    })}`;
 
   const screenName =
     input.screenName ??

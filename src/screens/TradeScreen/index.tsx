@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { OrbitChartTimeframe } from '../../../components/charts/chartData';
+import { pickLanguageText } from '../../../constants/i18n';
 import { RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -29,6 +30,7 @@ export default function TradeScreen() {
     pairId?: string;
     tokenId?: string;
     side?: 'buy' | 'sell';
+    price?: string;
   }>();
   const { colors } = useAppTheme();
   const { selectedPair, loading, error, selectPairById, refreshSelectedPair } =
@@ -81,6 +83,16 @@ export default function TradeScreen() {
   }, [params.side, setSide]);
 
   useEffect(() => {
+    const nextPrice = params.price ? Number(params.price) : Number.NaN;
+    if (!Number.isFinite(nextPrice) || nextPrice <= 0) {
+      return;
+    }
+
+    setOrderType('limit');
+    setPrice(String(nextPrice));
+  }, [params.price, setOrderType, setPrice]);
+
+  useEffect(() => {
     const nextPairId = selectedPair?.id;
     if (!nextPairId) {
       return;
@@ -112,7 +124,20 @@ export default function TradeScreen() {
       surface: 'trade' as const,
       path: '/spot',
       language,
-      screenName: language === 'en' ? 'Trade' : 'Operar',
+      screenName: pickLanguageText(
+        language,
+        {
+          en: 'Trade',
+          es: 'Operar',
+          pt: 'Trade',
+          'zh-Hans': '\u4ea4\u6613',
+          hi: '\u091f\u094d\u0930\u0947\u0921',
+          ru: '\u0422\u043e\u0440\u0433\u043e\u0432\u043b\u044f',
+          ar: '\u0627\u0644\u062a\u062f\u0627\u0648\u0644',
+          id: 'Trade',
+        },
+        'en',
+      ),
       summary: `Estas en ${pair.symbol} con formulario de orden, libro compacto y acceso al grafico completo.`,
       currentTask: 'trade_execution',
       currentPairSymbol: pair.symbol,
@@ -178,7 +203,20 @@ export default function TradeScreen() {
     }
     recordAstraError({
       surface: 'trade',
-      title: language === 'en' ? 'Trade issue' : 'Problema en Operar',
+      title: pickLanguageText(
+        language,
+        {
+          en: 'Trade issue',
+          es: 'Problema en Operar',
+          pt: 'Problema no Trade',
+          'zh-Hans': '\u4ea4\u6613\u95ee\u9898',
+          hi: '\u091f\u094d\u0930\u0947\u0921 \u0938\u092e\u0938\u094d\u092f\u093e',
+          ru: '\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0430 \u0432 \u0442\u043e\u0440\u0433\u043e\u0432\u043b\u0435',
+          ar: '\u0645\u0634\u0643\u0644\u0629 \u0641\u064a \u0627\u0644\u062a\u062f\u0627\u0648\u0644',
+          id: 'Masalah Trade',
+        },
+        'en',
+      ),
       body: error,
       linkedGuideId: 'resolve_error',
     });
@@ -229,7 +267,20 @@ export default function TradeScreen() {
   function openAstraForTrade() {
     openAstra({
       ...(astraTradeContext ?? {}),
-      surfaceTitle: language === 'en' ? 'Trade' : 'Operar',
+      surfaceTitle: pickLanguageText(
+        language,
+        {
+          en: 'Trade',
+          es: 'Operar',
+          pt: 'Trade',
+          'zh-Hans': '\u4ea4\u6613',
+          hi: '\u091f\u094d\u0930\u0947\u0921',
+          ru: '\u0422\u043e\u0440\u0433\u043e\u0432\u043b\u044f',
+          ar: '\u0627\u0644\u062a\u062f\u0627\u0648\u0644',
+          id: 'Trade',
+        },
+        'en',
+      ),
     });
   }
 
@@ -256,8 +307,8 @@ export default function TradeScreen() {
         style={[
           styles.executionCard,
           {
-            backgroundColor: withOpacity(colors.card, 0.94),
-            borderColor: colors.border,
+            backgroundColor: 'transparent',
+            borderColor: withOpacity(colors.border, 0.72),
           },
         ]}
       >
@@ -299,7 +350,8 @@ export default function TradeScreen() {
               status={realtimeFeed.status}
               statusLabel={getTradeRealtimeStatusLabel(realtimeFeed.status)}
               error={realtimeFeed.error}
-              onPickPrice={(nextPrice) => {
+              onPickPrice={(nextPrice, nextSide) => {
+                setSide(nextSide);
                 setOrderType('limit');
                 setPrice(String(nextPrice));
               }}
@@ -331,13 +383,12 @@ export default function TradeScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 10,
+    gap: 8,
     paddingBottom: 18,
   },
   executionCard: {
-    borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 10,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
     paddingVertical: 10,
   },
   executionGrid: {
@@ -346,11 +397,11 @@ const styles = StyleSheet.create({
   },
   formColumn: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 12,
   },
   bookColumn: {
     width: 136,
-    paddingLeft: 10,
+    paddingLeft: 12,
     gap: 8,
     borderLeftWidth: 1,
   },

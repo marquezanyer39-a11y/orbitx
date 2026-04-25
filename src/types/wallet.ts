@@ -1,5 +1,5 @@
 export type SupportedNetwork = 'ethereum' | 'base' | 'bnb' | 'solana';
-export type WalletType = 'orbitx' | 'imported' | 'external';
+export type WalletType = 'orbitx' | 'imported' | 'external' | 'linked';
 export type WalletEnvironment = 'spot' | 'web3';
 export type ExternalWalletProvider = 'metamask' | 'walletconnect';
 

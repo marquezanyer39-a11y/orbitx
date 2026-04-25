@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
 import {
   AuthError,
+  type User,
   type AuthChangeEvent,
   type Session,
   createClient,
@@ -28,6 +29,14 @@ interface OrbitAuthCallbackResult extends OrbitAuthResult {
 interface NormalizedOrbitAuthError {
   message: string;
   code?: string;
+}
+
+interface OrbitMetadataMutationResult {
+  ok: boolean;
+  message: string;
+  code?: string;
+  session?: Session | null;
+  user?: User | null;
 }
 
 function isConfiguredEnvValue(value: string) {
@@ -340,6 +349,82 @@ export async function getOrbitAuthSession() {
 
   const { data } = await supabase.auth.getSession();
   return data.session;
+}
+
+export async function getOrbitAuthUser() {
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    throw error;
+  }
+
+  return data.user ?? null;
+}
+
+export async function getOrbitAuthUserMetadata(): Promise<Record<string, unknown> | null> {
+  const user = await getOrbitAuthUser();
+  if (!user) {
+    return null;
+  }
+
+  if (user.user_metadata && typeof user.user_metadata === 'object') {
+    return user.user_metadata as Record<string, unknown>;
+  }
+
+  return {};
+}
+
+export async function mergeOrbitAuthUserMetadata(
+  patch: Record<string, unknown>,
+): Promise<OrbitMetadataMutationResult> {
+  if (!supabase) {
+    return {
+      ok: false,
+      message: 'El acceso por correo no esta configurado.',
+      code: 'auth_not_configured',
+    };
+  }
+
+  const user = await getOrbitAuthUser();
+  if (!user) {
+    return {
+      ok: false,
+      message: 'No hay una sesion autenticada para vincular datos.',
+      code: 'auth_not_authenticated',
+    };
+  }
+
+  const currentMetadata =
+    user.user_metadata && typeof user.user_metadata === 'object'
+      ? (user.user_metadata as Record<string, unknown>)
+      : {};
+
+  const { data, error } = await supabase.auth.updateUser({
+    data: {
+      ...currentMetadata,
+      ...patch,
+    },
+  });
+
+  if (error) {
+    const normalized = normalizeAuthError(error, 'No se pudo actualizar el perfil autenticado.');
+    return {
+      ok: false,
+      message: normalized.message,
+      code: normalized.code ?? error.code ?? 'auth_error',
+    };
+  }
+
+  return {
+    ok: true,
+    message: 'Auth metadata updated.',
+    code: 'metadata_updated',
+    session: await getOrbitAuthSession(),
+    user: data.user ?? null,
+  };
 }
 
 export function subscribeToOrbitAuth(

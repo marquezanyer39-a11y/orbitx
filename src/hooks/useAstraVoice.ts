@@ -16,7 +16,20 @@ import { executeAstraAction } from '../services/astra/astraActions';
 import { hasAstraBrainBackend, requestAstraBrainResponse } from '../services/astra/astraApi';
 import { getAstraCapabilities } from '../services/astra/astraCapabilities';
 import { buildAstraUnavailableResponse } from '../services/astra/astraCore';
-import { getAstraVoiceCopy } from '../services/astra/astraVoiceCopy';
+import {
+  getAstraVoiceCopy,
+  getFriendlyVoiceConnectionError,
+  getMicrophoneBusyMessage,
+  getMissingRecognitionServiceMessage,
+  getPremiumVoiceNotConfiguredMessage,
+  getPremiumVoiceStillUnavailableMessage,
+  getPremiumVoiceUnavailableMessage,
+  getRecognitionUnavailableMessage,
+  getStaleVoiceBuildMessage,
+  getVoiceConnectionLostMessage,
+  getVoiceInputDisabledMessage,
+  getVoicePlaybackErrorMessage,
+} from '../services/astra/astraVoiceCopy';
 import { getAstraVoiceRuntimeConfig } from '../services/astra/astraRuntimeConfig';
 import {
   DEFAULT_ASTRA_VOICE_PRESET_ID,
@@ -65,28 +78,6 @@ const PREFERRED_ANDROID_RECOGNITION_SERVICES = [
   'com.samsung.android.bixby.agent',
   'com.google.android.tts',
 ] as const;
-
-function createFriendlyVoiceError(message: string) {
-  return message.trim() || 'No pudimos conectar con Astra. Intenta otra vez.';
-}
-
-function buildStaleVoiceBuildMessage(language: AstraSupportContext['language']) {
-  return language === 'es'
-    ? 'Tu app instalada no incluye el modulo de voz actual. Reinstala la Development Build de OrbitX.'
-    : 'Your installed app does not include the current voice module. Reinstall the OrbitX development build.';
-}
-
-function buildMissingRecognitionServiceMessage(language: AstraSupportContext['language']) {
-  return language === 'es'
-    ? 'No encontramos un servicio de reconocimiento de voz disponible en tu Android. Instala o activa Google Speech Services y vuelve a intentarlo.'
-    : 'We could not find a speech recognition service on your Android device. Install or enable Google Speech Services and try again.';
-}
-
-function buildRecognitionUnavailableMessage(language: AstraSupportContext['language']) {
-  return language === 'es'
-    ? 'El reconocimiento de voz no esta disponible en este dispositivo. Revisa que Google Speech Services este activo.'
-    : 'Speech recognition is not available on this device. Check that Google Speech Services is enabled.';
-}
 
 function chooseRecognitionService(
   installedServices: string[],
@@ -434,9 +425,9 @@ export function useAstraVoice() {
     clearResumeConversationTimeout();
     pendingAutoResumeRef.current = false;
     speechPlaybackActiveRef.current = false;
-    setErrorMessage(createFriendlyVoiceError(message));
+    setErrorMessage(getFriendlyVoiceConnectionError(language, message));
     setVoiceState('error', 'friendly-error');
-  }, [clearResumeConversationTimeout, setVoiceState]);
+  }, [clearResumeConversationTimeout, language, setVoiceState]);
 
   const ensureRecognitionModule = useCallback(async () => {
     if (recognitionModuleRef.current) {
@@ -451,14 +442,14 @@ export function useAstraVoice() {
       const module = await import('expo-speech-recognition');
       const recognitionModule = module.ExpoSpeechRecognitionModule;
       if (!recognitionModule) {
-        throw new Error(buildStaleVoiceBuildMessage(language));
+        throw new Error(getStaleVoiceBuildMessage(language));
       }
 
       recognitionModuleRef.current = recognitionModule;
       return recognitionModule;
     } catch (error) {
       devWarn('[OrbitX][AstraVoice] recognition module unavailable', error);
-      throw new Error(buildStaleVoiceBuildMessage(language));
+      throw new Error(getStaleVoiceBuildMessage(language));
     }
   }, [copy.unavailableInExpoGo, language]);
 
@@ -499,10 +490,10 @@ export function useAstraVoice() {
 
       if (!recognitionAvailable) {
         if (!installedServices.length) {
-          throw new Error(buildMissingRecognitionServiceMessage(language));
+          throw new Error(getMissingRecognitionServiceMessage(language));
         }
 
-        throw new Error(buildRecognitionUnavailableMessage(language));
+        throw new Error(getRecognitionUnavailableMessage(language));
       }
 
       return {
@@ -656,16 +647,7 @@ export function useAstraVoice() {
         }
 
         voiceFallbackNoticeShownRef.current = true;
-        showToast(
-          reason === 'VOICE_QUOTA_EXCEEDED'
-            ? language === 'es'
-              ? 'La voz premium de Astra no esta disponible porque ElevenLabs se quedo sin creditos. Usaremos una voz local temporalmente.'
-              : 'Astra premium voice is unavailable because the ElevenLabs account is out of credits. We will use a temporary local voice.'
-            : language === 'es'
-              ? 'La voz premium de Astra no esta disponible. Usaremos una voz local temporalmente.'
-              : 'Astra premium voice is unavailable. We will use a temporary local voice.',
-          'info',
-        );
+        showToast(copy.premiumVoiceFallback, 'info');
         devWarn('[OrbitX][AstraVoice] explicit device fallback notice', { reason });
       };
 
@@ -707,11 +689,7 @@ export function useAstraVoice() {
             speechPlaybackActiveRef.current = false;
             pendingAutoResumeRef.current = false;
             if (isMountedRef.current) {
-              setFriendlyError(
-                language === 'es'
-                  ? 'No pudimos reproducir la voz de Astra.'
-                  : 'We could not play Astra voice.',
-              );
+              setFriendlyError(getVoicePlaybackErrorMessage(language));
             }
           },
         });
@@ -727,11 +705,7 @@ export function useAstraVoice() {
           blockedUntil: premiumVoiceBlockedUntilRef.current,
         });
         if (!runtimeConfig.allowDeviceFallback) {
-          setFriendlyError(
-            language === 'es'
-              ? 'La voz premium de Astra sigue no disponible en este momento.'
-              : 'Astra premium voice is still unavailable right now.',
-          );
+          setFriendlyError(getPremiumVoiceStillUnavailableMessage(language));
           return;
         }
 
@@ -761,11 +735,7 @@ export function useAstraVoice() {
           }
 
           if (!runtimeConfig.allowDeviceFallback) {
-            setFriendlyError(
-              language === 'es'
-                ? 'La voz premium de Astra no esta disponible en este momento. Intenta de nuevo en unos segundos.'
-                : 'Astra premium voice is not available right now. Try again in a few seconds.',
-            );
+            setFriendlyError(getPremiumVoiceUnavailableMessage(language));
             return;
           }
 
@@ -776,11 +746,7 @@ export function useAstraVoice() {
       }
 
       if (!runtimeConfig.allowDeviceFallback) {
-        setFriendlyError(
-          language === 'es'
-            ? 'La voz premium de Astra no esta configurada para esta build.'
-            : 'Astra premium voice is not configured for this build.',
-        );
+        setFriendlyError(getPremiumVoiceNotConfiguredMessage(language));
         return;
       }
 
@@ -853,9 +819,7 @@ export function useAstraVoice() {
             reason:
               error instanceof Error
                 ? error.message
-                : language === 'es'
-                  ? 'No pudimos conectar con Astra.'
-                  : 'We could not connect to Astra.',
+                : getFriendlyVoiceConnectionError(language, ''),
             retryQuestion: spokenText,
           });
         }
@@ -919,9 +883,7 @@ export function useAstraVoice() {
         const message =
           error instanceof Error
             ? error.message
-            : language === 'es'
-              ? 'No pudimos conectar con Astra. Intenta otra vez.'
-              : 'We could not connect to Astra. Try again.';
+            : getFriendlyVoiceConnectionError(language, '');
         setFriendlyError(message);
       }
     },
@@ -996,16 +958,12 @@ export function useAstraVoice() {
           }
 
           if (event.error === 'service-not-allowed') {
-            setFriendlyError(buildRecognitionUnavailableMessage(language));
+            setFriendlyError(getRecognitionUnavailableMessage(language));
             return;
           }
 
           if (event.error === 'busy') {
-            setFriendlyError(
-              language === 'es'
-                ? 'Astra ya esta usando el microfono. Espera un momento e intenta otra vez.'
-                : 'Astra is already using the microphone. Wait a moment and try again.',
-            );
+            setFriendlyError(getMicrophoneBusyMessage(language));
             return;
           }
 
@@ -1019,11 +977,7 @@ export function useAstraVoice() {
             return;
           }
 
-          setFriendlyError(
-            language === 'es'
-              ? 'Se perdio la conexion de voz. Intenta otra vez.'
-              : 'The voice connection was lost. Try again.',
-          );
+          setFriendlyError(getVoiceConnectionLostMessage(language));
         }),
         recognitionModule.addListener('volumechange', (event: { value: number }) => {
           setInputLevel(Math.max(0, Math.min((event.value + 2) / 12, 1)));
@@ -1073,11 +1027,7 @@ export function useAstraVoice() {
 
   const startConversation = useCallback(async () => {
     if (!voicePreferences.voiceInputEnabled) {
-      setFriendlyError(
-        language === 'es'
-          ? 'La entrada por voz esta desactivada. Actívala para hablar con Astra.'
-          : 'Voice input is disabled. Enable it to talk to Astra.',
-      );
+      setFriendlyError(getVoiceInputDisabledMessage(language));
       return;
     }
 

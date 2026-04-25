@@ -33,8 +33,8 @@ export function TradeChart({
           style={[
             styles.compactShell,
             {
-              backgroundColor: withOpacity(colors.fieldBackground, 0.88),
-              borderColor: colors.border,
+              backgroundColor: withOpacity(colors.fieldBackground, 0.34),
+              borderColor: withOpacity(colors.border, 0.42),
             },
           ]}
         >
@@ -78,7 +78,10 @@ export function TradeChart({
       <View
         style={[
           styles.compactShell,
-          { backgroundColor: withOpacity(colors.fieldBackground, 0.88), borderColor: colors.border },
+          {
+            backgroundColor: withOpacity(colors.fieldBackground, 0.34),
+            borderColor: withOpacity(colors.border, 0.42),
+          },
         ]}
       >
         <OrbitLightweightChart
@@ -131,7 +134,10 @@ export function TradeChart({
       <View
         style={[
           styles.expandedShell,
-          { backgroundColor: withOpacity(colors.fieldBackground, 0.88), borderColor: colors.border },
+          {
+            backgroundColor: withOpacity(colors.fieldBackground, 0.28),
+            borderColor: withOpacity(colors.border, 0.38),
+          },
         ]}
       >
         <OrbitLightweightChart
@@ -181,18 +187,18 @@ const styles = StyleSheet.create({
   },
   expandedShell: {
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 10,
     overflow: 'hidden',
-    paddingHorizontal: 6,
-    paddingTop: 6,
-    paddingBottom: 2,
+    paddingHorizontal: 2,
+    paddingTop: 2,
+    paddingBottom: 0,
   },
   compactShell: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 8,
     overflow: 'hidden',
-    paddingHorizontal: 4,
-    paddingTop: 4,
+    paddingHorizontal: 2,
+    paddingTop: 2,
     paddingBottom: 0,
   },
   nativePreviewBars: {

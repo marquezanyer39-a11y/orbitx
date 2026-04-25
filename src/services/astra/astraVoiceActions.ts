@@ -1,13 +1,10 @@
+import { pickLanguageText } from '../../../constants/i18n';
 import type { LanguageCode } from '../../../types';
 import type { AstraAction } from '../../types/astra';
 import type { AstraVoiceActionPayload } from '../../types/astraVoice';
 
-function translateLabel(
-  language: LanguageCode,
-  englishLabel: string,
-  spanishLabel: string,
-) {
-  return language === 'es' ? spanishLabel : englishLabel;
+function translateLabel(language: LanguageCode, values: Partial<Record<LanguageCode, string>>) {
+  return pickLanguageText(language, values, 'en');
 }
 
 export function mapVoiceActionToAstraAction(
@@ -33,7 +30,16 @@ export function mapVoiceActionToAstraAction(
       case 'wallet_import':
         return {
           id: `voice-nav-${voiceAction.target}`,
-          label: translateLabel(language, 'Open', 'Abrir'),
+          label: translateLabel(language, {
+            en: 'Open',
+            es: 'Abrir',
+            pt: 'Abrir',
+            'zh-Hans': '\u6253\u5f00',
+            hi: '\u0916\u094b\u0932\u0947\u0902',
+            ru: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c',
+            ar: '\u0641\u062a\u062d',
+            id: 'Buka',
+          }),
           icon: 'arrow-forward-outline',
           tone: 'primary',
           kind: 'open_screen',
@@ -47,7 +53,16 @@ export function mapVoiceActionToAstraAction(
   if (voiceAction.type === 'open_chart') {
     return {
       id: `voice-chart-${voiceAction.value ?? 'current'}`,
-      label: translateLabel(language, 'Open chart', 'Abrir gráfico'),
+      label: translateLabel(language, {
+        en: 'Open chart',
+        es: 'Abrir gr\u00e1fico',
+        pt: 'Abrir gr\u00e1fico',
+        'zh-Hans': '\u6253\u5f00\u56fe\u8868',
+        hi: '\u091a\u093e\u0930\u094d\u091f \u0916\u094b\u0932\u0947\u0902',
+        ru: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0433\u0440\u0430\u0444\u0438\u043a',
+        ar: '\u0641\u062a\u062d \u0627\u0644\u0645\u062e\u0637\u0637',
+        id: 'Buka grafik',
+      }),
       icon: 'stats-chart-outline',
       tone: 'primary',
       kind: 'open_chart',
@@ -71,7 +86,16 @@ export function mapVoiceActionToAstraAction(
 
     return {
       id: `voice-language-${voiceAction.value}`,
-      label: translateLabel(language, 'Change language', 'Cambiar idioma'),
+      label: translateLabel(language, {
+        en: 'Change language',
+        es: 'Cambiar idioma',
+        pt: 'Mudar idioma',
+        'zh-Hans': '\u5207\u6362\u8bed\u8a00',
+        hi: '\u092d\u093e\u0937\u093e \u092c\u0926\u0932\u0947\u0902',
+        ru: '\u0421\u043c\u0435\u043d\u0438\u0442\u044c \u044f\u0437\u044b\u043a',
+        ar: '\u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0644\u063a\u0629',
+        id: 'Ganti bahasa',
+      }),
       icon: 'language-outline',
       tone: 'primary',
       kind: 'change_language',
@@ -82,7 +106,16 @@ export function mapVoiceActionToAstraAction(
   if (voiceAction.type === 'open_settings') {
     return {
       id: 'voice-open-settings',
-      label: translateLabel(language, 'Open security', 'Abrir seguridad'),
+      label: translateLabel(language, {
+        en: 'Open security',
+        es: 'Abrir seguridad',
+        pt: 'Abrir seguran\u00e7a',
+        'zh-Hans': '\u6253\u5f00\u5b89\u5168',
+        hi: '\u0938\u0941\u0930\u0915\u094d\u0937\u093e \u0916\u094b\u0932\u0947\u0902',
+        ru: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c',
+        ar: '\u0641\u062a\u062d \u0627\u0644\u0623\u0645\u0627\u0646',
+        id: 'Buka keamanan',
+      }),
       icon: 'shield-checkmark-outline',
       tone: 'secondary',
       kind: 'go_security_settings',

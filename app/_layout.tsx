@@ -17,15 +17,16 @@ import { OrbitBullLoader } from '../components/common/OrbitBullLoader';
 import { OrbitLogo } from '../components/common/OrbitLogo';
 import { PrimaryButton } from '../components/common/PrimaryButton';
 import { ToastHost } from '../components/common/ToastHost';
-import { getLocaleDirection } from '../constants/i18n';
+import { getLocaleDirection, pickLanguageText } from '../constants/i18n';
+import { FONT } from '../constants/theme';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { useOrbitBootstrap } from '../hooks/useOrbitBootstrap';
 import { useOrbitStore } from '../store/useOrbitStore';
+import { AstraRuntimeBridge } from '../src/components/astra/AstraRuntimeBridge';
+import { AstraVoiceSheet } from '../src/components/astra/AstraVoiceSheet';
 import { useAuthStore } from '../src/store/authStore';
 import { useUiStore } from '../src/store/uiStore';
 import { devWarn } from '../src/utils/devLog';
-import { AstraRuntimeBridge } from '../src/components/astra/AstraRuntimeBridge';
-import { AstraVoiceSheet } from '../src/components/astra/AstraVoiceSheet';
 import {
   getOrbitXBiometricAvailability,
   unlockOrbitXWithBiometrics,
@@ -60,70 +61,56 @@ export default function RootLayout() {
   const fontsReady = fontsLoaded || startupFallbackReady;
   const appReady = hydrationReady && fontsReady;
   const direction = getLocaleDirection(language);
-  const startupLabel =
-    language === 'es'
-      ? 'Iniciando acceso seguro...'
-      : language === 'pt'
-        ? 'Iniciando acesso seguro...'
-        : language === 'zh-Hans'
-          ? '正在启动安全访问...'
-          : language === 'hi'
-            ? 'सुरक्षित प्रवेश शुरू हो रहा है...'
-            : language === 'ru'
-              ? 'Запускаем безопасный доступ...'
-              : language === 'ar'
-                ? 'جارٍ بدء الوصول الآمن...'
-                : language === 'id'
-                  ? 'Memulai akses aman...'
-                  : 'Starting secure access...';
-  const biometricTitle =
-    language === 'es'
-      ? 'OrbitX bloqueado'
-      : language === 'pt'
-        ? 'OrbitX bloqueado'
-        : language === 'zh-Hans'
-          ? 'OrbitX 已锁定'
-          : language === 'hi'
-            ? 'OrbitX लॉक है'
-            : language === 'ru'
-              ? 'OrbitX заблокирован'
-              : language === 'ar'
-                ? 'OrbitX مقفل'
-                : language === 'id'
-                  ? 'OrbitX terkunci'
-                  : 'OrbitX locked';
-  const biometricBody =
-    language === 'es'
-      ? 'Valida tu huella o rostro para entrar a tu cuenta.'
-      : language === 'pt'
-        ? 'Valide sua biometria para entrar na sua conta.'
-        : language === 'zh-Hans'
-          ? '请验证指纹或面容以进入你的账户。'
-          : language === 'hi'
-            ? 'अपने खाते में प्रवेश करने के लिए अपनी बायोमेट्रिक पहचान सत्यापित करें।'
-            : language === 'ru'
-              ? 'Подтвердите отпечаток или лицо, чтобы войти в аккаунт.'
-              : language === 'ar'
-                ? 'تحقق من بصمتك أو وجهك للدخول إلى حسابك.'
-                : language === 'id'
-                  ? 'Verifikasi biometrik untuk masuk ke akunmu.'
-                  : 'Verify your biometrics to enter your account.';
-  const biometricCta =
-    language === 'es'
-      ? 'Desbloquear'
-      : language === 'pt'
-        ? 'Desbloquear'
-        : language === 'zh-Hans'
-          ? '解锁'
-          : language === 'hi'
-            ? 'अनलॉक करें'
-            : language === 'ru'
-              ? 'Разблокировать'
-              : language === 'ar'
-                ? 'إلغاء القفل'
-                : language === 'id'
-                  ? 'Buka kunci'
-                  : 'Unlock';
+  const startupLabel = pickLanguageText(language, {
+    en: 'Starting secure access...',
+    es: 'Iniciando acceso seguro...',
+    pt: 'Iniciando acesso seguro...',
+    'zh-Hans': '\u6b63\u5728\u542f\u52a8\u5b89\u5168\u8bbf\u95ee...',
+    hi: '\u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u092a\u094d\u0930\u0935\u0947\u0936 \u0936\u0941\u0930\u0942 \u0939\u094b \u0930\u0939\u093e \u0939\u0948...',
+    ru: '\u0417\u0430\u043f\u0443\u0441\u043a\u0430\u0435\u043c \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u044b\u0439 \u0434\u043e\u0441\u0442\u0443\u043f...',
+    ar: '\u062c\u0627\u0631\u064d \u0628\u062f\u0621 \u0627\u0644\u0648\u0635\u0648\u0644 \u0627\u0644\u0622\u0645\u0646...',
+    id: 'Memulai akses aman...',
+  });
+  const biometricTitle = pickLanguageText(language, {
+    en: 'OrbitX locked',
+    es: 'OrbitX bloqueado',
+    pt: 'OrbitX bloqueado',
+    'zh-Hans': 'OrbitX \u5df2\u9501\u5b9a',
+    hi: 'OrbitX \u0932\u0949\u0915 \u0939\u0948',
+    ru: 'OrbitX \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d',
+    ar: 'OrbitX \u0645\u0642\u0641\u0644',
+    id: 'OrbitX terkunci',
+  });
+  const biometricBody = pickLanguageText(language, {
+    en: 'Verify your biometrics to enter your account.',
+    es: 'Valida tu huella o rostro para entrar a tu cuenta.',
+    pt: 'Valide sua biometria para entrar na sua conta.',
+    'zh-Hans': '\u8bf7\u9a8c\u8bc1\u6307\u7eb9\u6216\u9762\u5bb9\u4ee5\u8fdb\u5165\u4f60\u7684\u8d26\u6237\u3002',
+    hi: '\u0905\u092a\u0928\u0947 \u0916\u093e\u0924\u0947 \u092e\u0947\u0902 \u092a\u094d\u0930\u0935\u0947\u0936 \u0915\u0930\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f \u0905\u092a\u0928\u0940 \u092c\u093e\u092f\u094b\u092e\u0947\u091f\u094d\u0930\u093f\u0915 \u092a\u0939\u091a\u093e\u0928 \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0915\u0930\u0947\u0902\u0964',
+    ru: '\u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438 \u043e\u0442\u043f\u0435\u0447\u0430\u0442\u043e\u043a \u0438\u043b\u0438 \u043b\u0438\u0446\u043e, \u0447\u0442\u043e\u0431\u044b \u0432\u043e\u0439\u0442\u0438 \u0432 \u0430\u043a\u043a\u0430\u0443\u043d\u0442.',
+    ar: '\u062a\u062d\u0642\u0642 \u0645\u0646 \u0628\u0635\u0645\u062a\u0643 \u0623\u0648 \u0648\u062c\u0647\u0643 \u0644\u0644\u062f\u062e\u0648\u0644 \u0625\u0644\u0649 \u062d\u0633\u0627\u0628\u0643.',
+    id: 'Verifikasi biometrik untuk masuk ke akunmu.',
+  });
+  const biometricCta = pickLanguageText(language, {
+    en: 'Unlock',
+    es: 'Desbloquear',
+    pt: 'Desbloquear',
+    'zh-Hans': '\u89e3\u9501',
+    hi: '\u0905\u0928\u0932\u0949\u0915 \u0915\u0930\u0947\u0902',
+    ru: '\u0420\u0430\u0437\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u0442\u044c',
+    ar: '\u0625\u0644\u063a\u0627\u0621 \u0627\u0644\u0642\u0641\u0644',
+    id: 'Buka kunci',
+  });
+  const biometricsUnavailableToast = pickLanguageText(language, {
+    en: 'Biometrics are unavailable. We will continue with secure access.',
+    es: 'La biometria no esta disponible. Continuaremos con acceso seguro.',
+    pt: 'A biometria nao esta disponivel. Vamos continuar com acesso seguro.',
+    'zh-Hans': '\u751f\u7269\u8bc6\u522b\u4e0d\u53ef\u7528\uff0c\u6211\u4eec\u5c06\u7ee7\u7eed\u4f7f\u7528\u5b89\u5168\u8bbf\u95ee\u3002',
+    hi: '\u092c\u093e\u092f\u094b\u092e\u0947\u091f\u094d\u0930\u093f\u0915 \u0909\u092a\u0932\u092c\u094d\u0927 \u0928\u0939\u0940\u0902 \u0939\u0948\u0964 \u0939\u092e \u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u090f\u0915\u094d\u0938\u0947\u0938 \u0915\u0947 \u0938\u093e\u0925 \u091c\u093e\u0930\u0940 \u0930\u0916\u0947\u0902\u0917\u0947\u0964',
+    ru: '\u0411\u0438\u043e\u043c\u0435\u0442\u0440\u0438\u044f \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u0430. \u041c\u044b \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0438\u043c \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u044b\u0439 \u0432\u0445\u043e\u0434.',
+    ar: '\u0627\u0644\u0628\u0635\u0645\u0627\u062a \u0627\u0644\u062d\u064a\u0648\u064a\u0629 \u063a\u064a\u0631 \u0645\u062a\u0627\u062d\u0629. \u0633\u0646\u062a\u0627\u0628\u0639 \u0628\u0627\u0644\u0648\u0635\u0648\u0644 \u0627\u0644\u0622\u0645\u0646.',
+    id: 'Biometrik tidak tersedia. Kami akan melanjutkan dengan akses aman.',
+  });
 
   useOrbitBootstrap();
 
@@ -167,7 +154,7 @@ export default function RootLayout() {
             },
           }));
           setBiometricUnlocked(true);
-          showToast('Biometria no disponible. Continuamos con acceso seguro.', 'info');
+          showToast(biometricsUnavailableToast, 'info');
           return;
         }
 
@@ -184,7 +171,7 @@ export default function RootLayout() {
     return () => {
       cancelled = true;
     };
-  }, [appReady, biometricsEnabled, sessionStatus, showToast]);
+  }, [appReady, biometricsEnabled, biometricsUnavailableToast, sessionStatus, showToast]);
 
   useEffect(() => {
     if (!authHasHydrated || authHasBootstrapped) {
@@ -278,8 +265,18 @@ export default function RootLayout() {
         }}
       >
         <OrbitLogo size={88} />
-        <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>{biometricTitle}</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 22 }}>
+        <Text style={{ color: colors.text, fontSize: 24, fontFamily: FONT.bold }}>
+          {biometricTitle}
+        </Text>
+        <Text
+          style={{
+            color: colors.textMuted,
+            fontSize: 14,
+            textAlign: 'center',
+            lineHeight: 22,
+            fontFamily: FONT.regular,
+          }}
+        >
           {biometricBody}
         </Text>
         {biometricChecking ? <ActivityIndicator color={colors.primary} /> : null}

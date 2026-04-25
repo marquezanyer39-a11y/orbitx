@@ -16,7 +16,12 @@ import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { useOrbitStore } from '../../../store/useOrbitStore';
 import { useAstraVoice } from '../../hooks/useAstraVoice';
-import { getAstraVoiceCopy, getAstraVoiceStateLabel } from '../../services/astra/astraVoiceCopy';
+import {
+  getAstraVoiceCopy,
+  getAstraVoicePreviewText,
+  getAstraVoiceRuntimeStatus,
+  getAstraVoiceStateLabel,
+} from '../../services/astra/astraVoiceCopy';
 import { getAstraVoiceRuntimeConfig } from '../../services/astra/astraRuntimeConfig';
 import type { AstraVoiceActionPayload } from '../../types/astraVoice';
 import { AstraAnimatedLogo } from './AstraAnimatedLogo';
@@ -193,14 +198,18 @@ function VoicePresetCard({
   label,
   description,
   selected,
-  language,
+  selectedLabel,
+  selectLabel,
+  previewLabel,
   onSelect,
   onPreview,
 }: {
   label: string;
   description: string;
   selected: boolean;
-  language: 'es' | 'en';
+  selectedLabel: string;
+  selectLabel: string;
+  previewLabel: string;
   onSelect: () => void;
   onPreview: () => void;
 }) {
@@ -265,7 +274,7 @@ function VoicePresetCard({
               { color: selected ? colors.profit : colors.textSoft },
             ]}
           >
-            {selected ? (language === 'es' ? 'Activa' : 'Active') : language === 'es' ? 'Seleccionar' : 'Select'}
+            {selected ? selectedLabel : selectLabel}
           </Text>
         </Pressable>
 
@@ -280,7 +289,7 @@ function VoicePresetCard({
           ]}
         >
           <Text style={[styles.voiceCardActionLabel, { color: colors.primary }]}>
-            {language === 'es' ? 'Probar' : 'Preview'}
+            {previewLabel}
           </Text>
         </Pressable>
       </View>
@@ -399,19 +408,10 @@ export function AstraVoiceSheet() {
   );
 
   const voiceStatusText = useMemo(() => {
-    if (ttsState.status === 'error' && ttsState.error) {
-      return language === 'es'
-        ? 'La voz premium no esta disponible ahora. Astra usara una voz local temporalmente.'
-        : 'Premium voice is unavailable right now. Astra will use a temporary local voice.';
-    }
-
-    return runtimeVoice.provider === 'elevenlabs'
-      ? language === 'es'
-        ? 'Voz premium activa'
-        : 'Premium voice active'
-      : language === 'es'
-        ? 'Voz local temporal'
-        : 'Temporary local voice';
+    return getAstraVoiceRuntimeStatus(language, {
+      provider: runtimeVoice.provider,
+      hasPremiumError: ttsState.status === 'error' && Boolean(ttsState.error),
+    });
   }, [language, runtimeVoice.provider, ttsState.error, ttsState.status]);
 
   if (!isVoiceOpen) {
@@ -482,7 +482,7 @@ export function AstraVoiceSheet() {
             showsVerticalScrollIndicator={false}
           >
             <ConversationSnippet
-              label={language === 'es' ? 'Tu' : 'You'}
+              label={copy.youLabel}
               text={transcript}
               accent={colors.textMuted}
             />
@@ -520,7 +520,7 @@ export function AstraVoiceSheet() {
             >
               <View style={styles.voicePanelHeader}>
                 <Text style={[styles.voicePanelTitle, { color: colors.text }]}>
-                  {language === 'es' ? 'Voces Astra' : 'Astra voices'}
+                  {copy.voicePanelTitle}
                 </Text>
                 <Text
                   style={[
@@ -548,16 +548,11 @@ export function AstraVoiceSheet() {
                     label={preset.label}
                     description={preset.description}
                     selected={selectedVoicePreset.id === preset.id}
-                    language={language === 'es' ? 'es' : 'en'}
+                    selectedLabel={copy.voiceSelected}
+                    selectLabel={copy.voiceSelect}
+                    previewLabel={copy.voicePreview}
                     onSelect={() => setSelectedVoicePresetId(preset.id)}
-                    onPreview={() =>
-                      void speakText(
-                        language === 'es'
-                          ? `Hola, soy Astra. Esta es la voz ${preset.label} dentro de OrbitX.`
-                          : `Hi, I am Astra. This is the ${preset.label} voice inside OrbitX.`,
-                        'welcome',
-                      )
-                    }
+                    onPreview={() => void speakText(getAstraVoicePreviewText(language, preset.label), 'welcome')}
                   />
                 ))}
               </ScrollView>

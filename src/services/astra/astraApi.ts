@@ -8,6 +8,7 @@ import type {
   AstraSupportContext,
 } from '../../types/astra';
 import type { AstraMemorySnapshot } from '../../types/astra';
+import { pickLanguageText } from '../../../constants/i18n';
 import { getAstraBackendBaseUrl, hasAstraBackend } from './astraRuntimeConfig';
 
 type AstraBackendAction =
@@ -56,10 +57,35 @@ interface RequestAstraBrainResponseInput {
   };
 }
 
-const DEFAULT_TIMEOUT_MS = 12_000;
+const DEFAULT_TIMEOUT_MS = 18_000;
+const TRANSIENT_RETRY_DELAY_MS = 700;
 
 function mapLanguage(language: AstraSupportContext['language']) {
-  return language === 'es' ? 'ES' : 'EN';
+  switch (language) {
+    case 'es':
+      return 'ES';
+    case 'pt':
+      return 'PT';
+    case 'zh-Hans':
+      return 'ZH';
+    case 'hi':
+      return 'HI';
+    case 'ru':
+      return 'RU';
+    case 'ar':
+      return 'AR';
+    case 'id':
+      return 'ID';
+    default:
+      return 'EN';
+  }
+}
+
+function actionText(
+  language: AstraSupportContext['language'],
+  values: Partial<Record<AstraSupportContext['language'], string>>,
+) {
+  return pickLanguageText(language, values, 'en');
 }
 
 function mapScreen(surface: AstraSupportContext['surface']) {
@@ -115,13 +141,20 @@ function mapActionAliasToFrontendAction(
   action: AstraBackendAction,
   language: AstraSupportContext['language'],
 ): AstraAction | null {
-  const es = language === 'es';
-
   switch (action) {
     case 'wallet_create':
       return createFrontendAction(
         'astra-wallet-create',
-        es ? 'Crear wallet' : 'Create wallet',
+        actionText(language, {
+          en: 'Create wallet',
+          es: 'Crear wallet',
+          pt: 'Criar wallet',
+          'zh-Hans': '\u521b\u5efa wallet',
+          hi: 'Wallet \u092c\u0928\u093e\u090f\u0901',
+          ru: '\u0421\u043e\u0437\u0434\u0430\u0442\u044c wallet',
+          ar: '\u0625\u0646\u0634\u0627\u0621 wallet',
+          id: 'Buat wallet',
+        }),
         'open_screen',
         'wallet-outline',
         {
@@ -133,7 +166,16 @@ function mapActionAliasToFrontendAction(
     case 'wallet_open':
       return createFrontendAction(
         'astra-wallet-open',
-        es ? 'Abrir billetera' : 'Open wallet',
+        actionText(language, {
+          en: 'Open wallet',
+          es: 'Abrir billetera',
+          pt: 'Abrir carteira',
+          'zh-Hans': '\u6253\u5f00\u94b1\u5305',
+          hi: '\u0935\u0949\u0932\u0947\u091f \u0916\u094b\u0932\u0947\u0902',
+          ru: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043a\u043e\u0448\u0435\u043b\u0435\u043a',
+          ar: '\u0641\u062a\u062d \u0627\u0644\u0645\u062d\u0641\u0638\u0629',
+          id: 'Buka wallet',
+        }),
         'open_screen',
         'wallet-outline',
         {
@@ -144,7 +186,16 @@ function mapActionAliasToFrontendAction(
     case 'view_market':
       return createFrontendAction(
         'astra-view-market',
-        es ? 'Ver mercado' : 'View market',
+        actionText(language, {
+          en: 'View market',
+          es: 'Ver mercado',
+          pt: 'Ver mercado',
+          'zh-Hans': '\u67e5\u770b\u5e02\u573a',
+          hi: '\u092c\u093e\u091c\u093e\u0930 \u0926\u0947\u0916\u0947\u0902',
+          ru: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0440\u044b\u043d\u043e\u043a',
+          ar: '\u0639\u0631\u0636 \u0627\u0644\u0633\u0648\u0642',
+          id: 'Lihat pasar',
+        }),
         'open_screen',
         'stats-chart-outline',
         {
@@ -154,7 +205,16 @@ function mapActionAliasToFrontendAction(
     case 'go_trade':
       return createFrontendAction(
         'astra-go-trade',
-        es ? 'Ir a operar' : 'Go to trade',
+        actionText(language, {
+          en: 'Go to trade',
+          es: 'Ir a operar',
+          pt: 'Ir para trade',
+          'zh-Hans': '\u53bb\u4ea4\u6613',
+          hi: '\u091f\u094d\u0930\u0947\u0921 \u092a\u0930 \u091c\u093e\u090f\u0902',
+          ru: '\u041f\u0435\u0440\u0435\u0439\u0442\u0438 \u043a \u0442\u043e\u0440\u0433\u043e\u0432\u043b\u0435',
+          ar: '\u0627\u0630\u0647\u0628 \u0625\u0644\u0649 \u0627\u0644\u062a\u062f\u0627\u0648\u0644',
+          id: 'Buka trade',
+        }),
         'open_screen',
         'swap-horizontal-outline',
         {
@@ -166,7 +226,7 @@ function mapActionAliasToFrontendAction(
     case 'create_memecoin':
       return createFrontendAction(
         'astra-create-memecoin',
-        es ? 'Crear memecoin' : 'Create memecoin',
+        actionText(language, { en: 'Create memecoin', es: 'Crear memecoin', pt: 'Criar memecoin', 'zh-Hans': '\u521b\u5efa memecoin', hi: 'Memecoin \u092c\u0928\u093e\u090f\u0901', ru: '\u0421\u043e\u0437\u0434\u0430\u0442\u044c memecoin', ar: '\u0625\u0646\u0634\u0627\u0621 memecoin', id: 'Buat memecoin' }),
         'open_screen',
         'rocket-outline',
         {
@@ -177,7 +237,7 @@ function mapActionAliasToFrontendAction(
     case 'open_profile':
       return createFrontendAction(
         'astra-open-profile',
-        es ? 'Abrir perfil' : 'Open profile',
+        actionText(language, { en: 'Open profile', es: 'Abrir perfil', pt: 'Abrir perfil', 'zh-Hans': '\u6253\u5f00\u4e2a\u4eba\u8d44\u6599', hi: '\u092a\u094d\u0930\u094b\u092b\u093e\u0907\u0932 \u0916\u094b\u0932\u0947\u0902', ru: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043f\u0440\u043e\u0444\u0438\u043b\u044c', ar: '\u0641\u062a\u062d \u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a', id: 'Buka profil' }),
         'open_screen',
         'person-outline',
         {
@@ -187,7 +247,7 @@ function mapActionAliasToFrontendAction(
     case 'find_user_id':
       return createFrontendAction(
         'astra-find-user-id',
-        es ? 'Buscar mi ID' : 'Find my ID',
+        actionText(language, { en: 'Find my ID', es: 'Buscar mi ID', pt: 'Buscar meu ID', 'zh-Hans': '\u67e5\u627e\u6211\u7684 ID', hi: '\u092e\u0947\u0930\u093e ID \u0922\u0942\u0902\u0922\u0947\u0902', ru: '\u041d\u0430\u0439\u0442\u0438 \u043c\u043e\u0439 ID', ar: '\u0627\u0628\u062d\u062b \u0639\u0646 \u0645\u0639\u0631\u0641\u064a', id: 'Cari ID saya' }),
         'open_screen',
         'id-card-outline',
         {
@@ -198,7 +258,7 @@ function mapActionAliasToFrontendAction(
     case 'get_started':
       return createFrontendAction(
         'astra-get-started',
-        es ? 'Empezar' : 'Get started',
+        actionText(language, { en: 'Get started', es: 'Empezar', pt: 'Comecar', 'zh-Hans': '\u5f00\u59cb', hi: '\u0936\u0941\u0930\u0942 \u0915\u0930\u0947\u0902', ru: '\u041d\u0430\u0447\u0430\u0442\u044c', ar: '\u0627\u0628\u062f\u0623', id: 'Mulai' }),
         'resolve_with_astra',
         'sparkles-outline',
         {
@@ -208,7 +268,7 @@ function mapActionAliasToFrontendAction(
     case 'diagnose_issue':
       return createFrontendAction(
         'astra-diagnose-issue',
-        es ? 'Diagnosticar problema' : 'Diagnose issue',
+        actionText(language, { en: 'Diagnose issue', es: 'Diagnosticar problema', pt: 'Diagnosticar problema', 'zh-Hans': '\u8bca\u65ad\u95ee\u9898', hi: '\u0938\u092e\u0938\u094d\u092f\u093e \u0915\u093e \u0928\u093f\u0926\u093e\u0928 \u0915\u0930\u0947\u0902', ru: '\u0414\u0438\u0430\u0433\u043d\u043e\u0441\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u0443', ar: '\u0634\u062e\u0635 \u0627\u0644\u0645\u0634\u0643\u0644\u0629', id: 'Diagnosa masalah' }),
         'resolve_with_astra',
         'bug-outline',
         {
@@ -219,7 +279,7 @@ function mapActionAliasToFrontendAction(
     case 'connect_exchange':
       return createFrontendAction(
         'astra-connect-exchange',
-        es ? 'Conectar exchange' : 'Connect exchange',
+        actionText(language, { en: 'Connect exchange', es: 'Conectar exchange', pt: 'Conectar exchange', 'zh-Hans': '\u8fde\u63a5 exchange', hi: 'Exchange \u0915\u0928\u0947\u0915\u094d\u091f \u0915\u0930\u0947\u0902', ru: '\u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u044c exchange', ar: '\u0631\u0628\u0637 exchange', id: 'Hubungkan exchange' }),
         'open_screen',
         'link-outline',
         {
@@ -230,7 +290,7 @@ function mapActionAliasToFrontendAction(
     case 'open_bot_futures':
       return createFrontendAction(
         'astra-open-bot-futures',
-        es ? 'Abrir Bot Futures' : 'Open Bot Futures',
+        actionText(language, { en: 'Open Bot Futures', es: 'Abrir Bot Futures', pt: 'Abrir Bot Futures', 'zh-Hans': '\u6253\u5f00 Bot Futures', hi: 'Bot Futures \u0916\u094b\u0932\u0947\u0902', ru: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c Bot Futures', ar: '\u0641\u062a\u062d Bot Futures', id: 'Buka Bot Futures' }),
         'open_screen',
         'flash-outline',
         {
@@ -240,7 +300,7 @@ function mapActionAliasToFrontendAction(
     case 'open_social':
       return createFrontendAction(
         'astra-open-social',
-        es ? 'Abrir Social' : 'Open Social',
+        actionText(language, { en: 'Open Social', es: 'Abrir Social', pt: 'Abrir Social', 'zh-Hans': '\u6253\u5f00 Social', hi: 'Social \u0916\u094b\u0932\u0947\u0902', ru: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c Social', ar: '\u0641\u062a\u062d Social', id: 'Buka Social' }),
         'open_screen',
         'people-outline',
         {
@@ -250,7 +310,7 @@ function mapActionAliasToFrontendAction(
     case 'review_security':
       return createFrontendAction(
         'astra-review-security',
-        es ? 'Revisar seguridad' : 'Review security',
+        actionText(language, { en: 'Review security', es: 'Revisar seguridad', pt: 'Revisar seguranca', 'zh-Hans': '\u68c0\u67e5\u5b89\u5168', hi: 'Security \u0930\u093f\u0935\u094d\u092f\u0942 \u0915\u0930\u0947\u0902', ru: '\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c', ar: '\u0631\u0627\u062c\u0639 \u0627\u0644\u0623\u0645\u0627\u0646', id: 'Tinjau keamanan' }),
         'open_screen',
         'shield-checkmark-outline',
         {
@@ -262,7 +322,7 @@ function mapActionAliasToFrontendAction(
     case 'buy_crypto':
       return createFrontendAction(
         'astra-buy-crypto',
-        es ? 'Comprar crypto' : 'Buy crypto',
+        actionText(language, { en: 'Buy crypto', es: 'Comprar crypto', pt: 'Comprar crypto', 'zh-Hans': '\u8d2d\u4e70 crypto', hi: 'Crypto \u0916\u0930\u0940\u0926\u0947\u0902', ru: '\u041a\u0443\u043f\u0438\u0442\u044c crypto', ar: '\u0634\u0631\u0627\u0621 crypto', id: 'Beli crypto' }),
         'open_screen',
         'add-circle-outline',
         {
@@ -274,7 +334,7 @@ function mapActionAliasToFrontendAction(
     case 'sell_crypto':
       return createFrontendAction(
         'astra-sell-crypto',
-        es ? 'Vender crypto' : 'Sell crypto',
+        actionText(language, { en: 'Sell crypto', es: 'Vender crypto', pt: 'Vender crypto', 'zh-Hans': '\u51fa\u552e crypto', hi: 'Crypto \u092c\u0947\u091a\u0947\u0902', ru: '\u041f\u0440\u043e\u0434\u0430\u0442\u044c crypto', ar: '\u0628\u064a\u0639 crypto', id: 'Jual crypto' }),
         'open_screen',
         'remove-circle-outline',
         {
@@ -362,42 +422,63 @@ async function postJson<TResponse>(
     throw new Error('OrbitX backend is not configured.');
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  try {
-    const response = await fetch(`${baseUrl}${path}`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
+    try {
+      const response = await fetch(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
 
-    const payload = (await response.json().catch(() => null)) as
-      | BackendEnvelope<TResponse>
-      | { error?: { message?: string }; message?: string }
-      | null;
+      const payload = (await response.json().catch(() => null)) as
+        | BackendEnvelope<TResponse>
+        | { error?: { message?: string }; message?: string }
+        | null;
 
-    if (!response.ok) {
-      const errorMessage =
-        payload && 'error' in payload
-          ? payload.error?.message ?? payload.message ?? 'Astra backend request failed.'
-          : 'Astra backend request failed.';
-      throw new Error(errorMessage);
+      if (!response.ok) {
+        const errorMessage =
+          payload && 'error' in payload
+            ? payload.error?.message ?? payload.message ?? 'Astra backend request failed.'
+            : 'Astra backend request failed.';
+        throw new Error(errorMessage);
+      }
+
+      if (!payload || typeof payload !== 'object' || !('data' in payload)) {
+        throw new Error('Astra backend returned an invalid payload.');
+      }
+
+      return payload.data;
+    } catch (error) {
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
+      const isNetworkError = error instanceof TypeError;
+      const canRetry = attempt === 0 && (isAbortError || isNetworkError);
+
+      if (canRetry) {
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, TRANSIENT_RETRY_DELAY_MS);
+        });
+        continue;
+      }
+
+      if (isAbortError) {
+        throw new Error('Astra backend request timed out.');
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    if (!payload || typeof payload !== 'object' || !('data' in payload)) {
-      throw new Error('Astra backend returned an invalid payload.');
-    }
-
-    return payload.data;
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+  throw new Error('Astra backend request failed.');
 }
 
 export function hasAstraBrainBackend() {

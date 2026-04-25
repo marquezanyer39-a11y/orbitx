@@ -45,8 +45,8 @@ export function WalletActions({
             style={[
               styles.actionButton,
               {
-                backgroundColor: withOpacity(colors.surfaceElevated, 0.9),
-                borderColor: withOpacity(colors.borderStrong, 0.72),
+                backgroundColor: withOpacity(colors.surfaceElevated, 0.26),
+                borderColor: withOpacity(colors.borderStrong, 0.32),
               },
             ]}
           >
@@ -74,7 +74,7 @@ export function WalletActions({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 14,
+    gap: 10,
   },
   row: {
     flexDirection: 'row',
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: RADII.pill,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

@@ -14,6 +14,8 @@ import {
   createAstraVoiceConfig,
   isValidAstraVoiceContext,
   isValidAstraVoicePresetId,
+  resolveFallbackPreset,
+  resolvePreset,
 } from './lib/astra-voice-config.mjs';
 import { ElevenLabsVoiceError, synthesizeAstraSpeech } from './lib/elevenlabs-client.mjs';
 
@@ -25,6 +27,15 @@ const brainConfig = createAstraBrainConfig(process.env);
 const astraChatController = createAstraChatController(brainConfig);
 const astraImageController = createAstraImageController();
 const allowedCorsOrigins = `${process.env.CORS_ALLOWED_ORIGINS ?? '*'}`;
+
+function isAstraVoiceRuntimeConfigured(currentConfig) {
+  const primaryPreset = resolvePreset(currentConfig, currentConfig.defaultPresetId);
+  const fallbackPreset = resolveFallbackPreset(currentConfig, currentConfig.fallbackPresetId);
+
+  return Boolean(
+    currentConfig.apiKey && (primaryPreset?.voiceId || fallbackPreset?.voiceId),
+  );
+}
 
 function createCorsOriginResolver(rawValue) {
   const normalized = rawValue
@@ -102,11 +113,13 @@ app.use(express.json({ limit: '32kb' }));
 app.get('/health', (_request, response) => {
   const nanobananaConfig = createNanobananaConfig(process.env);
   const nanobananaAvailability = describeNanobananaAvailability(nanobananaConfig);
+  const voiceRuntimeConfigured = isAstraVoiceRuntimeConfigured(config);
 
   response.json({
     ok: true,
     service: 'orbitx-astra-core',
-    elevenlabsConfigured: Boolean(config.apiKey),
+    elevenlabsConfigured: voiceRuntimeConfigured,
+    elevenlabsApiKeyConfigured: Boolean(config.apiKey),
     astraBrainConfigured: Boolean(brainConfig.apiKey),
     nanobananaConfigured: nanobananaAvailability.available,
     nanobanana: nanobananaAvailability,
@@ -117,13 +130,14 @@ app.get('/health', (_request, response) => {
 
 app.post('/api/astra/realtime-session', (request, response) => {
   const userId = `${request.body?.context?.userId ?? 'astra-user'}`.trim() || 'astra-user';
+  const voiceRuntimeConfigured = isAstraVoiceRuntimeConfigured(config);
 
   response.json({
     sessionId: `astra-${userId}-${Date.now()}`,
     expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
     state: 'ready',
     transport: 'turn_based_voice',
-    voiceOutput: config.apiKey ? 'server_tts' : 'device_tts',
+    voiceOutput: voiceRuntimeConfigured ? 'server_tts' : 'device_tts',
     speechInput: 'native_stt',
     model: brainConfig.model,
   });

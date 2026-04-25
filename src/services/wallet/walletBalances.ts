@@ -14,7 +14,16 @@ const SYMBOL_MAP: Record<string, string> = {
 };
 
 export async function getWalletBalances(): Promise<WalletAsset[]> {
-  const [snapshot, markets] = await Promise.all([fetchOnchainPortfolio(), getMarketsList()]);
+  return getWalletBalancesForAddresses();
+}
+
+export async function getWalletBalancesForAddresses(
+  receiveAddresses?: Record<'ethereum' | 'base' | 'bnb' | 'solana', string>,
+): Promise<WalletAsset[]> {
+  const [snapshot, markets] = await Promise.all([
+    fetchOnchainPortfolio(receiveAddresses),
+    getMarketsList(),
+  ]);
   const marketMap = new Map(markets.map((market) => [market.baseSymbol.toLowerCase(), market]));
 
   return snapshot.assets.map((asset) => {
@@ -38,7 +47,7 @@ export async function getWalletBalances(): Promise<WalletAsset[]> {
 }
 
 export async function getNativeNetworkBalances() {
-  const assets = await getWalletBalances();
+  const assets = await getWalletBalancesForAddresses();
   return assets.filter((asset) =>
     ['ETH', 'BNB', 'SOL'].includes(asset.symbol.toUpperCase()),
   );
