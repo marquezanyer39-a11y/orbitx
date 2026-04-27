@@ -6,6 +6,7 @@ import { ExternalWalletConnectSheet } from '../../../components/wallet/ExternalW
 import { pickLanguageText } from '../../../constants/i18n';
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
+import { useI18n } from '../../../hooks/useI18n';
 import { AddressCard } from '../../components/wallet/AddressCard';
 import { AssetList } from '../../components/wallet/AssetList';
 import { BalanceCard } from '../../components/wallet/BalanceCard';
@@ -39,6 +40,7 @@ function maskAddress(address: string) {
 export default function WalletScreen() {
   const params = useLocalSearchParams<{ astraAction?: string; astraTab?: string }>();
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const wallet = useWallet();
   const showToast = useUiStore((state) => state.showToast);
   const { markets } = useMarketData('markets');
@@ -152,9 +154,16 @@ export default function WalletScreen() {
   const totalSpot = spotAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
   const totalBalance = totalSpot + totalWeb3;
   const activeReceiveAddress = wallet.receiveAddresses[wallet.selectedNetwork] || wallet.walletAddress;
+  const isSyncingBalances = wallet.web3Phase === 'balances' || wallet.web3Phase === 'details';
+  const hasNetworkIssues = NETWORKS.some(
+    (network) => wallet.networkSyncState[network].status === 'error',
+  );
+  const showSyncStatus =
+    wallet.isWalletReady &&
+    (isSyncingBalances || wallet.showingCachedBalances || hasNetworkIssues);
   const walletHeaderSubtitle = useMemo(() => {
     if (wallet.loading && !wallet.isWalletReady) {
-      return 'Buscando la wallet vinculada a tu cuenta...';
+      return t('walletView.searchingLinkedWallet');
     }
 
     if (wallet.error) {
@@ -162,15 +171,15 @@ export default function WalletScreen() {
     }
 
     if (wallet.isWalletReady && wallet.walletSource === 'remote') {
-      return 'Wallet encontrada y vinculada a tu cuenta. Este dispositivo esta en modo seguro de consulta.';
+      return t('walletView.remoteWalletFound');
     }
 
     if (wallet.isWalletReady) {
-      return 'Wallet activa en este dispositivo.';
+      return t('walletView.localWalletReady');
     }
 
-    return 'Crea o importa tu billetera para comenzar';
-  }, [wallet.error, wallet.isWalletReady, wallet.loading, wallet.walletSource]);
+    return t('walletView.createOrImport');
+  }, [t, wallet.error, wallet.isWalletReady, wallet.loading, wallet.walletSource]);
   const astraWalletContext = useMemo(
     () => ({
       surface: 'wallet' as const,
@@ -285,17 +294,92 @@ export default function WalletScreen() {
 
       <WalletTabs value={activeTab} onChange={setActiveTab} />
 
+      {showSyncStatus ? (
+        <View
+          style={[
+            styles.syncCard,
+            {
+              backgroundColor: withOpacity(colors.fieldBackground, 0.24),
+              borderColor: withOpacity(colors.borderStrong, 0.42),
+            },
+          ]}
+        >
+          <View style={styles.syncHeaderRow}>
+            <View style={styles.syncCopy}>
+              <Text style={[styles.syncTitle, { color: colors.text }]}>
+                {isSyncingBalances
+                  ? t('walletView.syncingBalances')
+                  : hasNetworkIssues
+                    ? t('walletView.partialNetworkUpdate')
+                    : t('walletView.usingCachedBalances')}
+              </Text>
+              <Text style={[styles.syncBody, { color: colors.textMuted }]}>
+                {wallet.showingCachedBalances
+                  ? t('walletView.usingCachedBalances')
+                  : hasNetworkIssues
+                    ? wallet.error ?? t('walletView.partialNetworkUpdate')
+                    : t('walletView.syncingBalances')}
+              </Text>
+            </View>
+
+            {(hasNetworkIssues || wallet.web3Phase === 'error') ? (
+              <PrimaryButton
+                label={t('walletView.retryUpdate')}
+                tone="secondary"
+                onPress={() => void wallet.refreshBalances()}
+              />
+            ) : null}
+          </View>
+
+          <View style={styles.syncNetworkRow}>
+            {NETWORKS.map((network) => {
+              const state = wallet.networkSyncState[network];
+              const tone =
+                state.status === 'error'
+                  ? colors.loss
+                  : state.status === 'loading'
+                    ? colors.primary
+                    : colors.profit;
+              const statusLabel =
+                state.status === 'error'
+                  ? t('walletView.networkStatusError')
+                  : state.status === 'loading'
+                    ? t('walletView.networkStatusUpdating')
+                    : t('walletView.networkStatusUpdated');
+
+              return (
+                <View
+                  key={network}
+                  style={[
+                    styles.syncNetworkChip,
+                    {
+                      backgroundColor: withOpacity(tone, 0.08),
+                      borderColor: withOpacity(tone, 0.28),
+                    },
+                  ]}
+                >
+                  <Text style={[styles.syncNetworkLabel, { color: colors.text }]}>
+                    {network.toUpperCase()}
+                  </Text>
+                  <Text style={[styles.syncNetworkState, { color: tone }]}>{statusLabel}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+
       <View style={styles.balanceRow}>
         <BalanceCard
-          title="Saldo Spot"
+          title={t('walletView.spotBalanceTitle')}
           value={formatCurrency(totalSpot)}
-          body="Fondos listos para operar dentro de OrbitX."
+          body={t('walletView.spotBalanceBody')}
           icon="server-outline"
         />
         <BalanceCard
-          title="Saldo Web3"
+          title={t('walletView.web3BalanceTitle')}
           value={formatCurrency(totalWeb3)}
-          body="Activos on-chain bajo tu control."
+          body={t('walletView.web3BalanceBody')}
           icon="git-network-outline"
         />
       </View>
@@ -319,8 +403,8 @@ export default function WalletScreen() {
       >
         <View style={styles.transakHeaderRow}>
           <View style={styles.transakCopy}>
-            <Text style={[styles.transakTitle, { color: colors.text }]}>COMPRAR / VENDER CRIPTO</Text>
-            <Text style={[styles.transakSubtitle, { color: colors.textMuted }]}>Socio proveedor externo</Text>
+            <Text style={[styles.transakTitle, { color: colors.text }]}>{t('walletView.buySellCrypto')}</Text>
+            <Text style={[styles.transakSubtitle, { color: colors.textMuted }]}>{t('walletView.externalProviderPartner')}</Text>
           </View>
 
           <View style={styles.transakBrandBlock}>
@@ -330,15 +414,41 @@ export default function WalletScreen() {
               </View>
               <Text style={[styles.transakBrandName, { color: colors.textSoft }]}>transak</Text>
             </View>
-            <Text style={[styles.transakBrandNote, { color: colors.textMuted }]}>Transak: Socio regulado</Text>
+            <Text style={[styles.transakBrandNote, { color: colors.textMuted }]}>{t('walletView.externalProviderRegulated')}</Text>
           </View>
         </View>
 
         <RampActionGrid
-          buyLabel="Comprar"
-          sellLabel="Vender"
-          convertLabel="Convertir"
-          payLabel="Pagar"
+          buyLabel={t('common.buy')}
+          sellLabel={t('common.sell')}
+          convertLabel={pickLanguageText(
+            language,
+            {
+              en: 'Convert',
+              es: 'Convertir',
+              pt: 'Converter',
+              'zh-Hans': '\u5151\u6362',
+              hi: '\u0915\u0928\u094d\u0935\u0930\u094d\u091f',
+              ru: '\u041a\u043e\u043d\u0432\u0435\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c',
+              ar: '\u062a\u062d\u0648\u064a\u0644',
+              id: 'Konversi',
+            },
+            'en',
+          )}
+          payLabel={pickLanguageText(
+            language,
+            {
+              en: 'Pay',
+              es: 'Pagar',
+              pt: 'Pagar',
+              'zh-Hans': '\u652f\u4ed8',
+              hi: '\u092d\u0941\u0917\u0924\u093e\u0928',
+              ru: '\u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c',
+              ar: '\u062f\u0641\u0639',
+              id: 'Bayar',
+            },
+            'en',
+          )}
           onBuy={() => router.push({ pathname: '/ramp/summary', params: { mode: 'buy' } })}
           onSell={() => router.push({ pathname: '/ramp/summary', params: { mode: 'sell' } })}
           onConvert={() => router.push('/convert')}
@@ -349,9 +459,9 @@ export default function WalletScreen() {
       {activeTab === 'spot' ? (
         <>
           <View style={styles.spotSection}>
-            <Text style={[styles.spotSectionTitle, { color: colors.text }]}>Activos Spot</Text>
+            <Text style={[styles.spotSectionTitle, { color: colors.text }]}>{t('walletView.spotAssetsTitle')}</Text>
             <Text style={[styles.spotSectionBody, { color: colors.textMuted }]}>
-              Tu saldo disponible para ordenes y simulacion.
+              {t('walletView.spotAssetsBody')}
             </Text>
           </View>
           {spotAssets.length ? <AssetList assets={spotAssets} /> : null}
@@ -359,15 +469,15 @@ export default function WalletScreen() {
       ) : (
         <>
           <SectionHeader
-              title="Espacio Web3"
+              title={t('walletView.web3SpaceTitle')}
               subtitle={
                 wallet.walletSource === 'remote'
-                  ? 'Wallet encontrada en tu cuenta. Puedes ver direcciones y balances sin exponer secretos.'
-                  : 'Billetera real, seguridad y seguimiento on-chain.'
+                  ? t('walletView.web3SpaceRemoteBody')
+                  : t('walletView.web3SpaceBody')
               }
               rightSlot={
               wallet.isWalletReady || wallet.loading ? null : (
-                <PrimaryButton label="Crear billetera" onPress={() => void wallet.createWallet()} />
+                <PrimaryButton label={t('walletView.createWallet')} onPress={() => void wallet.createWallet()} />
               )
             }
           />
@@ -410,7 +520,7 @@ export default function WalletScreen() {
                     return;
                   }
                   await copyToClipboard(activeReceiveAddress);
-                  showToast('Direccion copiada', 'success');
+                  showToast(t('walletView.addressCopied'), 'success');
                 }}
               />
 
@@ -418,7 +528,7 @@ export default function WalletScreen() {
 
               {wallet.mnemonicStored ? (
                 <SeedRevealCard
-                  body="Tu frase semilla da acceso total a tu billetera. Nunca la compartas."
+                  body={t('walletView.importWarningBody')}
                   onReveal={() => router.push('/security')}
                 />
               ) : (
@@ -433,10 +543,10 @@ export default function WalletScreen() {
                 >
                   <View style={styles.tokenCopy}>
                     <Text style={[styles.tokenTitle, { color: colors.text }]}>
-                      Wallet encontrada
+                      {t('walletView.walletFoundTitle')}
                     </Text>
                     <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
-                      Esta instalacion puede consultar direcciones, saldos e historial publico, pero no contiene tu seed phrase ni tu clave privada.
+                      {t('walletView.walletFoundBody')}
                     </Text>
                   </View>
                 </View>
@@ -444,11 +554,15 @@ export default function WalletScreen() {
 
               <View style={styles.section}>
                 <SectionHeader
-                  title="Billetera externa"
-                  subtitle="Vincula una direccion publica de MetaMask para seguirla y usarla como opcion adicional."
+                  title={t('walletView.externalWalletTitle')}
+                  subtitle={t('walletView.externalWalletBody')}
                   rightSlot={
                     <PrimaryButton
-                      label={wallet.externalWallet.address ? 'Actualizar' : 'Conectar'}
+                      label={
+                        wallet.externalWallet.address
+                          ? t('walletView.updateConnection')
+                          : t('walletView.connectConnection')
+                      }
                       tone="secondary"
                       onPress={() => setConnectSheetVisible(true)}
                     />
@@ -467,19 +581,19 @@ export default function WalletScreen() {
                   <View style={styles.tokenCopy}>
                     <Text style={[styles.tokenTitle, { color: colors.text }]}>
                       {wallet.externalWallet.provider === 'metamask'
-                        ? 'MetaMask vinculada'
-                        : 'Sin billetera externa'}
+                        ? t('walletView.externalWalletConnected')
+                        : t('walletView.noExternalWallet')}
                     </Text>
                     <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
                       {wallet.externalWallet.address
                         ? maskAddress(wallet.externalWallet.address)
-                        : 'Conecta una direccion publica si quieres seguir una billetera externa sin romper tu flujo Web3.'}
+                        : t('walletView.externalWalletHint')}
                     </Text>
                   </View>
 
                   {wallet.externalWallet.address ? (
                     <PrimaryButton
-                      label="Desconectar"
+                      label={t('walletView.disconnectConnection')}
                       tone="ghost"
                       onPress={() => wallet.disconnectExternalWallet()}
                     />
@@ -489,8 +603,8 @@ export default function WalletScreen() {
 
               <View style={styles.section}>
                 <SectionHeader
-                  title="Mis tokens creados"
-                  subtitle="Tus lanzamientos siguen visibles desde Web3."
+                  title={t('walletView.createdTokensTitle')}
+                  subtitle={t('walletView.createdTokensBody')}
                 />
                 {wallet.createdTokens.length ? (
                   wallet.createdTokens.map((token) => (
@@ -517,7 +631,7 @@ export default function WalletScreen() {
                   ))
                 ) : (
                   <Text style={[styles.helper, { color: colors.textMuted }]}>
-                    Aun no has creado tokens desde OrbitX.
+                    {t('walletView.createdTokensEmpty')}
                   </Text>
                 )}
               </View>
@@ -525,18 +639,34 @@ export default function WalletScreen() {
           ) : (
             <View style={styles.importCard}>
               <Text style={[styles.importTitle, { color: colors.text }]}>
-                {wallet.loading ? 'Buscando wallet...' : 'Importar billetera'}
+                {wallet.loading ? t('walletView.importSearchingTitle') : t('walletView.importTitle')}
               </Text>
               <Text style={[styles.importBody, { color: colors.textMuted }]}>
                 {wallet.loading
-                  ? 'Estamos revisando si tu cuenta ya tiene una wallet publica vinculada.'
-                  : 'Pega tu frase semilla para restaurar una billetera existente.'}
+                  ? t('walletView.importSearchingBody')
+                  : t('walletView.importBody')}
               </Text>
+              <View
+                style={[
+                  styles.importWarningCard,
+                  {
+                    backgroundColor: withOpacity(colors.fieldBackground, 0.24),
+                    borderColor: withOpacity(colors.borderStrong, 0.42),
+                  },
+                ]}
+              >
+                <Text style={[styles.importWarningTitle, { color: colors.text }]}>
+                  {t('walletView.importWarningTitle')}
+                </Text>
+                <Text style={[styles.importWarningBody, { color: colors.textMuted }]}>
+                  {t('walletView.importWarningBody')}
+                </Text>
+              </View>
               <TextInput
                 value={seedPhraseInput}
                 onChangeText={setSeedPhraseInput}
                 multiline
-                placeholder="palabra1 palabra2 palabra3 ..."
+                placeholder={t('walletView.importPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 style={[
                   styles.seedInput,
@@ -548,13 +678,13 @@ export default function WalletScreen() {
                 ]}
               />
               <PrimaryButton
-                label="Importar billetera"
+                label={t('walletView.importButton')}
                 tone="secondary"
                 onPress={() => void wallet.importWallet(seedPhraseInput)}
               />
 
               <PrimaryButton
-                label="Conectar billetera externa"
+                label={t('walletView.connectExternalButton')}
                 tone="secondary"
                 onPress={() => setConnectSheetVisible(true)}
               />
@@ -572,15 +702,15 @@ export default function WalletScreen() {
                   <View style={styles.tokenCopy}>
                     <Text style={[styles.tokenTitle, { color: colors.text }]}>
                       {wallet.externalWallet.provider === 'metamask'
-                        ? 'MetaMask vinculada'
-                        : 'Billetera externa vinculada'}
+                        ? t('walletView.externalWalletConnected')
+                        : t('walletView.externalLinkedTitle')}
                     </Text>
                     <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
                       {maskAddress(wallet.externalWallet.address)}
                     </Text>
                   </View>
                   <PrimaryButton
-                    label="Desconectar"
+                    label={t('walletView.disconnectConnection')}
                     tone="ghost"
                     onPress={() => wallet.disconnectExternalWallet()}
                   />
@@ -694,6 +824,53 @@ export default function WalletScreen() {
 const styles = StyleSheet.create({
   content: {
     gap: 14,
+  },
+  syncCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    gap: 10,
+  },
+  syncHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  syncCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  syncTitle: {
+    fontFamily: FONT.semibold,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  syncBody: {
+    fontFamily: FONT.regular,
+    fontSize: 10,
+    lineHeight: 15,
+  },
+  syncNetworkRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  syncNetworkChip: {
+    borderWidth: 1,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 2,
+  },
+  syncNetworkLabel: {
+    fontFamily: FONT.semibold,
+    fontSize: 10,
+  },
+  syncNetworkState: {
+    fontFamily: FONT.medium,
+    fontSize: 9,
   },
   balanceRow: {
     flexDirection: 'row',
@@ -826,6 +1003,22 @@ const styles = StyleSheet.create({
   },
   importCard: {
     gap: 10,
+  },
+  importWarningCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+  },
+  importWarningTitle: {
+    fontFamily: FONT.semibold,
+    fontSize: 12,
+  },
+  importWarningBody: {
+    fontFamily: FONT.regular,
+    fontSize: 10,
+    lineHeight: 15,
   },
   errorCard: {
     borderWidth: 1,

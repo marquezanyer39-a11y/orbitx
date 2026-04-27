@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
+import { useI18n } from '../../../hooks/useI18n';
 
 interface Props {
   totalBalanceLabel: string;
@@ -13,11 +14,12 @@ interface Props {
 
 export function WalletHeader({ totalBalanceLabel, subtitle, onRefresh, onInfo }: Props) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
 
   return (
     <View style={styles.container}>
       <View style={styles.copy}>
-        <Text style={[styles.eyebrow, { color: colors.textMuted }]}>Billetera</Text>
+        <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{t('walletView.headerTitle')}</Text>
         <Text style={[styles.value, { color: colors.text }]}>{totalBalanceLabel}</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>
       </View>

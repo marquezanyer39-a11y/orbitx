@@ -2,6 +2,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
+import { useI18n } from '../../../hooks/useI18n';
 import type { WalletAsset } from '../../types';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { EmptyState } from '../common/EmptyState';
@@ -12,12 +13,13 @@ interface Props {
 
 export function AssetList({ assets }: Props) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
 
   if (!assets.length) {
     return (
       <EmptyState
-        title="Aun no tienes activos en esta cuenta"
-        body="Conecta o crea tu billetera para comenzar."
+        title={t('assetList.emptyTitle')}
+        body={t('assetList.emptyBody')}
       />
     );
   }
@@ -44,7 +46,7 @@ export function AssetList({ assets }: Props) {
             <View style={styles.copy}>
               <Text style={[styles.symbol, { color: colors.text }]}>{asset.symbol}</Text>
               <Text style={[styles.meta, { color: colors.textMuted }]}>
-                {asset.name} - {asset.environment === 'spot' ? 'Spot' : asset.network}
+                {asset.name} - {asset.environment === 'spot' ? t('assetList.spotLabel') : asset.network}
               </Text>
             </View>
           </View>

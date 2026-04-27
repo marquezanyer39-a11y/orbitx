@@ -1,6 +1,10 @@
 import type { WalletAsset } from '../../types';
-import { fetchOnchainPortfolio } from '../../../utils/onchainPortfolio';
-import { getHomeMarketData, getMarketsList } from '../api/market';
+import {
+  fetchOnchainPortfolio,
+  fetchOnchainPortfolioDetailed,
+  type OnchainPortfolioDetailedSnapshot,
+} from '../../../utils/onchainPortfolio';
+import { getMarketsList } from '../api/market';
 
 const SYMBOL_MAP: Record<string, string> = {
   btc: 'BTC',
@@ -13,17 +17,33 @@ const SYMBOL_MAP: Record<string, string> = {
   pepe: 'PEPE',
 };
 
-export async function getWalletBalances(): Promise<WalletAsset[]> {
-  return getWalletBalancesForAddresses();
+let marketCache:
+  | {
+      fetchedAt: number;
+      markets: Awaited<ReturnType<typeof getMarketsList>>;
+    }
+  | null = null;
+
+const MARKET_CACHE_TTL_MS = 60_000;
+
+async function getMarketsListCached() {
+  if (marketCache && Date.now() - marketCache.fetchedAt < MARKET_CACHE_TTL_MS) {
+    return marketCache.markets;
+  }
+
+  const markets = await getMarketsList();
+  marketCache = {
+    markets,
+    fetchedAt: Date.now(),
+  };
+
+  return markets;
 }
 
-export async function getWalletBalancesForAddresses(
-  receiveAddresses?: Record<'ethereum' | 'base' | 'bnb' | 'solana', string>,
-): Promise<WalletAsset[]> {
-  const [snapshot, markets] = await Promise.all([
-    fetchOnchainPortfolio(receiveAddresses),
-    getMarketsList(),
-  ]);
+function mapSnapshotToWalletAssets(
+  snapshot: Pick<OnchainPortfolioDetailedSnapshot, 'assets'>,
+  markets: Awaited<ReturnType<typeof getMarketsList>>,
+) {
   const marketMap = new Map(markets.map((market) => [market.baseSymbol.toLowerCase(), market]));
 
   return snapshot.assets.map((asset) => {
@@ -42,8 +62,39 @@ export async function getWalletBalancesForAddresses(
       environment: 'web3',
       image: market?.image,
       coingeckoId: market?.coin.coingeckoId,
-    };
+    } satisfies WalletAsset;
   });
+}
+
+export async function getWalletBalances(): Promise<WalletAsset[]> {
+  return getWalletBalancesForAddresses();
+}
+
+export async function getWalletBalancesForAddresses(
+  receiveAddresses?: Record<'ethereum' | 'base' | 'bnb' | 'solana', string>,
+): Promise<WalletAsset[]> {
+  const [snapshot, markets] = await Promise.all([
+    fetchOnchainPortfolio(receiveAddresses),
+    getMarketsListCached(),
+  ]);
+
+  return mapSnapshotToWalletAssets(snapshot, markets);
+}
+
+export async function getWalletBalanceSnapshot(
+  receiveAddresses?: Record<'ethereum' | 'base' | 'bnb' | 'solana', string>,
+) {
+  const [snapshot, markets] = await Promise.all([
+    fetchOnchainPortfolioDetailed(receiveAddresses),
+    getMarketsListCached(),
+  ]);
+
+  return {
+    assets: mapSnapshotToWalletAssets(snapshot, markets),
+    fetchedAt: snapshot.fetchedAt,
+    networkStates: snapshot.networkStates,
+    failedNetworks: snapshot.failedNetworks,
+  };
 }
 
 export async function getNativeNetworkBalances() {

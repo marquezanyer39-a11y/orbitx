@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
+import { useI18n } from '../../../hooks/useI18n';
 import { PrimaryButton } from '../common/PrimaryButton';
 
 interface Props {
@@ -11,11 +12,12 @@ interface Props {
 
 export function SeedRevealCard({ body, onReveal }: Props) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   return (
     <View style={[styles.card, { backgroundColor: colors.fieldBackground, borderColor: colors.border }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Ver frase semilla</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{t('seedReveal.title')}</Text>
       <Text style={[styles.body, { color: colors.textMuted }]}>{body}</Text>
-      <PrimaryButton label="Reautenticar y ver" tone="secondary" onPress={onReveal} />
+      <PrimaryButton label={t('seedReveal.button')} tone="secondary" onPress={onReveal} />
     </View>
   );
 }

@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
+import { useI18n } from '../../../hooks/useI18n';
 
 interface Props {
   value: 'spot' | 'web3';
@@ -10,12 +11,13 @@ interface Props {
 
 export function WalletTabs({ value, onChange }: Props) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.fieldBackground, borderColor: colors.border }]}>
       {[
-        { key: 'spot' as const, label: 'Spot' },
-        { key: 'web3' as const, label: 'Web3' },
+        { key: 'spot' as const, label: t('walletTabs.spot') },
+        { key: 'web3' as const, label: t('walletTabs.web3') },
       ].map((item) => {
         const active = value === item.key;
         return (

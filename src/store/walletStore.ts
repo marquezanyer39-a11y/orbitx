@@ -22,7 +22,7 @@ import {
   getWalletSecurityStatus,
 } from '../services/wallet/secureWalletStorage';
 import { maskAddress } from '../../utils/wallet';
-import { getWalletBalancesForAddresses } from '../services/wallet/walletBalances';
+import { getWalletBalanceSnapshot } from '../services/wallet/walletBalances';
 import {
   buildWalletAccountFromRemoteProfile,
   getRemoteWalletProfile,
@@ -43,6 +43,23 @@ interface WalletHistoryEntry {
 }
 
 type WalletSource = 'empty' | 'local' | 'remote';
+type WalletWeb3Phase = 'idle' | 'restoring' | 'wallet' | 'balances' | 'details' | 'ready' | 'error';
+
+interface WalletNetworkSyncState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  error?: string;
+  updatedAt?: string;
+  assetCount: number;
+}
+
+type WalletNetworkSyncMap = Record<SupportedNetwork, WalletNetworkSyncState>;
+
+const EMPTY_NETWORK_SYNC_STATE: WalletNetworkSyncMap = {
+  ethereum: { status: 'idle', assetCount: 0 },
+  base: { status: 'idle', assetCount: 0 },
+  bnb: { status: 'idle', assetCount: 0 },
+  solana: { status: 'idle', assetCount: 0 },
+};
 
 interface WalletState {
   hasHydrated: boolean;
@@ -62,6 +79,10 @@ interface WalletState {
   createdTokens: CreatedTokenStatus[];
   loading: boolean;
   error: string | null;
+  web3Phase: WalletWeb3Phase;
+  networkSyncState: WalletNetworkSyncMap;
+  lastBalanceSyncAt?: string;
+  showingCachedBalances: boolean;
   hydrateWallet: () => Promise<void>;
   createWallet: () => Promise<WalletAccount | null>;
   importWallet: (seedPhrase: string) => Promise<WalletAccount | null>;
@@ -236,13 +257,17 @@ export const useWalletStore = create<WalletState>()(
       createdTokens: mapCreatedTokens(),
       loading: false,
       error: null,
+      web3Phase: 'idle',
+      networkSyncState: EMPTY_NETWORK_SYNC_STATE,
+      lastBalanceSyncAt: undefined,
+      showingCachedBalances: false,
 
       hydrateWallet: async () => {
         if (get().hasHydrated) {
           return;
         }
 
-        set({ loading: true, error: null });
+        set({ loading: true, error: null, web3Phase: 'restoring' });
         try {
           const authState = useAuthStore.getState();
           const isAuthenticated = authState.session.status === 'authenticated';
@@ -312,11 +337,15 @@ export const useWalletStore = create<WalletState>()(
               createdTokens: mapCreatedTokens(),
               hasHydrated: true,
               loading: false,
+              web3Phase: 'idle',
+              networkSyncState: EMPTY_NETWORK_SYNC_STATE,
+              showingCachedBalances: false,
             });
             return;
           }
 
           syncOrbitWalletFutureWallet(wallet, { simulated: false });
+          const hasCachedBalances = get().assets.length > 0;
           set({
             walletAddress: wallet.address,
             receiveAddresses: wallet.receiveAddresses,
@@ -330,6 +359,8 @@ export const useWalletStore = create<WalletState>()(
             createdTokens: mapCreatedTokens(),
             hasHydrated: true,
             loading: false,
+            web3Phase: hasCachedBalances ? 'balances' : 'wallet',
+            showingCachedBalances: hasCachedBalances,
           });
 
           await get().refreshBalances();
@@ -338,6 +369,7 @@ export const useWalletStore = create<WalletState>()(
           set({
             hasHydrated: true,
             loading: false,
+            web3Phase: 'error',
             error: error instanceof Error ? error.message : 'No se pudo restaurar la billetera.',
           });
         }
@@ -367,6 +399,8 @@ export const useWalletStore = create<WalletState>()(
             ].slice(0, 24),
             hasHydrated: true,
             loading: false,
+            web3Phase: 'wallet',
+            showingCachedBalances: false,
           }));
           try {
             await syncRemoteWalletProfile({
@@ -416,6 +450,8 @@ export const useWalletStore = create<WalletState>()(
             ].slice(0, 24),
             hasHydrated: true,
             loading: false,
+            web3Phase: 'wallet',
+            showingCachedBalances: false,
           }));
           try {
             await syncRemoteWalletProfile({
@@ -459,6 +495,9 @@ export const useWalletStore = create<WalletState>()(
           balances: [],
           assets: [],
           hasHydrated: true,
+          web3Phase: 'idle',
+          networkSyncState: EMPTY_NETWORK_SYNC_STATE,
+          showingCachedBalances: false,
           securityStatus: {
             biometricsEnabled: false,
             pinEnabled: false,
@@ -476,26 +515,54 @@ export const useWalletStore = create<WalletState>()(
           return;
         }
 
-        set({ loading: true, error: null });
+        const existingAssets = get().assets;
+        set({
+          loading: true,
+          error: null,
+          web3Phase: existingAssets.length ? 'details' : 'balances',
+          showingCachedBalances: existingAssets.length > 0,
+          networkSyncState: {
+            ethereum: { status: 'loading', assetCount: 0 },
+            base: { status: 'loading', assetCount: 0 },
+            bnb: { status: 'loading', assetCount: 0 },
+            solana: { status: 'loading', assetCount: 0 },
+          },
+        });
         try {
-          const balances = await getWalletBalancesForAddresses(get().receiveAddresses);
+          const snapshot = await getWalletBalanceSnapshot(get().receiveAddresses);
           set((state) => ({
-            balances,
-            assets: balances,
+            balances: snapshot.assets,
+            assets: snapshot.assets,
             createdTokens: mapCreatedTokens(),
             loading: false,
+            web3Phase: snapshot.failedNetworks.length ? 'details' : 'ready',
+            networkSyncState: snapshot.networkStates,
+            lastBalanceSyncAt: snapshot.fetchedAt,
+            showingCachedBalances: false,
             history:
-              balances.length && !state.history.some((entry) => entry.title === 'Balances actualizados')
+              snapshot.assets.length &&
+              !state.history.some((entry) => entry.title === 'Balances actualizados')
                 ? [
                     buildHistoryEntry('Balances actualizados', 'OrbitX refresco tus activos on-chain.'),
                     ...state.history,
                   ].slice(0, 24)
                 : state.history,
+            error:
+              snapshot.failedNetworks.length > 0
+                ? `No se pudo actualizar ${snapshot.failedNetworks.length} red${snapshot.failedNetworks.length > 1 ? 'es' : ''}.`
+                : null,
           }));
         } catch (error) {
           devWarn('[OrbitX][Wallet] refreshBalances failed', error);
           set({
             loading: false,
+            web3Phase: 'error',
+            networkSyncState: {
+              ethereum: { status: 'error', assetCount: 0 },
+              base: { status: 'error', assetCount: 0 },
+              bnb: { status: 'error', assetCount: 0 },
+              solana: { status: 'error', assetCount: 0 },
+            },
             error: error instanceof Error ? error.message : 'No se pudo leer el balance on-chain.',
           });
         }
@@ -540,6 +607,10 @@ export const useWalletStore = create<WalletState>()(
           loading: false,
           error: null,
           hasHydrated: false,
+          web3Phase: 'idle',
+          networkSyncState: EMPTY_NETWORK_SYNC_STATE,
+          lastBalanceSyncAt: undefined,
+          showingCachedBalances: false,
           createdTokens: mapCreatedTokens(),
           securityStatus: {
             biometricsEnabled: false,
@@ -738,6 +809,8 @@ export const useWalletStore = create<WalletState>()(
         selectedNetwork: state.selectedNetwork,
         spotBalances: state.spotBalances,
         history: state.history,
+        assets: state.assets,
+        lastBalanceSyncAt: state.lastBalanceSyncAt,
       }),
     },
   ),

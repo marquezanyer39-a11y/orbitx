@@ -9,6 +9,21 @@ interface OnchainPortfolioSnapshot {
   supportedTokenIds: string[];
 }
 
+export interface OnchainPortfolioNetworkState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  error?: string;
+  updatedAt?: string;
+  assetCount: number;
+}
+
+export interface OnchainPortfolioDetailedSnapshot extends OnchainPortfolioSnapshot {
+  networkStates: Record<WalletNetwork, OnchainPortfolioNetworkState>;
+  failedNetworks: WalletNetwork[];
+}
+
+const WALLET_NETWORKS: WalletNetwork[] = ['ethereum', 'base', 'bnb', 'solana'];
+const NETWORK_TIMEOUT_MS = 7_500;
+
 const EVM_NATIVE_CHAIN_IDS = {
   ethereum: 1,
   base: 8453,
@@ -204,9 +219,102 @@ async function fetchAssetAmount(
   );
 }
 
-export async function fetchOnchainPortfolio(
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string) {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(errorMessage));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+async function fetchNetworkPortfolio(
+  network: WalletNetwork,
+  receiveAddresses: Record<WalletNetwork, string>,
+) {
+  const specs = ONCHAIN_ASSET_SPECS.filter((spec) => spec.network === network);
+  const address = receiveAddresses[network];
+
+  if (!address) {
+    return {
+      assets: [] as WalletAsset[],
+      state: {
+        status: 'error' as const,
+        error: 'No hay una direccion activa para esta red.',
+        assetCount: 0,
+      },
+    };
+  }
+
+  try {
+    const balances = await withTimeout(
+      Promise.allSettled(
+        specs.map(async (spec) => ({
+          tokenId: spec.tokenId,
+          network: spec.network,
+          amount: await fetchAssetAmount(spec, receiveAddresses),
+        })),
+      ),
+      NETWORK_TIMEOUT_MS,
+      `La red ${network} tardo demasiado en responder.`,
+    );
+
+    const assets = balances.flatMap((entry) => {
+      if (entry.status !== 'fulfilled') {
+        return [];
+      }
+
+      return [
+        {
+          tokenId: entry.value.tokenId,
+          amount: entry.value.amount,
+          averageCost: 0,
+          network: entry.value.network,
+        },
+      ];
+    });
+
+    const failedAssets = balances.filter((entry) => entry.status === 'rejected').length;
+
+    return {
+      assets,
+      state: {
+        status: failedAssets === balances.length ? 'error' : 'success',
+        error:
+          failedAssets > 0
+            ? `No se pudieron actualizar ${failedAssets} activos de ${network}.`
+            : undefined,
+        updatedAt: new Date().toISOString(),
+        assetCount: assets.length,
+      } satisfies OnchainPortfolioNetworkState,
+    };
+  } catch (error) {
+    return {
+      assets: [] as WalletAsset[],
+      state: {
+        status: 'error' as const,
+        error:
+          error instanceof Error
+            ? error.message
+            : `No se pudo actualizar la red ${network}.`,
+        assetCount: 0,
+      },
+    };
+  }
+}
+
+export async function fetchOnchainPortfolioDetailed(
   receiveAddressesOverride?: Record<WalletNetwork, string>,
-): Promise<OnchainPortfolioSnapshot> {
+): Promise<OnchainPortfolioDetailedSnapshot> {
   const bundle = receiveAddressesOverride ? null : await getStoredWalletBundle();
   const receiveAddresses = receiveAddressesOverride ?? bundle?.receiveAddresses;
 
@@ -214,33 +322,50 @@ export async function fetchOnchainPortfolio(
     throw new Error('No hay una billetera activa para sincronizar.');
   }
 
-  const balances = await Promise.allSettled(
-    ONCHAIN_ASSET_SPECS.map(async (spec) => ({
-      tokenId: spec.tokenId,
-      network: spec.network,
-      amount: await fetchAssetAmount(spec, receiveAddresses),
-    })),
+  const settledNetworks = await Promise.all(
+    WALLET_NETWORKS.map(async (network) => {
+      const result = await fetchNetworkPortfolio(network, receiveAddresses);
+      return [network, result] as const;
+    }),
   );
 
-  const assets = balances.flatMap((entry) => {
-    if (entry.status !== 'fulfilled') {
-      return [];
-    }
+  const networkStates = settledNetworks.reduce<Record<WalletNetwork, OnchainPortfolioNetworkState>>(
+    (accumulator, [network, result]) => {
+      accumulator[network] = result.state;
+      return accumulator;
+    },
+    {
+      ethereum: { status: 'idle', assetCount: 0 },
+      base: { status: 'idle', assetCount: 0 },
+      bnb: { status: 'idle', assetCount: 0 },
+      solana: { status: 'idle', assetCount: 0 },
+    },
+  );
 
-    return [
-      {
-        tokenId: entry.value.tokenId,
-        amount: entry.value.amount,
-        averageCost: 0,
-        network: entry.value.network,
-      },
-    ];
-  });
+  const assets = settledNetworks.flatMap(([, result]) => result.assets);
+  const failedNetworks = settledNetworks
+    .filter(([, result]) => result.state.status === 'error')
+    .map(([network]) => network);
 
   return {
     assets,
     fetchedAt: new Date().toISOString(),
     receiveAddresses,
     supportedTokenIds: REAL_WALLET_TOKEN_IDS,
+    networkStates,
+    failedNetworks,
+  };
+}
+
+export async function fetchOnchainPortfolio(
+  receiveAddressesOverride?: Record<WalletNetwork, string>,
+): Promise<OnchainPortfolioSnapshot> {
+  const detailedSnapshot = await fetchOnchainPortfolioDetailed(receiveAddressesOverride);
+
+  return {
+    assets: detailedSnapshot.assets,
+    fetchedAt: detailedSnapshot.fetchedAt,
+    receiveAddresses: detailedSnapshot.receiveAddresses,
+    supportedTokenIds: detailedSnapshot.supportedTokenIds,
   };
 }

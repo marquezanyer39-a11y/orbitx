@@ -29,17 +29,17 @@ function StandardTabIcon({
       style={[
         styles.standardTabIconShell,
         {
-          backgroundColor: focused ? withOpacity(colors.primary, 0.12) : 'transparent',
+          backgroundColor: focused ? withOpacity(colors.profit, 0.12) : 'transparent',
           borderColor: focused
-            ? withOpacity(colors.primary, 0.18)
+            ? withOpacity(colors.profit, 0.18)
             : withOpacity(colors.borderStrong, 0.08),
         },
       ]}
     >
       <Ionicons
         name={icon ?? 'ellipse-outline'}
-          color={focused ? colors.text : withOpacity(colors.text, 0.6)}
-          size={18}
+        color={focused ? colors.profit : withOpacity(colors.text, 0.6)}
+        size={18}
       />
     </View>
   );
@@ -54,10 +54,10 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
         styles.tradeTabOuter,
         {
           backgroundColor: focused
-            ? withOpacity(colors.primary, 0.14)
-            : withOpacity(colors.primary, 0.06),
+            ? withOpacity(colors.profit, 0.16)
+            : withOpacity(colors.profit, 0.06),
           borderColor: focused
-            ? withOpacity(colors.primary, 0.24)
+            ? withOpacity(colors.profit, 0.28)
             : withOpacity(colors.borderStrong, 0.8),
         },
       ]}
@@ -66,10 +66,10 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
         style={[
           styles.tradeTabButton,
           {
-            backgroundColor: focused ? withOpacity(colors.primary, 0.88) : colors.card,
+            backgroundColor: focused ? withOpacity(colors.profit, 0.9) : colors.card,
             borderColor: focused
-              ? withOpacity(colors.primary, 0.76)
-              : withOpacity(colors.primary, 0.18),
+              ? withOpacity(colors.profit, 0.72)
+              : withOpacity(colors.profit, 0.18),
           },
         ]}
       >
@@ -83,12 +83,18 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
   );
 }
 
-function getTabLabel(routeName: (typeof TAB_ORDER)[number]) {
+function getTabLabel(routeName: (typeof TAB_ORDER)[number], t: (path: string) => string) {
+  if (routeName === 'home') return t('tabs.home');
+  if (routeName === 'market') return t('tabs.market');
+  if (routeName === 'spot') return t('tabs.trade');
+  if (routeName === 'wallet') return t('tabs.wallet');
+  if (routeName === 'profile') return t('tabs.profile');
   return TAB_NAV_ITEMS.find((item) => item.key === routeName)?.label ?? routeName;
 }
 
 function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const currentRouteName = state.routes[state.index]?.name;
 
@@ -164,12 +170,12 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
                     color: focused
                       ? isTrade
                         ? colors.text
-                        : colors.text
+                        : colors.profit
                       : withOpacity(colors.text, 0.5),
                   },
                 ]}
               >
-                {getTabLabel(route.name as (typeof TAB_ORDER)[number])}
+                {getTabLabel(route.name as (typeof TAB_ORDER)[number], t)}
               </Text>
             </Pressable>
           );
@@ -182,7 +188,7 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
 export default function TabsLayout() {
   const sessionStatus = useAuthStore((state) => state.session.status);
   const { colors } = useAppTheme();
-  useI18n();
+  const { t } = useI18n();
 
   if (sessionStatus === 'signed_out') {
     return <RouteRedirect href="/" />;
@@ -200,11 +206,11 @@ export default function TabsLayout() {
         },
       }}
     >
-      <Tabs.Screen name="home" options={{ title: 'Inicio' }} />
-      <Tabs.Screen name="market" options={{ title: 'Mercados' }} />
-      <Tabs.Screen name="spot" options={{ title: 'Operar' }} />
-      <Tabs.Screen name="wallet" options={{ title: 'Billetera' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
+      <Tabs.Screen name="home" options={{ title: t('tabs.home') }} />
+      <Tabs.Screen name="market" options={{ title: t('tabs.market') }} />
+      <Tabs.Screen name="spot" options={{ title: t('tabs.trade') }} />
+      <Tabs.Screen name="wallet" options={{ title: t('tabs.wallet') }} />
+      <Tabs.Screen name="profile" options={{ title: t('tabs.profile') }} />
     </Tabs>
   );
 }

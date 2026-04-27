@@ -1,11 +1,12 @@
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ExternalWalletProvider } from '../../types';
 import { FONT, RADII, SPACING, withOpacity } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
+import { useI18n } from '../../hooks/useI18n';
 import { isValidWalletAddress } from '../../utils/validation';
 import { OrbitInput } from '../forms/OrbitInput';
 import { PrimaryButton } from '../common/PrimaryButton';
@@ -48,6 +49,7 @@ export function ExternalWalletConnectSheet({
   onSelect,
 }: ExternalWalletConnectSheetProps) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const [selectedProvider, setSelectedProvider] = useState<ExternalWalletProvider>('metamask');
   const [address, setAddress] = useState(currentAddress);
 
@@ -60,10 +62,6 @@ export function ExternalWalletConnectSheet({
     setAddress(currentAddress);
   }, [currentAddress, currentProvider, visible]);
 
-  const selectedCard = useMemo(
-    () => providers.find((provider) => provider.value === selectedProvider) ?? providers[0],
-    [selectedProvider],
-  );
   const validEvmAddress = isValidWalletAddress(address, 'ethereum');
 
   async function openMetaMask() {
@@ -103,10 +101,10 @@ export function ExternalWalletConnectSheet({
 
           <View style={styles.header}>
             <View style={styles.headerCopy}>
-              <Text style={[styles.eyebrow, { color: colors.textMuted }]}>Billetera externa</Text>
-              <Text style={[styles.title, { color: colors.text }]}>Conectar una billetera</Text>
+              <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{t('externalWalletSheet.eyebrow')}</Text>
+              <Text style={[styles.title, { color: colors.text }]}>{t('externalWalletSheet.title')}</Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                Vincula una direccion publica para usarla como opcion adicional en OrbitX.
+                {t('externalWalletSheet.subtitle')}
               </Text>
             </View>
 
@@ -162,14 +160,16 @@ export function ExternalWalletConnectSheet({
                       {provider.title}
                     </Text>
                     <Text style={[styles.providerBody, { color: colors.textMuted }]}>
-                      {provider.body}
+                      {provider.value === 'metamask'
+                        ? t('externalWalletSheet.metamaskBody')
+                        : t('externalWalletSheet.walletConnectBody')}
                     </Text>
                   </View>
 
                   {connected ? (
-                    <Text style={[styles.badge, { color: colors.profit }]}>Vinculada</Text>
+                    <Text style={[styles.badge, { color: colors.profit }]}>{t('externalWalletSheet.linked')}</Text>
                   ) : disabled ? (
-                    <Text style={[styles.badge, { color: colors.textMuted }]}>Pronto</Text>
+                    <Text style={[styles.badge, { color: colors.textMuted }]}>{t('externalWalletSheet.soon')}</Text>
                   ) : (
                     <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                   )}
@@ -184,48 +184,46 @@ export function ExternalWalletConnectSheet({
               { backgroundColor: colors.fieldBackground, borderColor: colors.border },
             ]}
           >
-            <Text style={[styles.providerTitle, { color: colors.text }]}>
-              {selectedCard.title}
-            </Text>
+            <Text style={[styles.providerTitle, { color: colors.text }]}>{t('externalWalletSheet.helperTitle')}</Text>
             <Text style={[styles.providerBody, { color: colors.textMuted }]}>
-              Puedes vincular tu direccion publica ahora mismo. La firma directa desde OrbitX se activara cuando esta integracion quede lista.
+              {t('externalWalletSheet.helperBody')}
             </Text>
           </View>
 
           <PrimaryButton
-            label="Abrir MetaMask"
+            label={t('externalWalletSheet.openMetamask')}
             variant="secondary"
             onPress={() => void openMetaMask()}
           />
 
           <PrimaryButton
-            label="Pegar desde portapapeles"
+            label={t('externalWalletSheet.pasteClipboard')}
             variant="ghost"
             onPress={() => void pasteAddress()}
           />
 
           <OrbitInput
-            label="Direccion publica"
+            label={t('externalWalletSheet.publicAddress')}
             value={address}
             onChangeText={setAddress}
-            placeholder="0x..."
+            placeholder={t('externalWalletSheet.publicAddressPlaceholder')}
             autoCapitalize="none"
             autoCorrect={false}
           />
 
           <Text style={[styles.helperText, { color: colors.textMuted }]}>
-            Pega una direccion publica valida para vincular tu billetera.
+            {t('externalWalletSheet.publicAddressHint')}
           </Text>
 
           <PrimaryButton
-            label={loading ? 'Guardando...' : 'Guardar conexion'}
+            label={loading ? t('externalWalletSheet.savingConnection') : t('externalWalletSheet.saveConnection')}
             disabled={!validEvmAddress || loading}
             style={!validEvmAddress || loading ? styles.disabledAction : undefined}
             onPress={() => onSelect('metamask', address)}
           />
 
           <PrimaryButton
-            label="Cerrar"
+            label={t('externalWalletSheet.close')}
             variant="ghost"
             onPress={onClose}
             style={styles.closeAction}

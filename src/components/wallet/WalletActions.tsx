@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
+import { useI18n } from '../../../hooks/useI18n';
 
 interface Props {
   onDeposit: () => void;
@@ -13,10 +14,10 @@ interface Props {
 }
 
 const ACTIONS = [
-  { key: 'deposit', label: 'Depositar', icon: 'add-circle-outline' as const },
-  { key: 'receive', label: 'Recibir', icon: 'arrow-down-outline' as const },
-  { key: 'send', label: 'Enviar', icon: 'paper-plane-outline' as const },
-  { key: 'withdraw', label: 'Retirar', icon: 'arrow-up-outline' as const },
+  { key: 'deposit', labelKey: 'walletActions.deposit', icon: 'add-circle-outline' as const },
+  { key: 'receive', labelKey: 'walletActions.receive', icon: 'arrow-down-outline' as const },
+  { key: 'send', labelKey: 'walletActions.send', icon: 'paper-plane-outline' as const },
+  { key: 'withdraw', labelKey: 'walletActions.withdraw', icon: 'arrow-up-outline' as const },
 ] as const;
 
 export function WalletActions({
@@ -27,6 +28,7 @@ export function WalletActions({
   onTrade,
 }: Props) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
 
   const handlers = {
     deposit: onDeposit,
@@ -51,7 +53,7 @@ export function WalletActions({
             ]}
           >
             <Ionicons name={action.icon} size={15} color={withOpacity(colors.text, 0.78)} />
-            <Text style={[styles.actionLabel, { color: colors.textSoft }]}>{action.label}</Text>
+            <Text style={[styles.actionLabel, { color: colors.textSoft }]}>{t(action.labelKey)}</Text>
           </Pressable>
         ))}
       </View>
@@ -66,7 +68,7 @@ export function WalletActions({
           },
         ]}
       >
-        <Text style={[styles.tradeLabel, { color: colors.background }]}>Operar</Text>
+        <Text style={[styles.tradeLabel, { color: colors.background }]}>{t('walletActions.trade')}</Text>
       </Pressable>
     </View>
   );

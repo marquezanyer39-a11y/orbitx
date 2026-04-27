@@ -1,5 +1,6 @@
 import type { LanguageCode } from '../types';
 import { GENERATED_TRANSLATIONS } from '../src/i18n/resources.generated';
+import { RUNTIME_TRANSLATION_OVERRIDES } from '../src/i18n/runtimeOverrides';
 
 export interface TranslationTree {
   [key: string]: string | TranslationTree;
@@ -81,6 +82,7 @@ export const translations = GENERATED_TRANSLATIONS as unknown as Record<
   LanguageCode,
   TranslationTree
 >;
+const missingTranslationWarnings = new Set<string>();
 
 function getByPath(tree: TranslationTree, path: string) {
   return path.split('.').reduce<string | TranslationTree | undefined>((current, key) => {
@@ -164,8 +166,29 @@ export function translate(
   params?: Record<string, string | number>,
 ) {
   const source = translations[language] ?? translations.en;
-  const rawValue = getByPath(source, path) ?? getByPath(translations.en, path) ?? path;
+  const overrideSource = RUNTIME_TRANSLATION_OVERRIDES[language] as TranslationTree | undefined;
+  const overrideSpanish = RUNTIME_TRANSLATION_OVERRIDES.es as TranslationTree | undefined;
+  const overrideEnglish = RUNTIME_TRANSLATION_OVERRIDES.en as TranslationTree | undefined;
+  const rawValue =
+    getByPath(overrideSource ?? {}, path) ??
+    getByPath(source, path) ??
+    getByPath(overrideSpanish ?? {}, path) ??
+    getByPath(translations.es, path) ??
+    getByPath(overrideEnglish ?? {}, path) ??
+    getByPath(translations.en, path) ??
+    path;
   const value = typeof rawValue === 'string' ? rawValue : path;
+
+  if (
+    value === path &&
+    typeof __DEV__ !== 'undefined' &&
+    __DEV__ &&
+    !missingTranslationWarnings.has(`${language}:${path}`)
+  ) {
+    missingTranslationWarnings.add(`${language}:${path}`);
+    console.warn(`[OrbitX i18n] Missing translation key: ${language}.${path}`);
+  }
+
   return formatTemplate(value, params);
 }
 
