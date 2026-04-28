@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { useOrbitStore } from '../../store/useOrbitStore';
 import { useAuthStore } from './authStore';
+import { useUiStore } from './uiStore';
 import type {
   CreatedTokenStatus,
   ExternalWalletConnection,
@@ -90,6 +91,17 @@ interface WalletState {
   refreshBalances: () => Promise<void>;
   refreshSecurityStatus: () => Promise<void>;
   clearSessionWalletState: () => void;
+  updateExternalWalletState: (patch: Partial<ExternalWalletConnection>) => void;
+  setExternalWalletConnection: (
+    connection: ExternalWalletConnection,
+    options?: {
+      suppressHistory?: boolean;
+      historyTitle?: string;
+      historyBody?: string;
+      toastMessage?: string;
+      toastTone?: 'success' | 'error' | 'info';
+    },
+  ) => Promise<void>;
   connectExternalWallet: (
     provider: ExternalWalletProvider,
     address?: string,
@@ -111,6 +123,15 @@ const EMPTY_RECEIVE_ADDRESSES: WalletAccount['receiveAddresses'] = {
   bnb: '',
   solana: '',
 };
+
+function createEmptyExternalWalletConnection(): ExternalWalletConnection {
+  return {
+    provider: null,
+    address: '',
+    signingReady: false,
+    status: 'disconnected',
+  };
+}
 
 function buildHistoryEntry(title: string, body: string): WalletHistoryEntry {
   return {
@@ -169,9 +190,14 @@ function syncOrbitWalletFutureExternalWallet(connection: ExternalWalletConnectio
       externalWallet: {
         provider: connection.provider,
         address: connection.address,
+        chainId: connection.chainId,
+        walletName: connection.walletName,
+        sessionTopic: connection.sessionTopic,
         simulated: !connection.address,
         connectedAt: connection.connectedAt,
         signingReady: connection.signingReady,
+        status: connection.status,
+        lastError: connection.lastError,
       },
     },
   }));
@@ -203,12 +229,23 @@ function mapCreatedTokens(): CreatedTokenStatus[] {
 
 function mapExternalWalletState(): ExternalWalletConnection {
   const externalWallet = useOrbitStore.getState().walletFuture.externalWallet;
+  const parsedChainId =
+    typeof externalWallet.chainId === 'number'
+      ? externalWallet.chainId
+      : typeof externalWallet.chainId === 'string'
+        ? Number(externalWallet.chainId)
+        : undefined;
 
   return {
     provider: externalWallet.provider,
     address: externalWallet.address || '',
+    chainId: Number.isFinite(parsedChainId) ? parsedChainId : undefined,
+    walletName: externalWallet.walletName?.trim() || undefined,
+    sessionTopic: externalWallet.sessionTopic?.trim() || undefined,
     connectedAt: externalWallet.connectedAt,
     signingReady: Boolean(externalWallet.signingReady),
+    status: externalWallet.status ?? (externalWallet.address ? 'connected' : 'disconnected'),
+    lastError: externalWallet.lastError?.trim() || undefined,
   };
 }
 
@@ -246,11 +283,7 @@ export const useWalletStore = create<WalletState>()(
         biometricsEnabled: false,
         pinEnabled: false,
       },
-      externalWallet: {
-        provider: null,
-        address: '',
-        signingReady: false,
-      },
+      externalWallet: createEmptyExternalWalletConnection(),
       hasHydrated: false,
       spotBalances: [],
       history: [],
@@ -308,13 +341,7 @@ export const useWalletStore = create<WalletState>()(
               : null;
 
           const externalWallet = resolvedRemoteWalletProfile?.externalWallet ??
-            (wallet
-              ? localExternalWallet
-              : {
-                  provider: null,
-                  address: '',
-                  signingReady: false,
-                });
+            (wallet ? localExternalWallet : createEmptyExternalWalletConnection());
           const walletSource: WalletSource = wallet
             ? useLocalWallet
               ? 'local'
@@ -480,11 +507,7 @@ export const useWalletStore = create<WalletState>()(
       logoutWallet: async () => {
         await clearSecureWallet();
         syncOrbitWalletFutureWallet(null, { simulated: true });
-        syncOrbitWalletFutureExternalWallet({
-          provider: null,
-          address: '',
-          signingReady: false,
-        });
+        syncOrbitWalletFutureExternalWallet(createEmptyExternalWalletConnection());
         set({
           walletAddress: '',
           receiveAddresses: EMPTY_RECEIVE_ADDRESSES,
@@ -502,11 +525,7 @@ export const useWalletStore = create<WalletState>()(
             biometricsEnabled: false,
             pinEnabled: false,
           },
-          externalWallet: {
-            provider: null,
-            address: '',
-            signingReady: false,
-          },
+          externalWallet: createEmptyExternalWalletConnection(),
         });
       },
 
@@ -585,11 +604,7 @@ export const useWalletStore = create<WalletState>()(
 
       clearSessionWalletState: () => {
         syncOrbitWalletFutureWallet(null, { simulated: true });
-        syncOrbitWalletFutureExternalWallet({
-          provider: null,
-          address: '',
-          signingReady: false,
-        });
+        syncOrbitWalletFutureExternalWallet(createEmptyExternalWalletConnection());
         set((state) => ({
           walletAddress: '',
           receiveAddresses: EMPTY_RECEIVE_ADDRESSES,
@@ -599,11 +614,7 @@ export const useWalletStore = create<WalletState>()(
           assets: [],
           isWalletReady: false,
           walletType: null,
-          externalWallet: {
-            provider: null,
-            address: '',
-            signingReady: false,
-          },
+          externalWallet: createEmptyExternalWalletConnection(),
           loading: false,
           error: null,
           hasHydrated: false,
@@ -618,6 +629,117 @@ export const useWalletStore = create<WalletState>()(
           },
           history: state.history,
         }));
+      },
+
+      updateExternalWalletState: (patch) => {
+        set((state) => {
+          const nextExternalWallet: ExternalWalletConnection = {
+            ...state.externalWallet,
+            ...patch,
+            status:
+              patch.status ??
+              state.externalWallet.status ??
+              (patch.address || state.externalWallet.address ? 'connected' : 'disconnected'),
+            signingReady:
+              patch.signingReady ?? state.externalWallet.signingReady ?? false,
+          };
+
+          syncOrbitWalletFutureExternalWallet(nextExternalWallet);
+
+          return {
+            externalWallet: nextExternalWallet,
+          };
+        });
+      },
+
+      setExternalWalletConnection: async (connection, options) => {
+        const previousConnection = get().externalWallet;
+        const normalizedConnection: ExternalWalletConnection = {
+          ...createEmptyExternalWalletConnection(),
+          ...connection,
+          address: connection.address.trim(),
+          walletName: connection.walletName?.trim() || undefined,
+          sessionTopic: connection.sessionTopic?.trim() || undefined,
+          lastError: connection.lastError?.trim() || undefined,
+          status:
+            connection.status ??
+            (connection.address ? 'connected' : 'disconnected'),
+          signingReady: Boolean(connection.signingReady),
+        };
+        const changed =
+          previousConnection.provider !== normalizedConnection.provider ||
+          previousConnection.address !== normalizedConnection.address ||
+          previousConnection.chainId !== normalizedConnection.chainId ||
+          previousConnection.walletName !== normalizedConnection.walletName ||
+          previousConnection.sessionTopic !== normalizedConnection.sessionTopic ||
+          previousConnection.signingReady !== normalizedConnection.signingReady ||
+          previousConnection.status !== normalizedConnection.status ||
+          previousConnection.lastError !== normalizedConnection.lastError;
+
+        syncOrbitWalletFutureExternalWallet(normalizedConnection);
+
+        set((state) => {
+          if (!changed) {
+            return {
+              externalWallet: normalizedConnection,
+              loading: false,
+              error:
+                normalizedConnection.status === 'error'
+                  ? normalizedConnection.lastError ?? state.error
+                  : state.error,
+            };
+          }
+
+          const nextHistory = options?.suppressHistory
+            ? state.history
+            : [
+                buildHistoryEntry(
+                  options?.historyTitle ?? 'Wallet externa actualizada',
+                  options?.historyBody ??
+                    `${normalizedConnection.walletName ?? 'Wallet externa'} quedo ${
+                      normalizedConnection.status === 'connected'
+                        ? 'conectada'
+                        : normalizedConnection.status === 'connecting'
+                          ? 'en proceso de conexion'
+                          : normalizedConnection.status === 'error'
+                            ? 'con incidencia'
+                            : 'desconectada'
+                    }.`,
+                ),
+                ...state.history,
+              ].slice(0, 24);
+
+          return {
+            externalWallet: normalizedConnection,
+            loading: false,
+            error:
+              normalizedConnection.status === 'error'
+                ? normalizedConnection.lastError ?? state.error
+                : state.error,
+            history: nextHistory,
+          };
+        });
+
+        if (options?.toastMessage) {
+          useUiStore.getState().showToast(options.toastMessage, options.toastTone ?? 'info');
+        }
+
+        if (changed && get().isWalletReady) {
+          try {
+            await syncRemoteWalletProfile({
+              wallet: {
+                address: get().walletAddress,
+                mnemonicStored: get().mnemonicStored,
+                walletType: get().walletType === 'imported' ? 'imported' : 'orbitx',
+                receiveAddresses: get().receiveAddresses,
+                selectedNetwork: get().selectedNetwork,
+              },
+              externalWallet: normalizedConnection,
+            });
+          } catch (syncError) {
+            devWarn('[OrbitX][Wallet] remote external wallet sync failed', syncError);
+          }
+        }
       },
 
       connectExternalWallet: async (provider, address) => {
@@ -650,10 +772,11 @@ export const useWalletStore = create<WalletState>()(
           set((state) => ({
             externalWallet,
             loading: false,
+            error: null,
             history: [
               buildHistoryEntry(
                 'Billetera externa vinculada',
-                `${externalWallet.provider === 'metamask' ? 'MetaMask' : 'WalletConnect'} quedo vinculada con ${addressLabel}.`,
+                `${externalWallet.walletName ?? (externalWallet.provider === 'metamask' ? 'MetaMask' : 'WalletConnect')} quedo vinculada con ${addressLabel}.`,
               ),
               ...state.history,
             ].slice(0, 24),
@@ -694,14 +817,11 @@ export const useWalletStore = create<WalletState>()(
 
       disconnectExternalWallet: () => {
         useOrbitStore.getState().disconnectExternalWallet();
-        const emptyExternalWallet: ExternalWalletConnection = {
-          provider: null,
-          address: '',
-          signingReady: false,
-        };
+        const emptyExternalWallet = createEmptyExternalWalletConnection();
         syncOrbitWalletFutureExternalWallet(emptyExternalWallet);
         set((state) => ({
           externalWallet: emptyExternalWallet,
+          error: null,
           history: [
             buildHistoryEntry(
               'Billetera externa desconectada',

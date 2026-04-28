@@ -38,7 +38,6 @@ import { useWalletStore } from '../../src/store/walletStore';
 import { useOrbitStore } from '../../store/useOrbitStore';
 import type {
   DexLaunchNetwork,
-  ExternalWalletProvider,
   LaunchChain,
 } from '../../types';
 import { formatCurrency } from '../../utils/format';
@@ -144,7 +143,6 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
   const updateTokenRecord = useOrbitStore((state) => state.updateTokenRecord);
   const launchToken = useOrbitStore((state) => state.launchToken);
   const showToast = useOrbitStore((state) => state.showToast);
-  const connectExternalWallet = useOrbitStore((state) => state.connectExternalWallet);
   const rememberAstraContext = useAstraStore((state) => state.rememberContext);
 
   const [step, setStep] = useState<WizardStep>('wallet');
@@ -576,14 +574,6 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
       setAstraImageStatus('error');
       setAstraImageError(message);
       showToast(message, 'info');
-    }
-  }
-
-  async function handleConnectProvider(provider: ExternalWalletProvider, address?: string) {
-    const result = await connectExternalWallet(provider, address);
-    if (result.ok) {
-      setWalletSource('external');
-      setConnectorVisible(false);
     }
   }
 
@@ -1825,10 +1815,7 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
 
       <ExternalWalletConnectSheet
         visible={connectorVisible}
-        currentProvider={walletFuture.externalWallet.provider}
-        currentAddress={walletFuture.externalWallet.address}
         onClose={() => setConnectorVisible(false)}
-        onSelect={handleConnectProvider}
       />
 
       <TokenLaunchModal

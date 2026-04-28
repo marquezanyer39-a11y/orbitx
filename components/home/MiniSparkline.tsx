@@ -13,50 +13,69 @@ interface MiniSparklineProps {
   barWidth?: number;
   barGap?: number;
   subtle?: boolean;
+  variant?: 'line' | 'bars';
 }
 
-const FALLBACK_SERIES = [28, 34, 32, 38, 36, 42, 44, 41, 46, 52, 48, 56];
+const FALLBACK_SERIES = [42, 44, 46, 45, 47, 49, 51, 52, 53, 54];
 
-function normalizeSeries(
-  series: number[],
-  width: number,
-  barWidth: number,
-  barGap: number,
-) {
-  const safeSeries = series.filter((point) => Number.isFinite(point));
-  const usable = safeSeries.length ? safeSeries : FALLBACK_SERIES;
-  const maxBars = Math.max(6, Math.floor(width / Math.max(barWidth + barGap, 1)));
-  const sampled =
-    usable.length <= maxBars
-      ? usable
-      : Array.from({ length: maxBars }, (_, index) => {
-          const pointer = Math.floor((index / maxBars) * usable.length);
-          return usable[Math.min(pointer, usable.length - 1)];
-        });
+function getSeries(data: number[], targetPoints: number) {
+  const safe = data.filter((point) => Number.isFinite(point));
+  const usable = safe.length ? safe : FALLBACK_SERIES;
 
+  if (usable.length <= targetPoints) {
+    return usable;
+  }
+
+  return Array.from({ length: targetPoints }, (_, index) => {
+    const pointer = Math.floor((index / Math.max(targetPoints - 1, 1)) * (usable.length - 1));
+    return usable[pointer] ?? usable[usable.length - 1];
+  });
+}
+
+function getLinePoints(data: number[], width: number, height: number) {
+  const sampled = getSeries(data, Math.max(8, Math.min(18, Math.floor(width / 7))));
+  const min = Math.min(...sampled);
+  const max = Math.max(...sampled);
+  const delta = Math.max(max - min, 1);
+  const usableWidth = Math.max(width - 2, 1);
+  const usableHeight = Math.max(height - 4, 1);
+
+  return sampled.map((point, index) => ({
+    x: 1 + (index / Math.max(sampled.length - 1, 1)) * usableWidth,
+    y: height - 2 - ((point - min) / delta) * usableHeight,
+  }));
+}
+
+function getBars(data: number[], width: number, barWidth: number, barGap: number) {
+  const sampled = getSeries(data, Math.max(5, Math.floor(width / Math.max(barWidth + barGap, 1))));
   const min = Math.min(...sampled);
   const max = Math.max(...sampled);
   const delta = Math.max(max - min, 1);
 
-  return sampled.map((point) => 0.22 + ((point - min) / delta) * 0.78);
+  return sampled.map((point) => 0.25 + ((point - min) / delta) * 0.75);
 }
 
 function MiniSparklineComponent({
   data,
-  width = 116,
-  height = 44,
-  color = '#1EDC8B',
-  negativeColor = '#FF5A67',
+  width = 110,
+  height = 24,
+  color = '#00C853',
+  negativeColor = '#FF5252',
   positive = true,
   barWidth = 4,
   barGap = 2,
   subtle = false,
+  variant = 'line',
 }: MiniSparklineProps) {
-  const bars = useMemo(
-    () => normalizeSeries(data, width, barWidth, barGap),
-    [barGap, barWidth, data, width],
+  const stroke = positive ? color : negativeColor;
+  const linePoints = useMemo(
+    () => (variant === 'line' ? getLinePoints(data, width, height) : []),
+    [data, height, variant, width],
   );
-  const fill = positive ? color : negativeColor;
+  const bars = useMemo(
+    () => (variant === 'bars' ? getBars(data, width, barWidth, barGap) : []),
+    [barGap, barWidth, data, variant, width],
+  );
 
   return (
     <View
@@ -65,35 +84,61 @@ function MiniSparklineComponent({
         {
           width,
           height,
-          borderColor: subtle ? 'transparent' : withOpacity(fill, 0.08),
-          backgroundColor: subtle ? 'transparent' : withOpacity(fill, 0.04),
+          backgroundColor: subtle ? 'transparent' : withOpacity(stroke, 0.03),
+          borderColor: subtle ? 'transparent' : withOpacity(stroke, 0.08),
         },
       ]}
     >
-      <View
-        style={[
-          styles.glow,
-          {
-            backgroundColor: withOpacity(fill, subtle ? 0.08 : 0.12),
-          },
-        ]}
-      />
-      <View style={styles.barRow}>
-        {bars.map((value, index) => (
-          <View
-            key={`${index}-${value}`}
-            style={[
-              styles.bar,
-              {
-                width: barWidth,
-                marginRight: index === bars.length - 1 ? 0 : barGap,
-                height: Math.max(4, value * height),
-                backgroundColor: withOpacity(fill, subtle ? 0.78 : 0.94),
-              },
-            ]}
-          />
-        ))}
-      </View>
+      {variant === 'line' ? (
+        <View style={styles.canvas}>
+          {linePoints.map((point, index) => {
+            if (index === linePoints.length - 1) {
+              return null;
+            }
+
+            const nextPoint = linePoints[index + 1];
+            const dx = nextPoint.x - point.x;
+            const dy = nextPoint.y - point.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+            const centerX = (point.x + nextPoint.x) / 2;
+            const centerY = (point.y + nextPoint.y) / 2;
+
+            return (
+              <View
+                key={`segment-${index}`}
+                style={[
+                  styles.segment,
+                  {
+                    width: distance,
+                    left: centerX - distance / 2,
+                    top: centerY - 1,
+                    backgroundColor: withOpacity(stroke, subtle ? 0.96 : 0.92),
+                    transform: [{ rotate: `${angle}deg` }],
+                  },
+                ]}
+              />
+            );
+          })}
+        </View>
+      ) : (
+        <View style={styles.barsRow}>
+          {bars.map((value, index) => (
+            <View
+              key={`${index}-${value}`}
+              style={[
+                styles.bar,
+                {
+                  width: barWidth,
+                  marginRight: index === bars.length - 1 ? 0 : barGap,
+                  height: Math.max(4, value * height),
+                  backgroundColor: withOpacity(stroke, 0.86),
+                },
+              ]}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -103,20 +148,23 @@ export const MiniSparkline = memo(MiniSparklineComponent);
 const styles = StyleSheet.create({
   root: {
     overflow: 'hidden',
-    justifyContent: 'flex-end',
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 12,
   },
-  glow: {
-    ...StyleSheet.absoluteFillObject,
-    top: '48%',
+  canvas: {
+    flex: 1,
   },
-  barRow: {
+  segment: {
+    position: 'absolute',
+    height: 2,
+    borderRadius: 999,
+  },
+  barsRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     height: '100%',
-    paddingHorizontal: 6,
-    paddingBottom: 4,
+    paddingHorizontal: 4,
+    paddingBottom: 2,
   },
   bar: {
     borderTopLeftRadius: 999,

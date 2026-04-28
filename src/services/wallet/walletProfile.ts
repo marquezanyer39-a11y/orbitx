@@ -45,21 +45,47 @@ function normalizeExternalWallet(value: unknown): ExternalWalletConnection {
       provider: null,
       address: '',
       signingReady: false,
+      status: 'disconnected',
     };
   }
 
   const candidate = value as Record<string, unknown>;
   const provider =
-    candidate.provider === 'metamask' || candidate.provider === 'walletconnect'
+    candidate.provider === 'metamask' ||
+    candidate.provider === 'walletconnect' ||
+    candidate.provider === 'trust' ||
+    candidate.provider === 'coinbase' ||
+    candidate.provider === 'other'
       ? candidate.provider
       : null;
+  const parsedChainId =
+    typeof candidate.chainId === 'number'
+      ? candidate.chainId
+      : typeof candidate.chainId === 'string'
+        ? Number(candidate.chainId)
+        : undefined;
+  const chainId = Number.isFinite(parsedChainId) ? parsedChainId : undefined;
+  const status =
+    candidate.status === 'connecting' ||
+    candidate.status === 'connected' ||
+    candidate.status === 'error'
+      ? candidate.status
+      : 'disconnected';
 
   return {
     provider,
     address: normalizeAddress(candidate.address),
+    chainId,
+    walletName:
+      typeof candidate.walletName === 'string' ? candidate.walletName.trim() : undefined,
+    sessionTopic:
+      typeof candidate.sessionTopic === 'string' ? candidate.sessionTopic.trim() : undefined,
     connectedAt:
       typeof candidate.connectedAt === 'string' ? candidate.connectedAt : undefined,
     signingReady: Boolean(candidate.signingReady),
+    status,
+    lastError:
+      typeof candidate.lastError === 'string' ? candidate.lastError.trim() : undefined,
   };
 }
 
@@ -191,8 +217,22 @@ export async function syncRemoteWalletProfile(params: {
     externalWallet: {
       provider: params.externalWallet.provider,
       address: normalizeAddress(params.externalWallet.address),
+      chainId: params.externalWallet.chainId,
+      walletName:
+        typeof params.externalWallet.walletName === 'string'
+          ? params.externalWallet.walletName.trim()
+          : undefined,
+      sessionTopic:
+        typeof params.externalWallet.sessionTopic === 'string'
+          ? params.externalWallet.sessionTopic.trim()
+          : undefined,
       connectedAt: params.externalWallet.connectedAt,
       signingReady: Boolean(params.externalWallet.signingReady),
+      status: params.externalWallet.status,
+      lastError:
+        typeof params.externalWallet.lastError === 'string'
+          ? params.externalWallet.lastError.trim()
+          : undefined,
     },
     linkedAt: current?.linkedAt ?? timestamp,
     updatedAt: timestamp,

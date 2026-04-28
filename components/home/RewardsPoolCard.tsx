@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../constants/theme';
+import { ORBITX_THEME } from './orbitxTheme';
 
 interface RewardsPoolCardProps {
   currentAmountLabel: string;
@@ -10,23 +11,26 @@ interface RewardsPoolCardProps {
   progressPercent: number;
   progressLabel: string;
   remainingLabel: string;
+  contentWidth: number;
+  isSmallPhone?: boolean;
   onParticipate: () => void;
 }
 
-function RewardsIllustration() {
+function keepTogether(value: string) {
+  return value.replace(/\s+/g, ' ').trim().replace(/ /g, '\u00A0');
+}
+
+function RewardsArt({ isSmallPhone = false }: { isSmallPhone?: boolean }) {
   return (
-    <View style={styles.illustrationWrap}>
-      <View style={styles.orbitRingOuter} />
-      <View style={styles.orbitRingInner} />
+    <View style={[styles.artWrap, isSmallPhone ? styles.artWrapSmall : null]}>
       <LinearGradient
-        colors={['rgba(30,220,139,0.26)', 'rgba(30,220,139,0.06)']}
-        style={styles.cubeGlow}
+        colors={['rgba(0,200,83,0.32)', 'rgba(0,200,83,0.04)']}
+        style={[styles.artGlow, isSmallPhone ? styles.artGlowSmall : null]}
       />
-      <LinearGradient colors={['#21F29B', '#13A962']} style={styles.cubeFront} />
-      <View style={styles.cubeTop} />
-      <View style={styles.cubeSide} />
-      <View style={[styles.coin, styles.coinLeft]} />
-      <View style={[styles.coin, styles.coinRight]} />
+      <View style={[styles.artCore, isSmallPhone ? styles.artCoreSmall : null]}>
+        <Ionicons name="planet-outline" size={isSmallPhone ? 18 : 20} color="#D8FDE6" />
+      </View>
+      <View style={styles.artOrbitRing} />
     </View>
   );
 }
@@ -37,239 +41,296 @@ export function RewardsPoolCard({
   progressPercent,
   progressLabel,
   remainingLabel,
+  contentWidth,
+  isSmallPhone = false,
   onParticipate,
 }: RewardsPoolCardProps) {
+  const rightColumnWidth = Math.min(isSmallPhone ? 104 : 118, Math.floor(contentWidth * 0.3));
+  const currentAmount = keepTogether(currentAmountLabel);
+  const targetAmount = keepTogether(targetAmountLabel.replace(/^\/\s*/, '/ '));
+  const compactRemaining = keepTogether(remainingLabel);
+
   return (
     <LinearGradient
-      colors={['#121720', '#0F141B']}
+      colors={['#0F1114', '#101A14']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.card}
+      style={[styles.card, isSmallPhone ? styles.cardSmall : null]}
     >
-      <View style={styles.copyColumn}>
+      <LinearGradient
+        colors={['rgba(0,200,83,0.16)', 'rgba(0,200,83,0)']}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.topGlow}
+      />
+
+      <View style={styles.leftColumn}>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>Pozo mensual</Text>
+          <Ionicons name="sparkles-outline" size={11} color={ORBITX_THEME.colors.primaryGreen} />
+          <Text style={styles.badgeLabel} numberOfLines={1}>
+            POZO MENSUAL
+          </Text>
         </View>
 
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>Pozo de recompensas</Text>
-          <Ionicons name="information-circle-outline" size={16} color="#9AA4B2" />
-        </View>
+        <Text style={[styles.title, isSmallPhone ? styles.titleSmall : null]} numberOfLines={1}>
+          Pozo de recompensas
+        </Text>
 
         <View style={styles.amountRow}>
-          <Text style={styles.amount}>{currentAmountLabel}</Text>
-          <Text style={styles.target}>{targetAmountLabel}</Text>
+          <Text
+            style={[styles.amount, isSmallPhone ? styles.amountSmall : null]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.84}
+          >
+            {currentAmount}
+          </Text>
+          <Text style={[styles.target, isSmallPhone ? styles.targetSmall : null]} numberOfLines={1}>
+            {targetAmount}
+          </Text>
         </View>
 
         <View style={styles.progressRow}>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${Math.max(0, Math.min(progressPercent, 100))}%` }]} />
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  width: `${Math.max(0, Math.min(progressPercent, 100))}%`,
+                },
+              ]}
+            />
           </View>
-          <Text style={styles.progressLabel}>{progressLabel}</Text>
+          <Text style={styles.progressLabel} numberOfLines={1}>
+            {progressLabel}
+          </Text>
         </View>
 
-        <View style={styles.footerRow}>
-          <View style={styles.remainingRow}>
-            <Ionicons name="time-outline" size={14} color="#9AA4B2" />
-            <Text style={styles.remainingLabel}>{remainingLabel}</Text>
+        <View style={styles.bottomRow}>
+          <View style={styles.timeRow}>
+            <Ionicons name="time-outline" size={14} color={withOpacity('#FAFAFA', 0.42)} />
+            <Text
+              style={[styles.remainingLabel, isSmallPhone ? styles.remainingLabelSmall : null]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {compactRemaining}
+            </Text>
           </View>
-
-          <Pressable onPress={onParticipate} style={styles.ctaButton}>
-            <Text style={styles.ctaLabel}>Participar</Text>
-          </Pressable>
         </View>
       </View>
 
-      <RewardsIllustration />
+      <View style={[styles.rightColumn, { width: rightColumnWidth }]}>
+        <RewardsArt isSmallPhone={isSmallPhone} />
+        <Pressable
+          onPress={onParticipate}
+          style={({ pressed }) => [
+            styles.ctaButton,
+            isSmallPhone ? styles.ctaButtonSmall : null,
+            pressed ? styles.pressed : null,
+          ]}
+        >
+          <Text style={styles.ctaLabel} numberOfLines={1}>
+            Participar
+          </Text>
+        </Pressable>
+      </View>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    minHeight: 182,
-    borderRadius: 20,
+    minHeight: 206,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#232634',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.6),
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     overflow: 'hidden',
+    gap: 12,
   },
-  copyColumn: {
+  cardSmall: {
+    minHeight: 196,
+    padding: 14,
+  },
+  topGlow: {
+    position: 'absolute',
+    top: -12,
+    right: -8,
+    width: 150,
+    height: 120,
+    borderRadius: 80,
+  },
+  leftColumn: {
     flex: 1,
-    paddingRight: 10,
+    minWidth: 0,
     justifyContent: 'space-between',
   },
   badge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     minHeight: 24,
     paddingHorizontal: 10,
     borderRadius: RADII.pill,
-    backgroundColor: withOpacity('#1EDC8B', 0.12),
-    justifyContent: 'center',
+    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.1),
+    borderWidth: 1,
+    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.18),
   },
-  badgeText: {
-    color: '#1EDC8B',
+  badgeLabel: {
+    color: ORBITX_THEME.colors.primaryGreen,
     fontFamily: FONT.semibold,
-    fontSize: 11,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 10,
+    fontSize: 10,
+    letterSpacing: 0.6,
   },
   title: {
-    color: '#F5F7FA',
+    marginTop: 10,
+    color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
-    fontSize: 24,
+    fontSize: 18,
+  },
+  titleSmall: {
+    fontSize: 17,
   },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 8,
+    gap: 6,
     marginTop: 8,
+    minWidth: 0,
   },
   amount: {
-    color: '#F5F7FA',
+    color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.bold,
-    fontSize: 34,
-    letterSpacing: -0.8,
+    fontSize: 24,
+    letterSpacing: -0.5,
+    flexShrink: 1,
+  },
+  amountSmall: {
+    fontSize: 22,
   },
   target: {
-    color: '#9AA4B2',
+    color: ORBITX_THEME.colors.textSecondary,
     fontFamily: FONT.medium,
-    fontSize: 18,
+    fontSize: 13,
+    flexShrink: 1,
+  },
+  targetSmall: {
+    fontSize: 12,
   },
   progressRow: {
-    marginTop: 12,
+    marginTop: 16,
     gap: 8,
   },
   progressTrack: {
-    height: 8,
+    height: 4,
     borderRadius: RADII.pill,
-    backgroundColor: '#232634',
     overflow: 'hidden',
+    backgroundColor: withOpacity('#FFFFFF', 0.1),
   },
   progressFill: {
     height: '100%',
     borderRadius: RADII.pill,
-    backgroundColor: '#1EDC8B',
+    backgroundColor: ORBITX_THEME.colors.primaryGreen,
   },
   progressLabel: {
-    color: '#1EDC8B',
+    alignSelf: 'flex-end',
+    color: ORBITX_THEME.colors.primaryGreen,
     fontFamily: FONT.semibold,
-    fontSize: 13,
+    fontSize: 12,
   },
-  footerRow: {
-    marginTop: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
+  bottomRow: {
+    marginTop: 18,
+    paddingRight: 10,
   },
-  remainingRow: {
+  timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flex: 1,
+    minWidth: 0,
   },
   remainingLabel: {
-    color: '#9AA4B2',
+    color: withOpacity('#FAFAFA', 0.48),
     fontFamily: FONT.medium,
-    fontSize: 13,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    flex: 1,
+  },
+  remainingLabelSmall: {
+    fontSize: 10.5,
+  },
+  rightColumn: {
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
   },
   ctaButton: {
-    minWidth: 118,
-    minHeight: 44,
-    borderRadius: 16,
-    backgroundColor: '#1EDC8B',
+    minWidth: 104,
+    minHeight: 40,
+    borderRadius: 8,
+    backgroundColor: ORBITX_THEME.colors.primaryGreen,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
+  },
+  ctaButtonSmall: {
+    minWidth: 94,
+    minHeight: 38,
   },
   ctaLabel: {
-    color: '#07130E',
-    fontFamily: FONT.semibold,
-    fontSize: 15,
+    color: ORBITX_THEME.colors.background,
+    fontFamily: FONT.bold,
+    fontSize: 14,
   },
-  illustrationWrap: {
-    width: 132,
+  artWrap: {
+    width: 54,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    marginTop: 6,
   },
-  orbitRingOuter: {
+  artWrapSmall: {
+    width: 48,
+    height: 48,
+  },
+  artGlow: {
     position: 'absolute',
-    bottom: 22,
-    width: 112,
-    height: 22,
-    borderRadius: RADII.pill,
-    borderWidth: 1,
-    borderColor: withOpacity('#1EDC8B', 0.32),
-    backgroundColor: withOpacity('#1EDC8B', 0.05),
+    width: 54,
+    height: 54,
+    borderRadius: 27,
   },
-  orbitRingInner: {
-    position: 'absolute',
-    bottom: 28,
-    width: 86,
-    height: 16,
-    borderRadius: RADII.pill,
-    borderWidth: 1,
-    borderColor: withOpacity('#1EDC8B', 0.22),
+  artGlowSmall: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
-  cubeGlow: {
-    position: 'absolute',
-    width: 88,
-    height: 88,
-    borderRadius: 28,
-  },
-  cubeFront: {
-    width: 58,
-    height: 58,
-    borderRadius: 16,
-    transform: [{ rotate: '12deg' }],
-    borderWidth: 1,
-    borderColor: withOpacity('#F5F7FA', 0.22),
-  },
-  cubeTop: {
-    position: 'absolute',
-    top: 26,
-    width: 42,
-    height: 42,
+  artCore: {
+    width: 34,
+    height: 34,
     borderRadius: 12,
-    transform: [{ rotate: '45deg' }],
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: withOpacity('#06150D', 0.8),
     borderWidth: 1,
-    borderColor: withOpacity('#F5F7FA', 0.18),
-    backgroundColor: withOpacity('#1EDC8B', 0.12),
+    borderColor: withOpacity('#FFFFFF', 0.12),
   },
-  cubeSide: {
-    position: 'absolute',
-    top: 44,
-    right: 36,
-    width: 26,
-    height: 38,
+  artCoreSmall: {
+    width: 30,
+    height: 30,
     borderRadius: 10,
-    transform: [{ skewY: '-16deg' }],
-    backgroundColor: withOpacity('#0F5E39', 0.68),
   },
-  coin: {
+  artOrbitRing: {
     position: 'absolute',
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: '#F3C66F',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     borderWidth: 1,
-    borderColor: withOpacity('#FFFFFF', 0.3),
+    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.2),
   },
-  coinLeft: {
-    left: 12,
-    top: 48,
-  },
-  coinRight: {
-    right: 8,
-    top: 42,
+  pressed: {
+    opacity: 0.8,
   },
 });

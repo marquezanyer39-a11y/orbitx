@@ -45,12 +45,12 @@ export const RUNTIME_TRANSLATION_OVERRIDES: Partial<Record<LanguageCode, Transla
         'This installation can view addresses, balances and public activity, but it does not contain your seed phrase or private key.',
       externalWalletTitle: 'External wallet',
       externalWalletBody:
-        'Link a public MetaMask address to track it and use it as an additional option.',
-      externalWalletConnected: 'MetaMask linked',
+        'Connect MetaMask, Trust Wallet, Coinbase Wallet or another compatible wallet through WalletConnect.',
+      externalWalletConnected: 'External wallet connected',
       noExternalWallet: 'No external wallet',
       externalWalletHint:
-        'Connect a public address if you want to track an external wallet without breaking your Web3 flow.',
-      updateConnection: 'Update',
+        'OrbitX never stores your seed phrase. Approvals and signatures stay inside your external wallet.',
+      updateConnection: 'Manage',
       connectConnection: 'Connect',
       disconnectConnection: 'Disconnect',
       createdTokensTitle: 'My created tokens',
@@ -99,6 +99,13 @@ export const RUNTIME_TRANSLATION_OVERRIDES: Partial<Record<LanguageCode, Transla
     seedReveal: {
       title: 'View seed phrase',
       button: 'Re-authenticate and view',
+      backupBody:
+        'Your seed phrase already exists, but you still need to confirm the offline backup. You can unlock it now to back it up or export a protected copy.',
+      revealBody:
+        'Your seed phrase controls the full wallet. Re-authenticate only in a private place before viewing or exporting a backup.',
+      backupAction: 'Back up now',
+      revealAction: 'View phrase',
+      exportAction: 'Export backup',
     },
     externalWalletSheet: {
       eyebrow: 'External wallet',
@@ -165,12 +172,12 @@ export const RUNTIME_TRANSLATION_OVERRIDES: Partial<Record<LanguageCode, Transla
         'Esta instalacion puede consultar direcciones, saldos e historial publico, pero no contiene tu seed phrase ni tu clave privada.',
       externalWalletTitle: 'Billetera externa',
       externalWalletBody:
-        'Vincula una direccion publica de MetaMask para seguirla y usarla como opcion adicional.',
-      externalWalletConnected: 'MetaMask vinculada',
+        'Conecta MetaMask, Trust Wallet, Coinbase Wallet u otra wallet compatible usando WalletConnect.',
+      externalWalletConnected: 'Wallet externa conectada',
       noExternalWallet: 'Sin billetera externa',
       externalWalletHint:
-        'Conecta una direccion publica si quieres seguir una billetera externa sin romper tu flujo Web3.',
-      updateConnection: 'Actualizar',
+        'OrbitX nunca guarda tu frase semilla. Las aprobaciones y firmas quedan dentro de tu wallet externa.',
+      updateConnection: 'Gestionar',
       connectConnection: 'Conectar',
       disconnectConnection: 'Desconectar',
       createdTokensTitle: 'Mis tokens creados',
@@ -219,6 +226,13 @@ export const RUNTIME_TRANSLATION_OVERRIDES: Partial<Record<LanguageCode, Transla
     seedReveal: {
       title: 'Ver frase semilla',
       button: 'Reautenticar y ver',
+      backupBody:
+        'Tu frase semilla ya existe, pero todavia debes confirmar el respaldo fuera de linea. Puedes desbloquearla ahora para respaldarla o exportar una copia protegida.',
+      revealBody:
+        'Tu frase semilla controla la billetera completa. Reautenticate solo en un lugar privado antes de verla o exportar una copia.',
+      backupAction: 'Respaldar ahora',
+      revealAction: 'Ver frase',
+      exportAction: 'Exportar copia',
     },
     externalWalletSheet: {
       eyebrow: 'Billetera externa',
@@ -285,12 +299,12 @@ export const RUNTIME_TRANSLATION_OVERRIDES: Partial<Record<LanguageCode, Transla
         'Esta instalacao pode consultar enderecos, saldos e historico publico, mas nao contem sua seed phrase nem sua chave privada.',
       externalWalletTitle: 'Carteira externa',
       externalWalletBody:
-        'Vincule um endereco publico da MetaMask para acompanha-lo e usa-lo como opcao adicional.',
-      externalWalletConnected: 'MetaMask vinculada',
+        'Conecte MetaMask, Trust Wallet, Coinbase Wallet ou outra carteira compativel usando WalletConnect.',
+      externalWalletConnected: 'Carteira externa conectada',
       noExternalWallet: 'Sem carteira externa',
       externalWalletHint:
-        'Conecte um endereco publico se quiser acompanhar uma carteira externa sem quebrar seu fluxo Web3.',
-      updateConnection: 'Atualizar',
+        'A OrbitX nunca guarda sua seed phrase. As aprovacoes e assinaturas ficam dentro da sua carteira externa.',
+      updateConnection: 'Gerenciar',
       connectConnection: 'Conectar',
       disconnectConnection: 'Desconectar',
       createdTokensTitle: 'Meus tokens criados',

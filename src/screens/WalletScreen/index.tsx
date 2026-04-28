@@ -13,6 +13,8 @@ import { BalanceCard } from '../../components/wallet/BalanceCard';
 import { SeedRevealCard } from '../../components/wallet/SeedRevealCard';
 import { WalletActions } from '../../components/wallet/WalletActions';
 import { WalletHeader } from '../../components/wallet/WalletHeader';
+import { WalletPinSheet } from '../../../components/wallet/WalletPinSheet';
+import { WalletSeedSecurityScreen } from '../../../components/wallet/WalletSeedSecurityScreen';
 import { WalletTabs } from '../../components/wallet/WalletTabs';
 import { RampActionGrid } from '../../components/wallet/RampActionGrid';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
@@ -26,8 +28,10 @@ import { copyToClipboard } from '../../utils/copyToClipboard';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { useAstra } from '../../hooks/useAstra';
 import { useAstraStore } from '../../store/astraStore';
+import { useExternalWallet } from '../../hooks/useExternalWallet';
 
 const NETWORKS = ['base', 'ethereum', 'bnb', 'solana'] as const;
+type SeedModalMode = 'reveal' | 'export' | 'backup';
 
 function maskAddress(address: string) {
   if (!address) {
@@ -42,6 +46,7 @@ export default function WalletScreen() {
   const { colors } = useAppTheme();
   const { t } = useI18n();
   const wallet = useWallet();
+  const externalWalletRuntime = useExternalWallet();
   const showToast = useUiStore((state) => state.showToast);
   const { markets } = useMarketData('markets');
   const { openAstra, language } = useAstra();
@@ -51,7 +56,10 @@ export default function WalletScreen() {
   const [activeTab, setActiveTab] = useState<'spot' | 'web3'>('spot');
   const [seedPhraseInput, setSeedPhraseInput] = useState('');
   const [connectSheetVisible, setConnectSheetVisible] = useState(false);
-  const [externalWalletLoading, setExternalWalletLoading] = useState(false);
+  const [seedModalVisible, setSeedModalVisible] = useState(false);
+  const [seedModalMode, setSeedModalMode] = useState<SeedModalMode>('reveal');
+  const [pinSheetVisible, setPinSheetVisible] = useState(false);
+  const [pendingSeedModeAfterPin, setPendingSeedModeAfterPin] = useState<SeedModalMode | null>(null);
   const lastAstraActionRef = useRef<string>('');
 
   useEffect(() => {
@@ -180,6 +188,35 @@ export default function WalletScreen() {
 
     return t('walletView.createOrImport');
   }, [t, wallet.error, wallet.isWalletReady, wallet.loading, wallet.walletSource]);
+  const seedCardConfig = useMemo(() => {
+    if (!wallet.mnemonicStored) {
+      return null;
+    }
+
+    if (!wallet.securityStatus.seedPhraseConfirmedAt) {
+      return {
+        title: t('seedReveal.title'),
+        body: t('seedReveal.backupBody'),
+        primaryLabel: t('seedReveal.backupAction'),
+        primaryMode: 'backup' as const,
+        secondaryLabel: t('seedReveal.exportAction'),
+        secondaryMode: 'export' as const,
+      };
+    }
+
+    return {
+      title: t('seedReveal.title'),
+      body: t('seedReveal.revealBody'),
+      primaryLabel: t('seedReveal.revealAction'),
+      primaryMode: 'reveal' as const,
+      secondaryLabel: t('seedReveal.exportAction'),
+      secondaryMode: 'export' as const,
+    };
+  }, [
+    t,
+    wallet.mnemonicStored,
+    wallet.securityStatus.seedPhraseConfirmedAt,
+  ]);
   const astraWalletContext = useMemo(
     () => ({
       surface: 'wallet' as const,
@@ -264,6 +301,16 @@ export default function WalletScreen() {
   useEffect(() => {
     rememberAstraContext(astraWalletContext);
   }, [astraWalletContext, rememberAstraContext]);
+
+  function openSeedFlow(mode: SeedModalMode) {
+    setSeedModalMode(mode);
+    setSeedModalVisible(true);
+  }
+
+  function closeSeedFlow() {
+    setSeedModalVisible(false);
+    void wallet.refreshSecurityStatus();
+  }
 
   return (
     <ScreenContainer contentContainerStyle={styles.content} backgroundMode="plain">
@@ -526,10 +573,14 @@ export default function WalletScreen() {
 
               <AssetList assets={wallet.assets} />
 
-              {wallet.mnemonicStored ? (
+              {seedCardConfig ? (
                 <SeedRevealCard
-                  body={t('walletView.importWarningBody')}
-                  onReveal={() => router.push('/security')}
+                  title={seedCardConfig.title}
+                  body={seedCardConfig.body}
+                  primaryLabel={seedCardConfig.primaryLabel}
+                  onPrimaryPress={() => openSeedFlow(seedCardConfig.primaryMode)}
+                  secondaryLabel={seedCardConfig.secondaryLabel}
+                  onSecondaryPress={() => openSeedFlow(seedCardConfig.secondaryMode)}
                 />
               ) : (
                 <View
@@ -580,14 +631,26 @@ export default function WalletScreen() {
                 >
                   <View style={styles.tokenCopy}>
                     <Text style={[styles.tokenTitle, { color: colors.text }]}>
-                      {wallet.externalWallet.provider === 'metamask'
-                        ? t('walletView.externalWalletConnected')
-                        : t('walletView.noExternalWallet')}
+                      {externalWalletRuntime.isConnected
+                        ? 'Wallet externa conectada'
+                        : externalWalletRuntime.disabledReason
+                          ? 'WalletConnect no disponible'
+                          : t('walletView.noExternalWallet')}
                     </Text>
                     <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
-                      {wallet.externalWallet.address
-                        ? maskAddress(wallet.externalWallet.address)
-                        : t('walletView.externalWalletHint')}
+                      {externalWalletRuntime.isConnected
+                        ? `${externalWalletRuntime.walletName ?? 'Wallet externa'} · ${maskAddress(
+                            wallet.externalWallet.address,
+                          )}`
+                        : externalWalletRuntime.disabledReason ?? t('walletView.externalWalletHint')}
+                    </Text>
+                    {externalWalletRuntime.isConnected ? (
+                      <Text style={[styles.tokenBody, { color: colors.textSoft }]}>
+                        Red actual: {externalWalletRuntime.chainLabel}
+                      </Text>
+                    ) : null}
+                    <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
+                      OrbitX no guarda tu frase semilla. Las firmas se aprueban desde tu wallet externa.
                     </Text>
                   </View>
 
@@ -595,7 +658,7 @@ export default function WalletScreen() {
                     <PrimaryButton
                       label={t('walletView.disconnectConnection')}
                       tone="ghost"
-                      onPress={() => wallet.disconnectExternalWallet()}
+                      onPress={() => void externalWalletRuntime.disconnect()}
                     />
                   ) : null}
                 </View>
@@ -701,18 +764,23 @@ export default function WalletScreen() {
                 >
                   <View style={styles.tokenCopy}>
                     <Text style={[styles.tokenTitle, { color: colors.text }]}>
-                      {wallet.externalWallet.provider === 'metamask'
-                        ? t('walletView.externalWalletConnected')
+                      {externalWalletRuntime.isConnected
+                        ? 'Wallet externa conectada'
                         : t('walletView.externalLinkedTitle')}
                     </Text>
                     <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
                       {maskAddress(wallet.externalWallet.address)}
                     </Text>
+                    {externalWalletRuntime.isConnected ? (
+                      <Text style={[styles.tokenBody, { color: colors.textSoft }]}>
+                        {externalWalletRuntime.walletName ?? 'Wallet externa'} · {externalWalletRuntime.chainLabel}
+                      </Text>
+                    ) : null}
                   </View>
                   <PrimaryButton
                     label={t('walletView.disconnectConnection')}
                     tone="ghost"
-                    onPress={() => wallet.disconnectExternalWallet()}
+                    onPress={() => void externalWalletRuntime.disconnect()}
                   />
                 </View>
               ) : null}
@@ -803,17 +871,37 @@ export default function WalletScreen() {
 
       <ExternalWalletConnectSheet
         visible={connectSheetVisible}
-        loading={externalWalletLoading}
-        currentProvider={wallet.externalWallet.provider ?? undefined}
-        currentAddress={wallet.externalWallet.address}
         onClose={() => setConnectSheetVisible(false)}
-        onSelect={async (provider, address) => {
-          setExternalWalletLoading(true);
-          const connected = await wallet.connectExternalWallet(provider, address);
-          setExternalWalletLoading(false);
+      />
 
-          if (connected) {
-            setConnectSheetVisible(false);
+      <WalletSeedSecurityScreen
+        visible={seedModalVisible}
+        mode={seedModalMode}
+        biometricsEnabled={wallet.securityStatus.biometricsEnabled}
+        pinEnabled={wallet.securityStatus.pinEnabled}
+        onClose={closeSeedFlow}
+        onRequirePinSetup={() => {
+          setPendingSeedModeAfterPin(seedModalMode);
+          setSeedModalVisible(false);
+          setPinSheetVisible(true);
+        }}
+        onConfirmed={() => void wallet.refreshSecurityStatus()}
+      />
+
+      <WalletPinSheet
+        visible={pinSheetVisible}
+        onClose={() => {
+          setPendingSeedModeAfterPin(null);
+          setPinSheetVisible(false);
+        }}
+        onSaved={() => {
+          void wallet.refreshSecurityStatus();
+          if (pendingSeedModeAfterPin) {
+            const resumeMode = pendingSeedModeAfterPin;
+            setPendingSeedModeAfterPin(null);
+            setPinSheetVisible(false);
+            setSeedModalMode(resumeMode);
+            setSeedModalVisible(true);
           }
         }}
       />

@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../constants/theme';
+import { FONT } from '../../constants/theme';
+import { ORBITX_THEME } from './orbitxTheme';
 
 interface ShortcutItem {
   key: string;
@@ -10,17 +11,54 @@ interface ShortcutItem {
   onPress: () => void;
 }
 
-export function MainShortcuts({ items }: { items: ShortcutItem[] }) {
+export function MainShortcuts({
+  items,
+  isSmallPhone = false,
+}: {
+  items: ShortcutItem[];
+  isSmallPhone?: boolean;
+}) {
   return (
     <View style={styles.row}>
-      {items.map((item) => (
-        <Pressable key={item.key} onPress={item.onPress} style={styles.tile}>
-          <View style={styles.iconShell}>
-            <Ionicons name={item.icon} size={20} color="#1EDC8B" />
-          </View>
-          <Text style={styles.label}>{item.label}</Text>
-        </Pressable>
-      ))}
+      {items.map((item) => {
+        const splitCreateToken = item.key === 'crear-token';
+        const iconColor =
+          item.key === 'operar'
+            ? ORBITX_THEME.colors.primaryGreen
+            : ORBITX_THEME.colors.textPrimary;
+
+        return (
+          <Pressable
+            key={item.key}
+            onPress={item.onPress}
+            style={({ pressed }) => [
+              styles.item,
+              pressed ? styles.pressed : null,
+            ]}
+          >
+            <Ionicons
+              name={item.icon}
+              size={24}
+              color={iconColor}
+            />
+
+            {splitCreateToken ? (
+              <View style={styles.multiLineWrap}>
+                <Text style={[styles.label, isSmallPhone ? styles.labelSmall : null]}>Crear</Text>
+                <Text style={[styles.label, isSmallPhone ? styles.labelSmall : null]}>token</Text>
+              </View>
+            ) : (
+              <Text
+                style={[styles.label, isSmallPhone ? styles.labelSmall : null]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {item.label}
+              </Text>
+            )}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -28,32 +66,34 @@ export function MainShortcuts({ items }: { items: ShortcutItem[] }) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 10,
   },
-  tile: {
+  item: {
     flex: 1,
-    minHeight: 84,
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
+    minWidth: 0,
+    minHeight: 70,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#11131A',
-    borderWidth: 1,
-    borderColor: '#232634',
-  },
-  iconShell: {
-    width: 36,
-    height: 36,
-    borderRadius: RADII.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: withOpacity('#1EDC8B', 0.08),
   },
   label: {
-    color: '#F5F7FA',
+    color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.medium,
-    fontSize: 14,
+    fontSize: 12,
+    lineHeight: 14,
+    textAlign: 'center',
+  },
+  labelSmall: {
+    fontSize: 11.5,
+    lineHeight: 13,
+  },
+  multiLineWrap: {
+    minWidth: 0,
+    alignItems: 'center',
+    gap: 1,
+  },
+  pressed: {
+    opacity: 0.78,
   },
 });

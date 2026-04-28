@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../constants/theme';
+import { ORBITX_THEME } from './orbitxTheme';
 
 export type HomeNewsCategory = 'crypto' | 'economy' | 'technology' | 'politics';
 
@@ -20,22 +21,10 @@ interface NewsSectionProps {
   item: HomeNewsFeaturedItem | null;
   loading?: boolean;
   helperLabel?: string | null;
+  isSmallPhone?: boolean;
   onOpenFeatured: () => void;
   onViewAll: () => void;
   onRefresh: () => void;
-}
-
-function NewsSkeleton() {
-  return (
-    <View style={styles.storyRow}>
-      <View style={styles.imageSkeleton} />
-      <View style={styles.storyCopy}>
-        <View style={styles.storyMetaSkeleton} />
-        <View style={[styles.storyTitleSkeleton, { width: '100%' }]} />
-        <View style={[styles.storyTitleSkeleton, { width: '82%' }]} />
-      </View>
-    </View>
-  );
 }
 
 export function NewsSection({
@@ -45,6 +34,7 @@ export function NewsSection({
   item,
   loading = false,
   helperLabel,
+  isSmallPhone = false,
   onOpenFeatured,
   onViewAll,
   onRefresh,
@@ -53,9 +43,11 @@ export function NewsSection({
     <View style={styles.root}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Noticias</Text>
-        <Pressable onPress={onViewAll} style={styles.linkButton}>
-          <Text style={styles.linkText}>Ver todas</Text>
-          <Ionicons name="chevron-forward" size={14} color="#1EDC8B" />
+        <Pressable
+          onPress={onViewAll}
+          style={({ pressed }) => [styles.iconButton, pressed ? styles.pressed : null]}
+        >
+          <Ionicons name="options-outline" size={18} color={ORBITX_THEME.colors.textSecondary} />
         </Pressable>
       </View>
 
@@ -67,13 +59,18 @@ export function NewsSection({
             <Pressable
               key={category.key}
               onPress={() => onSelectCategory(category.key)}
-              style={[styles.chip, active ? styles.chipActive : styles.chipIdle]}
+              style={({ pressed }) => [
+                styles.chip,
+                active ? styles.chipActive : styles.chipIdle,
+                pressed ? styles.pressed : null,
+              ]}
             >
               <Text
                 style={[
                   styles.chipLabel,
                   active ? styles.chipLabelActive : styles.chipLabelIdle,
                 ]}
+                numberOfLines={1}
               >
                 {category.label}
               </Text>
@@ -82,113 +79,99 @@ export function NewsSection({
         })}
       </View>
 
-      <View style={styles.panel}>
-        {helperLabel ? (
-          <View style={styles.helperRow}>
-            <Text style={styles.helperText}>{helperLabel}</Text>
-            <Pressable onPress={onRefresh}>
-              <Ionicons name="refresh-outline" size={16} color="#9AA4B2" />
-            </Pressable>
-          </View>
-        ) : null}
-
-        {loading && !item ? (
-          <NewsSkeleton />
-        ) : item ? (
-          <Pressable onPress={onOpenFeatured} style={styles.storyRow}>
-            {item.image ? (
-              <Image source={{ uri: item.image }} style={styles.storyImage} />
-            ) : (
-              <View style={styles.storyImageFallback}>
-                <Ionicons name="newspaper-outline" size={22} color="#1EDC8B" />
-              </View>
-            )}
-
-            <View style={styles.storyCopy}>
-              <Text style={styles.storyMeta}>
-                {item.sourceLabel} | {item.timeLabel}
-              </Text>
-              <Text style={styles.storyTitle}>{item.title}</Text>
-            </View>
-
-            <Ionicons name="bookmark-outline" size={18} color="#9AA4B2" />
+      {helperLabel ? (
+        <View style={styles.helperRow}>
+          <Text style={styles.helperText} numberOfLines={1} ellipsizeMode="tail">
+            {helperLabel}
+          </Text>
+          <Pressable onPress={onRefresh} style={({ pressed }) => (pressed ? styles.pressed : null)}>
+            <Ionicons name="refresh-outline" size={16} color={ORBITX_THEME.colors.textSecondary} />
           </Pressable>
+        </View>
+      ) : null}
+
+      <Pressable
+        onPress={item ? onOpenFeatured : onRefresh}
+        style={({ pressed }) => [styles.storyWrap, pressed ? styles.pressed : null]}
+      >
+        {item?.image ? (
+          <Image source={{ uri: item.image }} style={styles.storyImage} />
         ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No se pudo cargar la noticia destacada</Text>
-            <Pressable onPress={onRefresh} style={styles.retryButton}>
-              <Text style={styles.retryLabel}>Reintentar</Text>
-            </Pressable>
+          <View style={styles.storyImageFallback}>
+            <Ionicons
+              name={loading ? 'refresh-outline' : 'newspaper-outline'}
+              size={24}
+              color={withOpacity(ORBITX_THEME.colors.primaryGreen, 0.9)}
+            />
           </View>
         )}
-      </View>
+
+        <Text style={styles.storyMeta} numberOfLines={1}>
+          {item ? `${item.sourceLabel} - ${item.timeLabel}` : 'CRYPTO HOY - 1H'}
+        </Text>
+        <Text
+          style={[styles.storyTitle, isSmallPhone ? styles.storyTitleSmall : null]}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {item?.title ?? 'No se pudo cargar la noticia destacada'}
+        </Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
-    gap: 10,
+    gap: 14,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
   },
   title: {
-    color: '#F5F7FA',
+    color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
-    fontSize: 22,
+    fontSize: 18,
   },
-  linkButton: {
-    flexDirection: 'row',
+  iconButton: {
+    width: 28,
+    height: 28,
     alignItems: 'center',
-    gap: 2,
-  },
-  linkText: {
-    color: '#1EDC8B',
-    fontFamily: FONT.medium,
-    fontSize: 13,
+    justifyContent: 'center',
   },
   chipsRow: {
     flexDirection: 'row',
     gap: 8,
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
   },
   chip: {
-    minHeight: 30,
-    borderRadius: RADII.pill,
-    paddingHorizontal: 12,
+    minHeight: 32,
+    paddingHorizontal: 14,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
   },
   chipActive: {
-    backgroundColor: withOpacity('#1EDC8B', 0.14),
-    borderColor: withOpacity('#1EDC8B', 0.22),
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
   },
   chipIdle: {
-    backgroundColor: '#11131A',
-    borderColor: '#232634',
+    backgroundColor: 'transparent',
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.95),
   },
   chipLabel: {
     fontFamily: FONT.medium,
     fontSize: 12,
   },
   chipLabelActive: {
-    color: '#F5F7FA',
+    color: '#08090B',
   },
   chipLabelIdle: {
-    color: '#9AA4B2',
-  },
-  panel: {
-    borderRadius: 18,
-    backgroundColor: '#11131A',
-    borderWidth: 1,
-    borderColor: '#232634',
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    gap: 10,
+    color: ORBITX_THEME.colors.textSecondary,
   },
   helperRow: {
     flexDirection: 'row',
@@ -198,83 +181,47 @@ const styles = StyleSheet.create({
   },
   helperText: {
     flex: 1,
-    color: '#9AA4B2',
+    color: ORBITX_THEME.colors.textSecondary,
     fontFamily: FONT.regular,
-    fontSize: 12,
+    fontSize: 11,
   },
-  storyRow: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
+  storyWrap: {
+    gap: 10,
   },
   storyImage: {
-    width: 82,
-    height: 82,
-    borderRadius: 16,
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 12,
+    backgroundColor: ORBITX_THEME.colors.surface,
   },
   storyImageFallback: {
-    width: 82,
-    height: 82,
-    borderRadius: 16,
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 12,
+    backgroundColor: '#253026',
+    borderWidth: 1,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.5),
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withOpacity('#1EDC8B', 0.08),
-  },
-  storyCopy: {
-    flex: 1,
-    gap: 8,
   },
   storyMeta: {
-    color: '#9AA4B2',
+    color: withOpacity(ORBITX_THEME.colors.textSecondary, 0.9),
     fontFamily: FONT.medium,
-    fontSize: 11,
+    fontSize: 10,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   storyTitle: {
-    color: '#F5F7FA',
+    color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.medium,
-    fontSize: 17,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
   },
-  emptyState: {
-    minHeight: 86,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    gap: 10,
+  storyTitleSmall: {
+    fontSize: 15,
+    lineHeight: 20,
   },
-  emptyTitle: {
-    color: '#F5F7FA',
-    fontFamily: FONT.medium,
-    fontSize: 14,
-  },
-  retryButton: {
-    minHeight: 32,
-    borderRadius: RADII.pill,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: withOpacity('#1EDC8B', 0.12),
-  },
-  retryLabel: {
-    color: '#1EDC8B',
-    fontFamily: FONT.semibold,
-    fontSize: 12,
-  },
-  imageSkeleton: {
-    width: 82,
-    height: 82,
-    borderRadius: 16,
-    backgroundColor: withOpacity('#F5F7FA', 0.08),
-  },
-  storyMetaSkeleton: {
-    width: 96,
-    height: 10,
-    borderRadius: RADII.pill,
-    backgroundColor: withOpacity('#F5F7FA', 0.07),
-  },
-  storyTitleSkeleton: {
-    height: 14,
-    borderRadius: RADII.pill,
-    backgroundColor: withOpacity('#F5F7FA', 0.08),
+  pressed: {
+    opacity: 0.8,
   },
 });

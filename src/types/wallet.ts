@@ -1,7 +1,13 @@
 export type SupportedNetwork = 'ethereum' | 'base' | 'bnb' | 'solana';
 export type WalletType = 'orbitx' | 'imported' | 'external' | 'linked';
 export type WalletEnvironment = 'spot' | 'web3';
-export type ExternalWalletProvider = 'metamask' | 'walletconnect';
+export type ExternalWalletProvider =
+  | 'metamask'
+  | 'trust'
+  | 'coinbase'
+  | 'walletconnect'
+  | 'other';
+export type ExternalWalletStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export interface WalletAccount {
   address: string;
@@ -40,8 +46,13 @@ export interface SecurityStatus {
 export interface ExternalWalletConnection {
   provider: ExternalWalletProvider | null;
   address: string;
+  chainId?: number;
+  walletName?: string;
+  sessionTopic?: string;
   connectedAt?: string;
   signingReady: boolean;
+  status: ExternalWalletStatus;
+  lastError?: string;
 }
 
 export interface CreatedTokenStatus {

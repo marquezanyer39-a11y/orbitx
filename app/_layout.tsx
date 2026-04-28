@@ -24,6 +24,7 @@ import { useOrbitBootstrap } from '../hooks/useOrbitBootstrap';
 import { useOrbitStore } from '../store/useOrbitStore';
 import { AstraRuntimeBridge } from '../src/components/astra/AstraRuntimeBridge';
 import { AstraVoiceSheet } from '../src/components/astra/AstraVoiceSheet';
+import { ExternalWalletProvider } from '../src/providers/ExternalWalletProvider';
 import { useAuthStore } from '../src/store/authStore';
 import { useUiStore } from '../src/store/uiStore';
 import { devWarn } from '../src/utils/devLog';
@@ -301,128 +302,130 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, direction }}>
       <SafeAreaProvider>
-        <StatusBar style={colors.statusBarStyle} />
-        <AstraRuntimeBridge />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-            animation: 'fade',
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="register" />
-          <Stack.Screen name="forgot-password" />
-          <Stack.Screen name="auth/reset" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="security"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="notifications"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="privacy"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="personalization"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="language"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="favorites"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="history"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="receive"
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-          />
-          <Stack.Screen
-            name="send"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="pair-selector"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="token/[id]"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="trade/chart"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="create-token"
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-          />
-          <Stack.Screen
-            name="browser"
-            options={{ presentation: 'modal', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="astra"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="convert"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="pool"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="ramp/summary"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="ramp/flow"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="ramp/result"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="social/index"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="social/create"
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-          />
-          <Stack.Screen
-            name="social/live"
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-          />
-          <Stack.Screen
-            name="social/messages"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="social/creator/[creatorId]"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="social/comments/[postId]"
-            options={{ presentation: 'card', animation: 'slide_from_right' }}
-          />
-        </Stack>
-        <AstraVoiceSheet />
-        <ToastHost />
+        <ExternalWalletProvider>
+          <StatusBar style={colors.statusBarStyle} />
+          <AstraRuntimeBridge />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+              animation: 'fade',
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="register" />
+            <Stack.Screen name="forgot-password" />
+            <Stack.Screen name="auth/reset" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="security"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="notifications"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="privacy"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="personalization"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="language"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="favorites"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="history"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="receive"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="send"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="pair-selector"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="token/[id]"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="trade/chart"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="create-token"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="browser"
+              options={{ presentation: 'modal', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="astra"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="convert"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="pool"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="ramp/summary"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="ramp/flow"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="ramp/result"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="social/index"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="social/create"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="social/live"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="social/messages"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="social/creator/[creatorId]"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="social/comments/[postId]"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+          </Stack>
+          <AstraVoiceSheet />
+          <ToastHost />
+        </ExternalWalletProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

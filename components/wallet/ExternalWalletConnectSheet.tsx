@@ -1,91 +1,83 @@
-import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
-import { Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { ExternalWalletProvider } from '../../types';
 import { FONT, RADII, SPACING, withOpacity } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
-import { useI18n } from '../../hooks/useI18n';
-import { isValidWalletAddress } from '../../utils/validation';
-import { OrbitInput } from '../forms/OrbitInput';
+import { useExternalWallet } from '../../src/hooks/useExternalWallet';
+import { useWalletStore } from '../../src/store/walletStore';
 import { PrimaryButton } from '../common/PrimaryButton';
 
 interface ExternalWalletConnectSheetProps {
   visible: boolean;
-  loading?: boolean;
-  currentProvider?: ExternalWalletProvider | null;
-  currentAddress?: string;
   onClose: () => void;
-  onSelect: (provider: ExternalWalletProvider, address?: string) => void;
 }
 
-const providers: Array<{
-  value: ExternalWalletProvider;
-  title: string;
-  body: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}> = [
-  {
-    value: 'metamask',
-    title: 'MetaMask',
-    body: 'Usa una billetera que ya controlas como opcion adicional dentro de OrbitX.',
-    icon: 'wallet-outline',
-  },
-  {
-    value: 'walletconnect',
-    title: 'WalletConnect',
-    body: 'Disponible en una siguiente fase de OrbitX.',
-    icon: 'link-outline',
-  },
+const supportedWallets = [
+  { title: 'MetaMask', icon: 'wallet-outline' as const },
+  { title: 'Trust Wallet', icon: 'shield-checkmark-outline' as const },
+  { title: 'Coinbase Wallet', icon: 'card-outline' as const },
+  { title: 'WalletConnect', icon: 'link-outline' as const },
 ];
+
+function maskAddress(address?: string) {
+  if (!address) {
+    return '';
+  }
+
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function selectedNetworkLabel(network: ReturnType<typeof useWalletStore.getState>['selectedNetwork']) {
+  if (network === 'bnb') {
+    return 'BNB Chain';
+  }
+
+  if (network === 'ethereum') {
+    return 'Ethereum';
+  }
+
+  return 'Base';
+}
 
 export function ExternalWalletConnectSheet({
   visible,
-  loading = false,
-  currentProvider,
-  currentAddress = '',
   onClose,
-  onSelect,
 }: ExternalWalletConnectSheetProps) {
   const { colors } = useAppTheme();
-  const { t } = useI18n();
-  const [selectedProvider, setSelectedProvider] = useState<ExternalWalletProvider>('metamask');
-  const [address, setAddress] = useState(currentAddress);
+  const selectedNetwork = useWalletStore((state) => state.selectedNetwork);
+  const {
+    address,
+    chainLabel,
+    configured,
+    connect,
+    disconnect,
+    disabledReason,
+    isBusy,
+    isConnected,
+    lastError,
+    orbitNetwork,
+    provider,
+    runtimeSupported,
+    signMessage,
+    signature,
+    switchToNetwork,
+    walletName,
+  } = useExternalWallet();
+  const canSwitchToSelectedNetwork =
+    isConnected &&
+    selectedNetwork !== 'solana' &&
+    selectedNetwork !== orbitNetwork;
 
   useEffect(() => {
-    if (!visible) {
-      return;
+    if (visible && isConnected) {
+      onClose();
     }
-
-    setSelectedProvider(currentProvider ?? 'metamask');
-    setAddress(currentAddress);
-  }, [currentAddress, currentProvider, visible]);
-
-  const validEvmAddress = isValidWalletAddress(address, 'ethereum');
-
-  async function openMetaMask() {
-    try {
-      const deepLink = 'metamask://';
-      const appLink = 'https://metamask.app.link/';
-      const canUseDeepLink = await Linking.canOpenURL(deepLink);
-
-      await Linking.openURL(canUseDeepLink ? deepLink : appLink);
-    } catch {
-      // Keep the flow resilient even if the device cannot open the scheme.
-    }
-  }
-
-  async function pasteAddress() {
-    const clipboard = (await Clipboard.getStringAsync()).trim();
-    if (clipboard) {
-      setAddress(clipboard);
-    }
-  }
+  }, [isConnected, onClose, visible]);
 
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-      <View style={[styles.overlay, { backgroundColor: withOpacity(colors.background, 0.84) }]}>
+      <View style={[styles.overlay, { backgroundColor: withOpacity(colors.background, 0.86) }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
         <View
@@ -101,10 +93,10 @@ export function ExternalWalletConnectSheet({
 
           <View style={styles.header}>
             <View style={styles.headerCopy}>
-              <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{t('externalWalletSheet.eyebrow')}</Text>
-              <Text style={[styles.title, { color: colors.text }]}>{t('externalWalletSheet.title')}</Text>
+              <Text style={[styles.eyebrow, { color: colors.textMuted }]}>WalletConnect</Text>
+              <Text style={[styles.title, { color: colors.text }]}>Conectar wallet externa</Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {t('externalWalletSheet.subtitle')}
+                Usa MetaMask, Trust Wallet, Coinbase Wallet u otra wallet compatible.
               </Text>
             </View>
 
@@ -116,118 +108,162 @@ export function ExternalWalletConnectSheet({
             </Pressable>
           </View>
 
-          <View style={styles.list}>
-            {providers.map((provider) => {
-              const active = provider.value === selectedProvider;
-              const connected = provider.value === currentProvider;
-              const disabled = provider.value === 'walletconnect';
-
-              return (
-                <Pressable
-                  key={provider.value}
-                  onPress={() => {
-                    if (disabled) {
-                      return;
-                    }
-
-                    setSelectedProvider(provider.value);
-                  }}
-                  disabled={loading || disabled}
-                  style={[
-                    styles.providerCard,
-                    {
-                      backgroundColor: colors.fieldBackground,
-                      borderColor: active ? colors.primary : colors.border,
-                      opacity: disabled ? 0.68 : 1,
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.providerIcon,
-                      {
-                        backgroundColor: active
-                          ? withOpacity(colors.primary, 0.14)
-                          : withOpacity(colors.text, 0.08),
-                      },
-                    ]}
-                  >
-                    <Ionicons name={provider.icon} size={16} color={colors.text} />
-                  </View>
-
-                  <View style={styles.providerCopy}>
-                    <Text style={[styles.providerTitle, { color: colors.text }]}>
-                      {provider.title}
-                    </Text>
-                    <Text style={[styles.providerBody, { color: colors.textMuted }]}>
-                      {provider.value === 'metamask'
-                        ? t('externalWalletSheet.metamaskBody')
-                        : t('externalWalletSheet.walletConnectBody')}
-                    </Text>
-                  </View>
-
-                  {connected ? (
-                    <Text style={[styles.badge, { color: colors.profit }]}>{t('externalWalletSheet.linked')}</Text>
-                  ) : disabled ? (
-                    <Text style={[styles.badge, { color: colors.textMuted }]}>{t('externalWalletSheet.soon')}</Text>
-                  ) : (
-                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-
           <View
             style={[
               styles.helperCard,
               { backgroundColor: colors.fieldBackground, borderColor: colors.border },
             ]}
           >
-            <Text style={[styles.providerTitle, { color: colors.text }]}>{t('externalWalletSheet.helperTitle')}</Text>
-            <Text style={[styles.providerBody, { color: colors.textMuted }]}>
-              {t('externalWalletSheet.helperBody')}
+            <Text style={[styles.helperTitle, { color: colors.text }]}>
+              Wallet externa conectada con aprobacion real
+            </Text>
+            <Text style={[styles.helperBody, { color: colors.textMuted }]}>
+              OrbitX no guarda tu frase semilla. Las aprobaciones y firmas se hacen desde tu
+              wallet.
             </Text>
           </View>
 
-          <PrimaryButton
-            label={t('externalWalletSheet.openMetamask')}
-            variant="secondary"
-            onPress={() => void openMetaMask()}
-          />
+          <View style={styles.list}>
+            {supportedWallets.map((wallet) => (
+              <View
+                key={wallet.title}
+                style={[
+                  styles.walletRow,
+                  {
+                    backgroundColor: colors.fieldBackground,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.walletIcon,
+                    { backgroundColor: withOpacity(colors.primary, 0.12) },
+                  ]}
+                >
+                  <Ionicons name={wallet.icon} size={16} color={colors.text} />
+                </View>
+                <Text style={[styles.walletName, { color: colors.text }]}>{wallet.title}</Text>
+              </View>
+            ))}
+          </View>
 
-          <PrimaryButton
-            label={t('externalWalletSheet.pasteClipboard')}
-            variant="ghost"
-            onPress={() => void pasteAddress()}
-          />
+          {!configured || !runtimeSupported ? (
+            <View
+              style={[
+                styles.stateCard,
+                {
+                  backgroundColor: withOpacity(colors.loss, 0.08),
+                  borderColor: withOpacity(colors.loss, 0.32),
+                },
+              ]}
+            >
+              <Text style={[styles.stateTitle, { color: colors.text }]}>
+                WalletConnect no disponible
+              </Text>
+              <Text style={[styles.stateBody, { color: colors.textMuted }]}>
+                {disabledReason}
+              </Text>
+            </View>
+          ) : null}
 
-          <OrbitInput
-            label={t('externalWalletSheet.publicAddress')}
-            value={address}
-            onChangeText={setAddress}
-            placeholder={t('externalWalletSheet.publicAddressPlaceholder')}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+          {isConnected ? (
+            <View
+              style={[
+                styles.stateCard,
+                {
+                  backgroundColor: withOpacity(colors.profit, 0.08),
+                  borderColor: withOpacity(colors.profit, 0.26),
+                },
+              ]}
+            >
+              <View style={styles.stateHeaderRow}>
+                <Text style={[styles.stateTitle, { color: colors.text }]}>Wallet externa conectada</Text>
+                <View
+                  style={[
+                    styles.statusChip,
+                    { backgroundColor: withOpacity(colors.profit, 0.14) },
+                  ]}
+                >
+                  <Text style={[styles.statusChipLabel, { color: colors.profit }]}>Conectada</Text>
+                </View>
+              </View>
 
-          <Text style={[styles.helperText, { color: colors.textMuted }]}>
-            {t('externalWalletSheet.publicAddressHint')}
-          </Text>
+              <Text style={[styles.stateBody, { color: colors.textMuted }]}>
+                {walletName ?? provider ?? 'WalletConnect'}
+              </Text>
+              <Text style={[styles.connectionMeta, { color: colors.textSoft }]}>
+                {maskAddress(address)}
+              </Text>
+              <Text style={[styles.connectionMeta, { color: colors.textMuted }]}>
+                Red actual: {chainLabel}
+              </Text>
+              {signature ? (
+                <Text style={[styles.signaturePreview, { color: colors.textMuted }]}>
+                  Ultima firma: {`${signature.slice(0, 10)}...${signature.slice(-10)}`}
+                </Text>
+              ) : null}
+              {canSwitchToSelectedNetwork ? (
+                <Text style={[styles.switchHint, { color: colors.warning }]}>
+                  La wallet esta en {chainLabel}. Puedes cambiarla a{' '}
+                  {selectedNetworkLabel(selectedNetwork)}.
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
 
-          <PrimaryButton
-            label={loading ? t('externalWalletSheet.savingConnection') : t('externalWalletSheet.saveConnection')}
-            disabled={!validEvmAddress || loading}
-            style={!validEvmAddress || loading ? styles.disabledAction : undefined}
-            onPress={() => onSelect('metamask', address)}
-          />
+          {lastError ? (
+            <View
+              style={[
+                styles.errorCard,
+                {
+                  backgroundColor: withOpacity(colors.loss, 0.08),
+                  borderColor: withOpacity(colors.loss, 0.26),
+                },
+              ]}
+            >
+              <Text style={[styles.errorText, { color: colors.loss }]}>{lastError}</Text>
+            </View>
+          ) : null}
 
-          <PrimaryButton
-            label={t('externalWalletSheet.close')}
-            variant="ghost"
-            onPress={onClose}
-            style={styles.closeAction}
-          />
+          {!isConnected ? (
+            <PrimaryButton
+              label={isBusy ? 'Abriendo wallets...' : 'Conectar wallet externa'}
+              onPress={() => void connect()}
+              disabled={isBusy || !configured || !runtimeSupported}
+              style={isBusy || !configured || !runtimeSupported ? styles.disabledAction : undefined}
+            />
+          ) : (
+            <View style={styles.actionStack}>
+              <PrimaryButton
+                label={isBusy ? 'Solicitando firma...' : 'Firmar mensaje de prueba'}
+                variant="secondary"
+                onPress={() => void signMessage()}
+                disabled={isBusy}
+                style={isBusy ? styles.disabledAction : undefined}
+              />
+
+              {canSwitchToSelectedNetwork ? (
+                <PrimaryButton
+                  label={`Cambiar a ${selectedNetworkLabel(selectedNetwork)}`}
+                  variant="secondary"
+                  onPress={() => void switchToNetwork(selectedNetwork)}
+                  disabled={isBusy}
+                  style={isBusy ? styles.disabledAction : undefined}
+                />
+              ) : null}
+
+              <PrimaryButton
+                label="Desconectar wallet"
+                variant="ghost"
+                onPress={() => void disconnect()}
+                disabled={isBusy}
+                style={isBusy ? styles.disabledAction : undefined}
+              />
+            </View>
+          )}
+
+          <PrimaryButton label="Cerrar" variant="ghost" onPress={onClose} style={styles.closeAction} />
         </View>
       </View>
     </Modal>
@@ -257,9 +293,9 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: SPACING.sm,
+    alignItems: 'flex-start',
+    gap: 12,
   },
   headerCopy: {
     flex: 1,
@@ -279,63 +315,115 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: FONT.regular,
     fontSize: 12,
-    lineHeight: 17,
+    lineHeight: 18,
   },
   closeButton: {
     width: 34,
     height: 34,
     borderRadius: RADII.md,
-    alignItems: 'center',
     justifyContent: 'center',
-  },
-  list: {
-    gap: 8,
+    alignItems: 'center',
   },
   helperCard: {
     borderRadius: RADII.md,
     borderWidth: 1,
     padding: 12,
-    gap: 5,
+    gap: 4,
   },
-  providerCard: {
-    borderRadius: RADII.md,
+  helperTitle: {
+    fontFamily: FONT.semibold,
+    fontSize: 13,
+  },
+  helperBody: {
+    fontFamily: FONT.regular,
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  list: {
+    gap: 8,
+  },
+  walletRow: {
     borderWidth: 1,
-    padding: 11,
+    borderRadius: RADII.md,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  providerIcon: {
+  walletIcon: {
     width: 32,
     height: 32,
-    borderRadius: RADII.md,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  providerCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  providerTitle: {
+  walletName: {
     fontFamily: FONT.semibold,
     fontSize: 13,
   },
-  providerBody: {
+  stateCard: {
+    borderRadius: RADII.md,
+    borderWidth: 1,
+    padding: 12,
+    gap: 4,
+  },
+  stateHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  stateTitle: {
+    fontFamily: FONT.semibold,
+    fontSize: 13,
+  },
+  stateBody: {
     fontFamily: FONT.regular,
     fontSize: 11,
-    lineHeight: 15,
+    lineHeight: 16,
   },
-  badge: {
+  statusChip: {
+    borderRadius: RADII.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  statusChipLabel: {
     fontFamily: FONT.semibold,
     fontSize: 10,
   },
+  connectionMeta: {
+    fontFamily: FONT.medium,
+    fontSize: 12,
+  },
+  signaturePreview: {
+    fontFamily: FONT.regular,
+    fontSize: 10,
+    lineHeight: 15,
+    marginTop: 4,
+  },
+  switchHint: {
+    fontFamily: FONT.medium,
+    fontSize: 10,
+    lineHeight: 15,
+    marginTop: 4,
+  },
+  errorCard: {
+    borderRadius: RADII.md,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  errorText: {
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  actionStack: {
+    gap: 10,
+  },
   closeAction: {
     minHeight: 40,
-  },
-  helperText: {
-    fontFamily: FONT.regular,
-    fontSize: 11,
-    lineHeight: 15,
   },
   disabledAction: {
     opacity: 0.45,

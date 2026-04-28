@@ -330,6 +330,7 @@ export function createInitialOrbitState(): OrbitPersistedState {
         address: '',
         simulated: true,
         signingReady: false,
+        status: 'disconnected',
       },
     },
     tokens: baseTokens.map((token) => ({

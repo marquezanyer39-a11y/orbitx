@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AstraRadarStrip } from '../../../components/home/AstraRadarStrip';
 import { BalanceHero } from '../../../components/home/BalanceHero';
@@ -8,48 +9,64 @@ import { HomeHeader } from '../../../components/home/HomeHeader';
 import { LiveMarketSection } from '../../../components/home/LiveMarketSection';
 import { MainShortcuts } from '../../../components/home/MainShortcuts';
 import { NewsSection, type HomeNewsCategory } from '../../../components/home/NewsSection';
+import { PromoBanner } from '../../../components/home/PromoBanner';
 import { QuickActions } from '../../../components/home/QuickActions';
 import { RewardsPoolCard } from '../../../components/home/RewardsPoolCard';
+import { ORBITX_THEME, getHomeLayoutMetrics } from '../../../components/home/orbitxTheme';
 import { formatRelativeTimeByLanguage } from '../../../constants/i18n';
 import { useAstra } from '../../hooks/useAstra';
 import { useLiveMarkets } from '../../hooks/useLiveMarkets';
 import { useNewsFeed } from '../../hooks/useNewsFeed';
 import { usePortfolioData } from '../../hooks/usePortfolioData';
 import { useRewardsPool } from '../../hooks/useRewardsPool';
-import { navigateToTrade, buildPairSelectorHref, buildReceiveHref, buildSendHref } from '../../navigation/AppNavigator';
+import {
+  buildPairSelectorHref,
+  buildReceiveHref,
+  buildSendHref,
+  navigateToTrade,
+} from '../../navigation/AppNavigator';
 import { useAuthStore } from '../../store/authStore';
 import { useWalletStore } from '../../store/walletStore';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 
 function buildRadarInsight(symbol: string, change24h: number) {
   if (change24h >= 2.5) {
-    return `${symbol} mantiene impulso alcista y puede seguir liderando el flujo comprador.`;
+    return `${symbol} mantiene impulso alcista.`;
   }
 
   if (change24h <= -2.5) {
-    return `${symbol} entra en zona de tension y puede dejar una oportunidad de rebote.`;
+    return `${symbol} entra en zona de tension.`;
   }
 
   return `${symbol} cerca de zona de rebote.`;
 }
 
 export default function HomeScreen() {
+  const { width: screenWidth } = useWindowDimensions();
+  const { contentWidth, horizontalMargin, isSmallPhone } = getHomeLayoutMetrics(screenWidth);
+  const insets = useSafeAreaInsets();
   const profile = useAuthStore((state) => state.profile);
   const selectedNetwork = useWalletStore((state) => state.selectedNetwork);
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [activeNewsCategory, setActiveNewsCategory] = useState<HomeNewsCategory>('crypto');
+  const bottomTabHeight = 84 + insets.bottom;
 
-  const { openAstraWithQuestion, openAstra } = useAstra();
+  const { openAstra, openAstraWithQuestion } = useAstra();
   const portfolio = usePortfolioData();
-  const { items: liveMarkets, error: marketError, refresh: refreshMarkets } = useLiveMarkets();
+  const {
+    items: liveMarkets,
+    error: marketError,
+    loading: marketsLoading,
+    refresh: refreshMarkets,
+  } = useLiveMarkets();
   const rewardsPool = useRewardsPool();
   const news = useNewsFeed(activeNewsCategory);
 
+  const currentPoolAmount = rewardsPool.amountLabel.split(' / ')[0] ?? '$0';
+  const targetPoolAmount = rewardsPool.amountLabel.split(' / ')[1]
+    ? `/ ${rewardsPool.amountLabel.split(' / ')[1]}`
+    : '/ $0';
   const firstMarket = liveMarkets[0];
-  const rewardAmountParts = rewardsPool.amountLabel.split(' / ');
-  const currentPoolAmount = rewardAmountParts[0] ?? '$0';
-  const targetPoolAmount = rewardAmountParts[1] ? `/${rewardAmountParts[1]}` : '/$0';
-
   const astraInsight = useMemo(
     () => buildRadarInsight(firstMarket?.baseSymbol ?? 'BTC', firstMarket?.change24h ?? 0),
     [firstMarket?.baseSymbol, firstMarket?.change24h],
@@ -68,10 +85,17 @@ export default function HomeScreen() {
   const marketRows = liveMarkets.map((market) => ({
     id: market.id,
     pairLabel: market.symbol,
+    assetLabel: (market.coin?.name ?? market.baseSymbol).toUpperCase(),
     priceLabel:
       market.price >= 1000
-        ? `$${market.price.toLocaleString('es-419', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : `$${market.price.toLocaleString('es-419', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`,
+        ? `$${market.price.toLocaleString('es-419', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`
+        : `$${market.price.toLocaleString('es-419', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 4,
+          })}`,
     changeLabel: `${market.change24h >= 0 ? '+' : ''}${market.change24h.toFixed(2)}%`,
     positive: market.change24h >= 0,
     sparkline: market.sparkline,
@@ -104,13 +128,13 @@ export default function HomeScreen() {
     {
       key: 'comprar',
       label: 'Comprar',
-      icon: 'add-circle-outline' as const,
+      icon: 'cart-outline' as const,
       onPress: () => router.push('/convert'),
     },
     {
       key: 'enviar',
       label: 'Enviar',
-      icon: 'arrow-up-outline' as const,
+      icon: 'send-outline' as const,
       onPress: () => router.push(buildSendHref(selectedNetwork)),
     },
     {
@@ -131,7 +155,7 @@ export default function HomeScreen() {
     {
       key: 'mercados',
       label: 'Mercados',
-      icon: 'bar-chart-outline' as const,
+      icon: 'analytics-outline' as const,
       onPress: () => router.push('/market'),
     },
     {
@@ -143,24 +167,31 @@ export default function HomeScreen() {
     {
       key: 'crear-token',
       label: 'Crear token',
-      icon: 'leaf-outline' as const,
+      icon: 'cube-outline' as const,
       onPress: () => router.push('/create-token'),
     },
   ];
 
   return (
-    <ScreenContainer contentContainerStyle={styles.content} backgroundMode="plain">
+    <ScreenContainer
+      contentContainerStyle={[
+        styles.content,
+        {
+          paddingBottom: bottomTabHeight + 36,
+        },
+      ]}
+      backgroundMode="plain"
+    >
       <HomeHeader
         avatarLabel={profile.avatar}
         avatarUri={profile.avatarUri}
+        horizontalMargin={horizontalMargin}
+        isSmallPhone={isSmallPhone}
         onProfilePress={() => router.push('/profile')}
         onSearchPress={() => router.push(buildPairSelectorHref())}
-        onNotificationsPress={() => router.push('/notifications')}
-        onAstraPress={() => openAstra(homeContext)}
-        onProPress={() => router.push('/profile')}
       />
 
-      <View style={styles.heroStack}>
+      <View style={[styles.stack, { paddingHorizontal: horizontalMargin }]}>
         <BalanceHero
           amountLabel={portfolio.totalBalanceLabel}
           deltaLabel={portfolio.changeLabel}
@@ -169,91 +200,101 @@ export default function HomeScreen() {
           series={portfolio.series}
           loading={portfolio.loading}
           cacheLabel={portfolio.cacheLabel}
+          contentWidth={contentWidth}
+          isSmallPhone={isSmallPhone}
           onToggleVisibility={() => setBalanceHidden((value) => !value)}
           onViewAnalysis={() =>
             void openAstraWithQuestion(
               homeContext,
-              'Analiza mi balance, el mercado actual y dime la mejor oportunidad de hoy.',
+              'Analiza mi balance y el mercado de hoy en una lectura breve.',
             )
           }
         />
-        <QuickActions items={quickActions} />
-      </View>
 
-      <MainShortcuts items={mainShortcuts} />
+        <QuickActions items={quickActions} isSmallPhone={isSmallPhone} />
 
-      <RewardsPoolCard
-        currentAmountLabel={currentPoolAmount}
-        targetAmountLabel={targetPoolAmount}
-        progressPercent={rewardsPool.snapshot.progressPercent}
-        progressLabel={rewardsPool.progressLabel}
-        remainingLabel={rewardsPool.countdownLabel}
-        onParticipate={() => router.push('/pool')}
-      />
+        <MainShortcuts items={mainShortcuts} isSmallPhone={isSmallPhone} />
 
-      <LiveMarketSection
-        items={marketRows}
-        loading={portfolio.loading}
-        error={marketError}
-        onRetry={refreshMarkets}
-        onViewAll={() => router.push('/market')}
-      />
+        <PromoBanner
+          isSmallPhone={isSmallPhone}
+          onPress={() => router.push('/pool')}
+        />
 
-      <AstraRadarStrip
-        insight={astraInsight}
-        onPress={() =>
-          void openAstraWithQuestion(
-            {
+        <RewardsPoolCard
+          currentAmountLabel={currentPoolAmount}
+          targetAmountLabel={targetPoolAmount}
+          progressPercent={rewardsPool.snapshot.progressPercent}
+          progressLabel={rewardsPool.progressLabel}
+          remainingLabel={rewardsPool.countdownLabel}
+          contentWidth={contentWidth}
+          isSmallPhone={isSmallPhone}
+          onParticipate={() => router.push('/pool')}
+        />
+
+        <LiveMarketSection
+          items={marketRows}
+          loading={marketsLoading}
+          error={marketError}
+          contentWidth={contentWidth}
+          isSmallPhone={isSmallPhone}
+          onRetry={refreshMarkets}
+          onViewAll={() => router.push('/market')}
+        />
+
+        <AstraRadarStrip
+          insight={astraInsight}
+          isSmallPhone={isSmallPhone}
+          onPress={() =>
+            void openAstra({
               ...homeContext,
-              currentTask: 'market_insight',
-            },
-            'Dame una lectura breve del mercado y la mejor oportunidad visible ahora mismo.',
-          )
-        }
-      />
-
-      <NewsSection
-        categories={news.categories}
-        activeCategory={activeNewsCategory}
-        onSelectCategory={setActiveNewsCategory}
-        item={featuredNews}
-        loading={news.loading}
-        helperLabel={
-          news.loading
-            ? 'Actualizando noticias...'
-            : news.fromCache
-              ? 'Mostrando el ultimo titular disponible'
-              : null
-        }
-        onOpenFeatured={() => {
-          if (!news.featuredItem) {
-            return;
+              currentTask: 'market_radar',
+            })
           }
+        />
 
-          router.push({
-            pathname: '/browser',
-            params: {
-              url: news.featuredItem.url,
-              title: 'Noticias',
-            },
-          });
-        }}
-        onViewAll={() => router.push('/browser')}
-        onRefresh={() => void news.refresh()}
-      />
+        <NewsSection
+          categories={news.categories}
+          activeCategory={activeNewsCategory}
+          onSelectCategory={setActiveNewsCategory}
+          item={featuredNews}
+          loading={news.loading}
+          helperLabel={
+            news.loading
+              ? 'Actualizando noticias...'
+              : news.fromCache
+                ? 'Mostrando el ultimo titular disponible'
+                : null
+          }
+          isSmallPhone={isSmallPhone}
+          onOpenFeatured={() => {
+            if (!news.featuredItem) {
+              return;
+            }
+
+            router.push({
+              pathname: '/browser',
+              params: {
+                url: news.featuredItem.url,
+                title: 'Noticias',
+              },
+            });
+          }}
+          onViewAll={() => router.push('/browser')}
+          onRefresh={() => void news.refresh()}
+        />
+      </View>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 118,
-    gap: 16,
-    backgroundColor: '#0B0B0F',
-  },
-  heroStack: {
+    backgroundColor: ORBITX_THEME.colors.background,
+    paddingTop: 0,
     gap: 0,
+  },
+  stack: {
+    paddingTop: 12,
+    gap: 24,
   },
 });

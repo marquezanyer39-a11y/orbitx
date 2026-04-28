@@ -1,12 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../constants/theme';
 import { MiniSparkline } from './MiniSparkline';
+import { ORBITX_THEME } from './orbitxTheme';
 
 export interface LiveMarketRowItem {
   id: string;
   pairLabel: string;
+  assetLabel: string;
   priceLabel: string;
   changeLabel: string;
   positive: boolean;
@@ -19,24 +20,26 @@ interface LiveMarketSectionProps {
   items: LiveMarketRowItem[];
   loading?: boolean;
   error?: string | null;
+  contentWidth: number;
+  isSmallPhone?: boolean;
   onRetry: () => void;
   onViewAll: () => void;
 }
 
-function SkeletonRow() {
+function MarketSkeleton({ isSmallPhone = false }: { isSmallPhone?: boolean }) {
   return (
-    <View style={styles.row}>
-      <View style={styles.leftRow}>
-        <View style={styles.assetSkeleton} />
-        <View style={styles.textSkeletonColumn}>
-          <View style={styles.lineLarge} />
-          <View style={styles.lineSmall} />
+    <View style={[styles.row, isSmallPhone ? styles.rowSmall : null]}>
+      <View style={styles.assetColumn}>
+        <View style={styles.assetIconSkeleton} />
+        <View style={styles.assetTextSkeleton}>
+          <View style={styles.textLineWide} />
+          <View style={styles.textLineNarrow} />
         </View>
       </View>
       <View style={styles.sparklineSkeleton} />
-      <View style={styles.priceSkeletonColumn}>
-        <View style={styles.lineLarge} />
-        <View style={styles.pillSkeleton} />
+      <View style={styles.priceColumn}>
+        <View style={styles.textLineWide} />
+        <View style={styles.textLineNarrow} />
       </View>
     </View>
   );
@@ -46,89 +49,111 @@ export function LiveMarketSection({
   items,
   loading = false,
   error,
+  contentWidth,
+  isSmallPhone = false,
   onRetry,
   onViewAll,
 }: LiveMarketSectionProps) {
+  const chartWidth = isSmallPhone ? 54 : 60;
+  const priceWidth = Math.max(isSmallPhone ? 100 : 108, Math.floor(contentWidth * 0.28));
+
   return (
     <View style={styles.root}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Mercado en vivo</Text>
-        <Pressable onPress={onViewAll} style={styles.linkButton}>
-          <Text style={styles.linkText}>Ver todos</Text>
-          <Ionicons name="chevron-forward" size={14} color="#1EDC8B" />
+        <Pressable onPress={onViewAll} style={({ pressed }) => (pressed ? styles.pressed : null)}>
+          <Text style={styles.viewAllLabel}>Ver todos</Text>
         </Pressable>
       </View>
 
-      <View style={styles.panel}>
-        {error ? (
-          <View style={styles.statusRow}>
-            <Text style={styles.errorText}>No se pudo actualizar el mercado</Text>
-            <Pressable onPress={onRetry} style={styles.retryButton}>
-              <Text style={styles.retryLabel}>Reintentar</Text>
-            </Pressable>
-          </View>
-        ) : null}
+      <View style={styles.columnsHeader}>
+        <Text style={[styles.columnLabel, styles.columnAsset]}>ACTIVO</Text>
+        <Text style={[styles.columnLabel, styles.columnChart]}>GRAFICO</Text>
+        <Text style={[styles.columnLabel, styles.columnPrice]}>PRECIO / 24H</Text>
+      </View>
 
-        {loading && !items.length ? (
-          <>
-            <SkeletonRow />
-            <SkeletonRow />
-            <SkeletonRow />
-            <SkeletonRow />
-          </>
-        ) : (
-          items.map((item, index) => (
-            <Pressable key={item.id} onPress={item.onPress} style={styles.row}>
-              <View style={styles.leftRow}>
-                {item.image ? (
-                  <Image source={{ uri: item.image }} style={styles.assetImage} />
-                ) : (
-                  <View style={styles.assetFallback}>
-                    <Text style={styles.assetFallbackText}>{item.pairLabel.slice(0, 1)}</Text>
+      {error ? (
+        <View style={styles.errorRow}>
+          <Text style={styles.errorText}>No se pudo actualizar el mercado</Text>
+          <Pressable onPress={onRetry} style={({ pressed }) => [styles.retryButton, pressed ? styles.pressed : null]}>
+            <Text style={styles.retryLabel}>Reintentar</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      <View style={styles.list}>
+        {loading && !items.length
+          ? Array.from({ length: 4 }, (_, index) => (
+              <MarketSkeleton key={`skeleton-${index}`} isSmallPhone={isSmallPhone} />
+            ))
+          : items.map((item, index) => (
+              <Pressable
+                key={item.id}
+                onPress={item.onPress}
+                style={({ pressed }) => [
+                  styles.row,
+                  isSmallPhone ? styles.rowSmall : null,
+                  pressed ? styles.rowPressed : null,
+                ]}
+              >
+                <View style={styles.assetColumn}>
+                  {item.image ? (
+                    <Image source={{ uri: item.image }} style={styles.assetImage} />
+                  ) : (
+                    <View style={styles.assetFallback}>
+                      <Text style={styles.assetFallbackLabel}>{item.pairLabel.slice(0, 1)}</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.assetCopy}>
+                    <Text
+                      style={[styles.pairLabel, isSmallPhone ? styles.pairLabelSmall : null]}
+                      numberOfLines={1}
+                    >
+                      {item.pairLabel}
+                    </Text>
+                    <Text style={styles.assetLabel} numberOfLines={1}>
+                      {item.assetLabel}
+                    </Text>
                   </View>
-                )}
-                <Text style={styles.pairLabel}>{item.pairLabel}</Text>
-              </View>
+                </View>
 
-              <MiniSparkline
-                data={item.sparkline}
-                width={74}
-                height={26}
-                color="#1EDC8B"
-                negativeColor="#FF5A67"
-                positive={item.positive}
-                barWidth={3}
-                barGap={1}
-                subtle
-              />
+                <View style={[styles.chartCell, { width: chartWidth }]}>
+                  <MiniSparkline
+                    data={item.sparkline}
+                    width={chartWidth}
+                    height={20}
+                    color={ORBITX_THEME.colors.primaryGreen}
+                    negativeColor={ORBITX_THEME.colors.lossRed}
+                    positive={item.positive}
+                    subtle
+                    variant="line"
+                  />
+                </View>
 
-              <View style={styles.priceColumn}>
-                <Text style={styles.priceLabel}>{item.priceLabel}</Text>
-                <View
-                  style={[
-                    styles.changePill,
-                    {
-                      backgroundColor: item.positive
-                        ? withOpacity('#1EDC8B', 0.14)
-                        : withOpacity('#FF5A67', 0.14),
-                    },
-                  ]}
-                >
+                <View style={[styles.priceColumn, { width: priceWidth }]}>
+                  <Text
+                    style={[styles.priceLabel, isSmallPhone ? styles.priceLabelSmall : null]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.84}
+                  >
+                    {item.priceLabel}
+                  </Text>
                   <Text
                     style={[
                       styles.changeLabel,
-                      { color: item.positive ? '#1EDC8B' : '#FF5A67' },
+                      { color: item.positive ? ORBITX_THEME.colors.primaryGreen : ORBITX_THEME.colors.lossRed },
                     ]}
+                    numberOfLines={1}
                   >
                     {item.changeLabel}
                   </Text>
                 </View>
-              </View>
 
-              {index < items.length - 1 ? <View style={styles.separator} /> : null}
-            </Pressable>
-          ))
-        )}
+                {index < items.length - 1 ? <View style={styles.separator} /> : null}
+              </Pressable>
+            ))}
       </View>
     </View>
   );
@@ -136,167 +161,191 @@ export function LiveMarketSection({
 
 const styles = StyleSheet.create({
   root: {
-    gap: 10,
+    gap: 12,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
   },
   title: {
-    color: '#F5F7FA',
+    color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
-    fontSize: 22,
+    fontSize: 18,
   },
-  linkButton: {
+  viewAllLabel: {
+    color: ORBITX_THEME.colors.primaryGreen,
+    fontFamily: FONT.medium,
+    fontSize: 14,
+  },
+  columnsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    paddingBottom: 6,
   },
-  linkText: {
-    color: '#1EDC8B',
+  columnLabel: {
+    color: withOpacity(ORBITX_THEME.colors.textSecondary, 0.4),
     fontFamily: FONT.medium,
-    fontSize: 13,
+    fontSize: 9,
+    letterSpacing: 0.7,
   },
-  panel: {
-    borderRadius: 20,
-    backgroundColor: '#11131A',
-    borderWidth: 1,
-    borderColor: '#232634',
-    overflow: 'hidden',
+  columnAsset: {
+    flex: 1,
   },
-  statusRow: {
+  columnChart: {
+    width: 60,
+    textAlign: 'center',
+  },
+  columnPrice: {
+    width: 108,
+    textAlign: 'right',
+  },
+  errorRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#232634',
-    backgroundColor: withOpacity('#FF5A67', 0.06),
+    gap: 10,
+    paddingVertical: 6,
   },
   errorText: {
     flex: 1,
-    color: '#F5F7FA',
+    color: ORBITX_THEME.colors.textSecondary,
     fontFamily: FONT.medium,
     fontSize: 12,
   },
   retryButton: {
     minHeight: 28,
-    borderRadius: RADII.pill,
     paddingHorizontal: 12,
+    borderRadius: RADII.pill,
     borderWidth: 1,
-    borderColor: withOpacity('#F5F7FA', 0.12),
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.8),
     alignItems: 'center',
     justifyContent: 'center',
   },
   retryLabel: {
-    color: '#F5F7FA',
+    color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.medium,
-    fontSize: 12,
+    fontSize: 11,
+  },
+  list: {
+    gap: 0,
   },
   row: {
-    minHeight: 72,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    gap: 12,
     position: 'relative',
   },
-  leftRow: {
+  rowSmall: {
+    minHeight: 52,
+  },
+  rowPressed: {
+    opacity: 0.74,
+  },
+  assetColumn: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
   assetImage: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
   assetFallback: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.12),
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withOpacity('#1EDC8B', 0.12),
   },
-  assetFallbackText: {
-    color: '#1EDC8B',
+  assetFallbackLabel: {
+    color: ORBITX_THEME.colors.primaryGreen,
     fontFamily: FONT.semibold,
-    fontSize: 12,
+    fontSize: 10,
+  },
+  assetCopy: {
+    flex: 1,
+    minWidth: 0,
   },
   pairLabel: {
-    color: '#F5F7FA',
-    fontFamily: FONT.medium,
-    fontSize: 15,
-  },
-  priceColumn: {
-    minWidth: 106,
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  priceLabel: {
-    color: '#F5F7FA',
+    color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
-    fontSize: 15,
+    fontSize: 10.5,
   },
-  changePill: {
-    minHeight: 24,
-    borderRadius: RADII.pill,
-    paddingHorizontal: 10,
+  pairLabelSmall: {
+    fontSize: 10,
+  },
+  assetLabel: {
+    marginTop: 1,
+    color: withOpacity(ORBITX_THEME.colors.textSecondary, 0.76),
+    fontFamily: FONT.medium,
+    fontSize: 7.8,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  chartCell: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  changeLabel: {
+  priceColumn: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    minWidth: 0,
+  },
+  priceLabel: {
+    color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
     fontSize: 12,
+  },
+  priceLabelSmall: {
+    fontSize: 11.5,
+  },
+  changeLabel: {
+    marginTop: 2,
+    fontFamily: FONT.bold,
+    fontSize: 8.5,
   },
   separator: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: 0,
+    right: 0,
     bottom: 0,
     height: 1,
-    backgroundColor: '#232634',
+    backgroundColor: withOpacity(ORBITX_THEME.colors.border, 0.4),
   },
-  assetSkeleton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: withOpacity('#F5F7FA', 0.08),
+  assetIconSkeleton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: withOpacity('#FAFAFA', 0.08),
   },
-  textSkeletonColumn: {
-    gap: 6,
+  assetTextSkeleton: {
+    gap: 4,
   },
-  lineLarge: {
-    width: 78,
-    height: 12,
-    borderRadius: 999,
-    backgroundColor: withOpacity('#F5F7FA', 0.08),
-  },
-  lineSmall: {
-    width: 56,
+  textLineWide: {
+    width: 74,
     height: 10,
-    borderRadius: 999,
-    backgroundColor: withOpacity('#F5F7FA', 0.06),
+    borderRadius: RADII.pill,
+    backgroundColor: withOpacity('#FAFAFA', 0.08),
+  },
+  textLineNarrow: {
+    width: 52,
+    height: 8,
+    borderRadius: RADII.pill,
+    backgroundColor: withOpacity('#FAFAFA', 0.06),
   },
   sparklineSkeleton: {
-    width: 74,
-    height: 26,
-    borderRadius: 12,
-    backgroundColor: withOpacity('#1EDC8B', 0.08),
+    width: 60,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.08),
   },
-  priceSkeletonColumn: {
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  pillSkeleton: {
-    width: 62,
-    height: 22,
-    borderRadius: RADII.pill,
-    backgroundColor: withOpacity('#F5F7FA', 0.06),
+  pressed: {
+    opacity: 0.8,
   },
 });

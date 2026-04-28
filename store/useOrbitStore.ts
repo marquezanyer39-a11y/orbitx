@@ -272,7 +272,23 @@ function maskTransferDestination(destination: string) {
 }
 
 function externalWalletProviderLabel(provider: ExternalWalletProvider) {
-  return provider === 'metamask' ? 'MetaMask' : 'WalletConnect';
+  if (provider === 'metamask') {
+    return 'MetaMask';
+  }
+
+  if (provider === 'trust') {
+    return 'Trust Wallet';
+  }
+
+  if (provider === 'coinbase') {
+    return 'Coinbase Wallet';
+  }
+
+  if (provider === 'other') {
+    return 'Wallet externa';
+  }
+
+  return 'WalletConnect';
 }
 
 function inferVenueFromDexNetwork(network?: LaunchTokenPayload['dexNetwork']) {
@@ -942,6 +958,11 @@ export const useOrbitStore = create<OrbitStore>()(
                 simulated: false,
                 signingReady: false,
                 connectedAt: new Date().toISOString(),
+                status: 'connected',
+                walletName: label,
+                chainId: undefined,
+                sessionTopic: undefined,
+                lastError: undefined,
               },
             },
             activity: prependActivity(
@@ -982,6 +1003,11 @@ export const useOrbitStore = create<OrbitStore>()(
               address: '',
               simulated: true,
               signingReady: false,
+              status: 'disconnected',
+              walletName: undefined,
+              chainId: undefined,
+              sessionTopic: undefined,
+              lastError: undefined,
             },
           },
           activity: prependActivity(

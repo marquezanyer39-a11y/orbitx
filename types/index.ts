@@ -32,7 +32,13 @@ export type LaunchVenue = 'orbitx' | 'uniswap' | 'pancakeswap' | 'raydium';
 export type TokenLaunchMode = 'orbitx' | 'dex';
 export type DexLaunchNetwork = 'ethereum' | 'base' | 'bnb' | 'solana';
 export type WalletNetwork = 'ethereum' | 'base' | 'bnb' | 'solana';
-export type ExternalWalletProvider = 'metamask' | 'walletconnect';
+export type ExternalWalletProvider =
+  | 'metamask'
+  | 'trust'
+  | 'coinbase'
+  | 'walletconnect'
+  | 'other';
+export type ExternalWalletStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 export type TokenLifecycleStatus =
   | 'created'
   | 'ready_to_list'
@@ -300,8 +306,13 @@ export interface ExternalWalletState {
   provider: ExternalWalletProvider | null;
   address: string;
   simulated: boolean;
+  chainId?: number;
+  walletName?: string;
+  sessionTopic?: string;
   signingReady?: boolean;
   connectedAt?: string;
+  status?: ExternalWalletStatus;
+  lastError?: string;
 }
 
 export interface WalletFutureState {
