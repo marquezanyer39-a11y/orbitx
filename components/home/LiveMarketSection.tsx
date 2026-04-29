@@ -54,8 +54,8 @@ export function LiveMarketSection({
   onRetry,
   onViewAll,
 }: LiveMarketSectionProps) {
-  const chartWidth = isSmallPhone ? 54 : 60;
-  const priceWidth = Math.max(isSmallPhone ? 100 : 108, Math.floor(contentWidth * 0.28));
+  const chartWidth = isSmallPhone ? 60 : 68;
+  const priceWidth = Math.max(isSmallPhone ? 112 : 122, Math.floor(contentWidth * 0.31));
 
   return (
     <View style={styles.root}>
@@ -68,8 +68,8 @@ export function LiveMarketSection({
 
       <View style={styles.columnsHeader}>
         <Text style={[styles.columnLabel, styles.columnAsset]}>ACTIVO</Text>
-        <Text style={[styles.columnLabel, styles.columnChart]}>GRAFICO</Text>
-        <Text style={[styles.columnLabel, styles.columnPrice]}>PRECIO / 24H</Text>
+        <Text style={[styles.columnLabel, styles.columnChart, { width: chartWidth }]}>GRÁFICO</Text>
+        <Text style={[styles.columnLabel, styles.columnPrice, { width: priceWidth }]}>PRECIO / 24H</Text>
       </View>
 
       {error ? (
@@ -122,7 +122,7 @@ export function LiveMarketSection({
                   <MiniSparkline
                     data={item.sparkline}
                     width={chartWidth}
-                    height={20}
+                    height={22}
                     color={ORBITX_THEME.colors.primaryGreen}
                     negativeColor={ORBITX_THEME.colors.lossRed}
                     positive={item.positive}
@@ -143,7 +143,9 @@ export function LiveMarketSection({
                   <Text
                     style={[
                       styles.changeLabel,
-                      { color: item.positive ? ORBITX_THEME.colors.primaryGreen : ORBITX_THEME.colors.lossRed },
+                      {
+                        color: item.positive ? ORBITX_THEME.colors.primaryGreen : ORBITX_THEME.colors.lossRed,
+                      },
                     ]}
                     numberOfLines={1}
                   >
@@ -161,7 +163,7 @@ export function LiveMarketSection({
 
 const styles = StyleSheet.create({
   root: {
-    gap: 12,
+    gap: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   columnLabel: {
-    color: withOpacity(ORBITX_THEME.colors.textSecondary, 0.4),
+    color: withOpacity(ORBITX_THEME.colors.textSecondary, 0.42),
     fontFamily: FONT.medium,
     fontSize: 9,
     letterSpacing: 0.7,
@@ -194,11 +196,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   columnChart: {
-    width: 60,
     textAlign: 'center',
   },
   columnPrice: {
-    width: 108,
     textAlign: 'right',
   },
   errorRow: {
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: RADII.pill,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.8),
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.7),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -232,13 +232,13 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   row: {
-    minHeight: 56,
+    minHeight: 58,
     flexDirection: 'row',
     alignItems: 'center',
     position: 'relative',
   },
   rowSmall: {
-    minHeight: 52,
+    minHeight: 54,
   },
   rowPressed: {
     opacity: 0.74,
@@ -275,17 +275,17 @@ const styles = StyleSheet.create({
   pairLabel: {
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
-    fontSize: 10.5,
+    fontSize: 11,
   },
   pairLabelSmall: {
-    fontSize: 10,
+    fontSize: 10.5,
   },
   assetLabel: {
     marginTop: 1,
     color: withOpacity(ORBITX_THEME.colors.textSecondary, 0.76),
     fontFamily: FONT.medium,
-    fontSize: 7.8,
-    letterSpacing: 0.5,
+    fontSize: 8,
+    letterSpacing: 0.45,
     textTransform: 'uppercase',
   },
   chartCell: {
@@ -300,15 +300,15 @@ const styles = StyleSheet.create({
   priceLabel: {
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
-    fontSize: 12,
+    fontSize: 12.6,
   },
   priceLabelSmall: {
-    fontSize: 11.5,
+    fontSize: 12,
   },
   changeLabel: {
     marginTop: 2,
     fontFamily: FONT.bold,
-    fontSize: 8.5,
+    fontSize: 9,
   },
   separator: {
     position: 'absolute',
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: 1,
-    backgroundColor: withOpacity(ORBITX_THEME.colors.border, 0.4),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.border, 0.3),
   },
   assetIconSkeleton: {
     width: 20,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     backgroundColor: withOpacity('#FAFAFA', 0.06),
   },
   sparklineSkeleton: {
-    width: 60,
+    width: 68,
     height: 20,
     borderRadius: 10,
     backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.08),

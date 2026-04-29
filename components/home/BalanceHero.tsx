@@ -25,6 +25,15 @@ function compactBalance(value: string) {
   return clean.replace(/(\d)\.\s+(\d+)/g, '$1.$2');
 }
 
+function extractNumericValue(value: string) {
+  const normalized = value
+    .replace(/[^\d,.-]/g, '')
+    .replace(/\.(?=\d{3}(?:\D|$))/g, '')
+    .replace(',', '.');
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function BalanceHero({
   amountLabel,
   deltaLabel,
@@ -39,12 +48,17 @@ export function BalanceHero({
   onToggleVisibility,
   onViewAnalysis,
 }: BalanceHeroProps) {
-  const chartWidth = Math.min(isSmallPhone ? 104 : 118, Math.floor(contentWidth * 0.34));
-  const accent = positive
-    ? ORBITX_THEME.colors.primaryGreen
-    : ORBITX_THEME.colors.lossRed;
-  const displayAmount = hidden ? '••••••' : compactBalance(amountLabel);
-  const displayDelta = hidden ? '••••••' : deltaLabel;
+  const chartWidth = Math.min(isSmallPhone ? 110 : 130, Math.floor(contentWidth * 0.4));
+  const parsedAmount = extractNumericValue(amountLabel);
+  const hasReliableDelta = (parsedAmount ?? 0) > 0 && extractNumericValue(deltaLabel) !== null;
+  const accent = positive ? ORBITX_THEME.colors.primaryGreen : ORBITX_THEME.colors.lossRed;
+  const hiddenMask = '\u2022\u2022\u2022\u2022\u2022\u2022';
+  const displayAmount = hidden ? hiddenMask : compactBalance(amountLabel);
+  const displayDelta = hidden
+    ? hiddenMask
+    : hasReliableDelta
+      ? deltaLabel
+      : 'Sin variación disponible';
 
   return (
     <View style={[styles.card, isSmallPhone ? styles.cardSmall : null]}>
@@ -73,11 +87,19 @@ export function BalanceHero({
               </Pressable>
 
               <View style={styles.deltaRow}>
-                <Ionicons name="trending-up" size={14} color={accent} />
+                {hasReliableDelta ? (
+                  <Ionicons name="trending-up" size={14} color={accent} />
+                ) : null}
                 <Text
-                  style={[styles.deltaLabel, { color: accent }]}
+                  style={[
+                    styles.deltaLabel,
+                    {
+                      color: hasReliableDelta
+                        ? accent
+                        : ORBITX_THEME.colors.textSecondary,
+                    },
+                  ]}
                   numberOfLines={1}
-                  ellipsizeMode="tail"
                 >
                   {displayDelta}
                 </Text>
@@ -94,7 +116,7 @@ export function BalanceHero({
             ]}
           >
             <Text style={styles.analysisLabel} numberOfLines={1}>
-              Ver analisis
+              Ver análisis
             </Text>
             <Ionicons name="analytics-outline" size={13} color={withOpacity('#FAFAFA', 0.42)} />
           </Pressable>
@@ -128,14 +150,14 @@ const styles = StyleSheet.create({
     minHeight: 178,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.6),
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.42),
     backgroundColor: ORBITX_THEME.colors.background,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 18,
   },
   cardSmall: {
     minHeight: 170,
-    paddingHorizontal: 16,
+    paddingHorizontal: 15,
     paddingVertical: 16,
   },
   headerRow: {
@@ -152,7 +174,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
     marginTop: 14,
   },
   copyColumn: {
@@ -174,10 +196,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     minWidth: 0,
+    minHeight: 18,
   },
   deltaLabel: {
     fontFamily: FONT.semibold,
-    fontSize: 14,
+    fontSize: 13,
     flexShrink: 1,
   },
   rangeLabel: {
@@ -206,7 +229,7 @@ const styles = StyleSheet.create({
   chartWrap: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    paddingBottom: 24,
+    paddingBottom: 22,
   },
   cacheLabel: {
     marginTop: 6,

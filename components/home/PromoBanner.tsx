@@ -13,7 +13,7 @@ interface PromoBannerProps {
 export function PromoBanner({ isSmallPhone = false, onPress }: PromoBannerProps) {
   return (
     <LinearGradient
-      colors={['#0D0E10', '#0F1A12']}
+      colors={['#0D0E10', '#102015']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.card, isSmallPhone ? styles.cardSmall : null]}
@@ -21,7 +21,7 @@ export function PromoBanner({ isSmallPhone = false, onPress }: PromoBannerProps)
       <View style={styles.copyColumn}>
         <Text
           style={[styles.title, isSmallPhone ? styles.titleSmall : null]}
-          numberOfLines={1}
+          numberOfLines={isSmallPhone ? 2 : 1}
           ellipsizeMode="tail"
         >
           Invita y gana hasta 100 USDT
@@ -44,7 +44,7 @@ export function PromoBanner({ isSmallPhone = false, onPress }: PromoBannerProps)
           ]}
         >
           <Text style={styles.ctaLabel} numberOfLines={1}>
-            Ver mas
+            Ver más
           </Text>
         </Pressable>
 
@@ -64,10 +64,10 @@ export function PromoBanner({ isSmallPhone = false, onPress }: PromoBannerProps)
 
 const styles = StyleSheet.create({
   card: {
-    minHeight: 88,
+    minHeight: 90,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.55),
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.42),
     paddingHorizontal: 16,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -76,24 +76,25 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardSmall: {
-    minHeight: 84,
+    minHeight: 86,
     paddingHorizontal: 14,
   },
   copyColumn: {
     flex: 1,
     minWidth: 0,
-    paddingRight: 10,
+    paddingRight: 12,
   },
   title: {
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
     fontSize: 14,
+    lineHeight: 18,
   },
   titleSmall: {
     fontSize: 13,
   },
   subtitle: {
-    marginTop: 3,
+    marginTop: 4,
     color: ORBITX_THEME.colors.textSecondary,
     fontFamily: FONT.regular,
     fontSize: 11,
@@ -104,21 +105,21 @@ const styles = StyleSheet.create({
   rightColumn: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
   },
   ctaButton: {
     minHeight: 30,
     paddingHorizontal: 14,
     borderRadius: 15,
-    backgroundColor: withOpacity('#FFFFFF', 0.08),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.16),
     borderWidth: 1,
-    borderColor: withOpacity('#FFFFFF', 0.08),
+    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.12),
     alignItems: 'center',
     justifyContent: 'center',
   },
   ctaLabel: {
     color: ORBITX_THEME.colors.textPrimary,
-    fontFamily: FONT.medium,
+    fontFamily: FONT.semibold,
     fontSize: 11,
   },
   dotsRow: {
@@ -136,10 +137,10 @@ const styles = StyleSheet.create({
   },
   giftHalo: {
     position: 'absolute',
-    right: 74,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    right: 88,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.08),

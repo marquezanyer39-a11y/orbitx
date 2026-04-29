@@ -96,11 +96,6 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
   const { colors } = useAppTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
-  const currentRouteName = state.routes[state.index]?.name;
-
-  if (currentRouteName === 'profile') {
-    return null;
-  }
 
   return (
     <View

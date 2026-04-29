@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../constants/theme';
+import { FONT, withOpacity } from '../../constants/theme';
 import { ORBITX_THEME } from './orbitxTheme';
 
 interface AstraRadarStripProps {
@@ -35,8 +35,7 @@ export function AstraRadarStrip({
           </Text>
           <Text
             style={[styles.insight, isSmallPhone ? styles.insightSmall : null]}
-            numberOfLines={1}
-            ellipsizeMode="tail"
+            numberOfLines={2}
           >
             {insight}
           </Text>
@@ -44,7 +43,7 @@ export function AstraRadarStrip({
       </View>
 
       <View style={styles.rightRow}>
-        <Text style={styles.cta}>Ver mas</Text>
+        <Text style={styles.cta}>Ver más</Text>
         <Ionicons name="chevron-forward" size={14} color={ORBITX_THEME.colors.primaryGreen} />
       </View>
     </Pressable>
@@ -53,11 +52,11 @@ export function AstraRadarStrip({
 
 const styles = StyleSheet.create({
   root: {
-    minHeight: 82,
+    minHeight: 86,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.6),
-    backgroundColor: withOpacity(ORBITX_THEME.colors.surface, 0.72),
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.42),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.surface, 0.56),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -65,8 +64,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   rootSmall: {
-    minHeight: 76,
-    paddingHorizontal: 12,
+    minHeight: 82,
+    paddingHorizontal: 13,
   },
   leftRow: {
     flex: 1,
@@ -88,7 +87,8 @@ const styles = StyleSheet.create({
   copyColumn: {
     flex: 1,
     minWidth: 0,
-    gap: 3,
+    gap: 4,
+    paddingRight: 4,
   },
   eyebrow: {
     color: withOpacity(ORBITX_THEME.colors.textSecondary, 0.9),
@@ -101,19 +101,23 @@ const styles = StyleSheet.create({
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
     fontSize: 14,
+    lineHeight: 19,
   },
   insightSmall: {
     fontSize: 13,
+    lineHeight: 18,
   },
   rightRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
+    alignSelf: 'flex-end',
+    paddingBottom: 2,
   },
   cta: {
     color: ORBITX_THEME.colors.primaryGreen,
     fontFamily: FONT.medium,
-    fontSize: 11,
+    fontSize: 11.5,
   },
   pressed: {
     opacity: 0.78,

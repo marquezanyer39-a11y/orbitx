@@ -1,16 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import type { MarketRealtimeStatus, OrderBookRow, TradeSide } from '../../types';
 import { getTradeRealtimeStatusLabel } from '../../utils/tradeRealtimeUi';
 
-const BUY = '#00FFA3';
-const SELL = '#FF4D4D';
-const TEXT = '#FFFFFF';
-const TEXT_SOFT = '#C8C8D2';
-const TEXT_MUTED = '#8E8EA0';
-const BORDER = 'rgba(255,255,255,0.08)';
+const BUY = '#00C853';
+const SELL = '#FF5252';
+const TEXT = '#FAFAFA';
+const TEXT_SOFT = '#D4D4D8';
+const TEXT_MUTED = '#A1A1AA';
+const BORDER = '#2D3139';
 
 interface Props {
   rows: OrderBookRow[];
@@ -19,19 +19,18 @@ interface Props {
   statusCopy?: string;
   error?: string | null;
   currentPrice?: number;
-  preview?: boolean;
   onPickPrice?: (price: number, side: TradeSide) => void;
 }
 
 function formatPrice(price: number) {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('es-PE', {
     minimumFractionDigits: price >= 100 ? 1 : 2,
     maximumFractionDigits: price >= 100 ? 1 : 4,
   }).format(price);
 }
 
 function formatQty(quantity: number) {
-  return quantity >= 1 ? quantity.toFixed(3) : quantity.toFixed(4);
+  return quantity >= 1 ? quantity.toFixed(8) : quantity.toFixed(8);
 }
 
 function buildDepth(rows: OrderBookRow[], side: 'buy' | 'sell', limit: number) {
@@ -50,16 +49,10 @@ function buildDepth(rows: OrderBookRow[], side: 'buy' | 'sell', limit: number) {
   });
 }
 
-function getStatusTone(status: MarketRealtimeStatus) {
-  if (status === 'live') {
-    return BUY;
-  }
-  if (status === 'reconnecting' || status === 'connecting') {
-    return '#7B3FE4';
-  }
-  if (status === 'error') {
-    return SELL;
-  }
+function getTone(status: MarketRealtimeStatus) {
+  if (status === 'live') return BUY;
+  if (status === 'reconnecting' || status === 'connecting') return '#6F3FF5';
+  if (status === 'error') return SELL;
   return TEXT_MUTED;
 }
 
@@ -70,58 +63,50 @@ export function TradeOrderBookPanel({
   statusCopy,
   error,
   currentPrice,
-  preview = false,
   onPickPrice,
 }: Props) {
-  const rowLimit = preview ? 7 : 10;
-  const asks = buildDepth(rows, 'sell', rowLimit);
-  const bids = buildDepth(rows, 'buy', rowLimit);
-  const levels = Math.max(asks.length, bids.length);
+  const asks = buildDepth(rows, 'sell', 11);
+  const bids = buildDepth(rows, 'buy', 11);
+  const totalLevels = Math.max(asks.length, bids.length);
   const maxAsk = Math.max(...asks.map((row) => row.cumulative), 1);
   const maxBid = Math.max(...bids.map((row) => row.cumulative), 1);
-  const pairedRows = Array.from({ length: levels }, (_, index) => ({
+  const pairedRows = Array.from({ length: totalLevels }, (_, index) => ({
     bid: bids[index],
     ask: asks[index],
   }));
-  const totalBuy = bids.at(-1)?.cumulative ?? 0;
-  const totalSell = asks.at(-1)?.cumulative ?? 0;
-  const totalDepth = Math.max(totalBuy + totalSell, 1);
-  const buyShare = Math.round((totalBuy / totalDepth) * 100);
+  const buyTotal = bids.at(-1)?.cumulative ?? 0;
+  const sellTotal = asks.at(-1)?.cumulative ?? 0;
+  const totalDepth = Math.max(buyTotal + sellTotal, 1);
+  const buyShare = Math.round((buyTotal / totalDepth) * 100);
   const sellShare = 100 - buyShare;
   const spread = asks.length && bids.length ? Math.max(asks[0].price - bids[0].price, 0) : 0;
-  const displayStatusLabel = statusLabel || getTradeRealtimeStatusLabel(status);
-  const statusTone = getStatusTone(status);
+  const label = statusLabel || getTradeRealtimeStatusLabel(status);
+  const tone = getTone(status);
 
   return (
     <View style={styles.shell}>
       <View style={styles.headerRow}>
-        <View style={styles.headerCopy}>
-          <Text style={styles.title}>Libro de ordenes</Text>
-          <Text style={styles.subtitle}>
-            {rows.length
-              ? statusCopy || displayStatusLabel
-              : error || 'Esperando profundidad del mercado'}
-          </Text>
-        </View>
-
-        <View style={styles.headerMeta}>
+        <View style={styles.statusBlock}>
           <View
             style={[
               styles.statusPill,
               {
-                borderColor: withOpacity(statusTone, 0.28),
-                backgroundColor: withOpacity(statusTone, 0.12),
+                borderColor: withOpacity(tone, 0.32),
+                backgroundColor: withOpacity(tone, 0.12),
               },
             ]}
           >
-            <View style={[styles.statusDot, { backgroundColor: statusTone }]} />
-            <Text style={styles.statusLabel}>{displayStatusLabel}</Text>
+            <View style={[styles.statusDot, { backgroundColor: tone }]} />
+            <Text style={styles.statusLabel}>{label}</Text>
           </View>
+          <Text style={styles.statusCopy} numberOfLines={1}>
+            {rows.length ? statusCopy || label : error || 'Esperando profundidad del mercado'}
+          </Text>
+        </View>
 
-          <View style={styles.scalePill}>
-            <Text style={styles.scaleLabel}>0.1</Text>
-            <Ionicons name="chevron-down" size={12} color={TEXT_MUTED} />
-          </View>
+        <View style={styles.scalePill}>
+          <Text style={styles.scaleLabel}>0.1</Text>
+          <Ionicons name="chevron-down" size={12} color={TEXT_MUTED} />
         </View>
       </View>
 
@@ -169,29 +154,29 @@ export function TradeOrderBookPanel({
           </View>
 
           <View style={styles.balanceRow}>
-            <Text style={[styles.balanceLabel, { color: BUY }]}>Comprar {buyShare}%</Text>
+            <Text style={[styles.balanceLabel, { color: BUY }]}>Compras {buyShare}%</Text>
             <View style={styles.balanceBar}>
               <View style={[styles.balanceFill, { width: `${buyShare}%`, backgroundColor: BUY }]} />
               <View style={[styles.balanceFill, { width: `${sellShare}%`, backgroundColor: SELL }]} />
             </View>
             <Text style={[styles.balanceLabel, styles.balanceLabelRight, { color: SELL }]}>
-              {sellShare}% Vender
+              {sellShare}% Ventas
             </Text>
           </View>
 
-          <View style={styles.priceStrip}>
-            <Text style={styles.priceStripLabel}>Precio actual</Text>
-            <Text style={styles.priceStripValue}>
+          <View style={styles.currentPriceRow}>
+            <Text style={styles.currentPriceCaption}>Precio actual</Text>
+            <Text style={styles.currentPriceValue}>
               {currentPrice ? formatPrice(currentPrice) : '--'}
             </Text>
-            <Text style={styles.priceStripMeta}>Spread {spread ? formatPrice(spread) : '--'}</Text>
+            <Text style={styles.currentPriceMeta}>Spread {spread ? formatPrice(spread) : '--'}</Text>
           </View>
 
           <View style={styles.tableHeader}>
-            <Text style={styles.headerCellLeft}>Importe</Text>
-            <Text style={styles.headerCellBuy}>Precio</Text>
-            <Text style={styles.headerCellSell}>Precio</Text>
-            <Text style={styles.headerCellRight}>Importe</Text>
+            <Text style={styles.headerQtyLeft}>Cant(BTC)</Text>
+            <Text style={styles.headerPriceBuy}>Precio(USDT)</Text>
+            <Text style={styles.headerPriceSell}>Precio(USDT)</Text>
+            <Text style={styles.headerQtyRight}>Cant(BTC)</Text>
           </View>
 
           <ScrollView
@@ -204,29 +189,22 @@ export function TradeOrderBookPanel({
               const askWidth = ask ? Math.max((ask.cumulative / maxAsk) * 100, 10) : 0;
 
               return (
-                <View key={`order-book-${index}`} style={styles.bookRow}>
+                <View key={`book-${index}`} style={styles.bookRow}>
                   {bid ? (
                     <View
                       style={[
                         styles.depthFill,
                         styles.depthFillBuy,
-                        {
-                          width: `${bidWidth}%`,
-                          backgroundColor: withOpacity(BUY, 0.14),
-                        },
+                        { width: `${bidWidth}%`, backgroundColor: withOpacity(BUY, 0.14) },
                       ]}
                     />
                   ) : null}
-
                   {ask ? (
                     <View
                       style={[
                         styles.depthFill,
                         styles.depthFillSell,
-                        {
-                          width: `${askWidth}%`,
-                          backgroundColor: withOpacity(SELL, 0.14),
-                        },
+                        { width: `${askWidth}%`, backgroundColor: withOpacity(SELL, 0.14) },
                       ]}
                     />
                   ) : null}
@@ -236,9 +214,9 @@ export function TradeOrderBookPanel({
                   <Pressable
                     disabled={!bid}
                     onPress={() => bid && onPickPrice?.(bid.price, bid.side)}
-                    style={styles.priceCell}
+                    style={({ pressed }) => [styles.priceCell, pressed && styles.pressed]}
                   >
-                    <Text style={[styles.bidPrice, !bid ? styles.emptyCell : null]}>
+                    <Text style={[styles.bidPrice, !bid && styles.emptyCell]}>
                       {bid ? formatPrice(bid.price) : '--'}
                     </Text>
                   </Pressable>
@@ -246,14 +224,14 @@ export function TradeOrderBookPanel({
                   <Pressable
                     disabled={!ask}
                     onPress={() => ask && onPickPrice?.(ask.price, ask.side)}
-                    style={styles.priceCell}
+                    style={({ pressed }) => [styles.priceCell, pressed && styles.pressed]}
                   >
-                    <Text style={[styles.askPrice, !ask ? styles.emptyCell : null]}>
+                    <Text style={[styles.askPrice, !ask && styles.emptyCell]}>
                       {ask ? formatPrice(ask.price) : '--'}
                     </Text>
                   </Pressable>
 
-                  <Text style={[styles.askQty, !ask ? styles.emptyCell : null]}>
+                  <Text style={[styles.askQty, !ask && styles.emptyCell]}>
                     {ask ? formatQty(ask.quantity) : '--'}
                   </Text>
                 </View>
@@ -263,9 +241,9 @@ export function TradeOrderBookPanel({
         </>
       ) : (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Sin profundidad todavia</Text>
+          <Text style={styles.emptyTitle}>Sin profundidad todavía</Text>
           <Text style={styles.emptyBody}>
-            {error || 'OrbitX esta esperando el snapshot del libro de ordenes para este par.'}
+            {error || 'OrbitX está esperando el snapshot del libro de órdenes para este par.'}
           </Text>
         </View>
       )}
@@ -286,30 +264,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
-  headerCopy: {
+  statusBlock: {
     flex: 1,
-    gap: 4,
-  },
-  title: {
-    color: TEXT,
-    fontFamily: FONT.semibold,
-    fontSize: 13,
-  },
-  subtitle: {
-    color: TEXT_MUTED,
-    fontFamily: FONT.regular,
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  headerMeta: {
-    alignItems: 'flex-end',
-    gap: 8,
+    gap: 5,
   },
   statusPill: {
+    alignSelf: 'flex-start',
     minHeight: 24,
     borderRadius: RADII.pill,
     borderWidth: 1,
-    paddingHorizontal: 9,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -324,12 +288,17 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: 10,
   },
+  statusCopy: {
+    color: TEXT_MUTED,
+    fontFamily: FONT.regular,
+    fontSize: 11,
+  },
   scalePill: {
     minHeight: 24,
     borderRadius: RADII.pill,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: withOpacity(BORDER, 0.9),
+    backgroundColor: withOpacity('#FFFFFF', 0.03),
     paddingHorizontal: 8,
     flexDirection: 'row',
     alignItems: 'center',
@@ -341,9 +310,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   depthShell: {
-    height: 92,
+    height: 86,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.015)',
+    backgroundColor: withOpacity('#FFFFFF', 0.015),
     overflow: 'hidden',
     justifyContent: 'space-between',
     paddingVertical: 6,
@@ -354,7 +323,7 @@ const styles = StyleSheet.create({
     bottom: 8,
     left: '50%',
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: withOpacity('#FFFFFF', 0.06),
   },
   depthRow: {
     flex: 1,
@@ -384,7 +353,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   balanceLabel: {
-    width: 76,
+    width: 78,
     fontFamily: FONT.medium,
     fontSize: 10,
   },
@@ -395,37 +364,34 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 10,
     borderRadius: RADII.pill,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: withOpacity('#FFFFFF', 0.05),
     overflow: 'hidden',
     flexDirection: 'row',
   },
   balanceFill: {
     height: '100%',
   },
-  priceStrip: {
-    minHeight: 34,
-    borderRadius: 10,
+  currentPriceRow: {
+    minHeight: 32,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    backgroundColor: 'rgba(255,255,255,0.012)',
-    paddingHorizontal: 12,
+    borderColor: withOpacity('#FFFFFF', 0.05),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
   },
-  priceStripLabel: {
+  currentPriceCaption: {
     color: TEXT_MUTED,
     fontFamily: FONT.medium,
     fontSize: 10,
   },
-  priceStripValue: {
+  currentPriceValue: {
     color: TEXT,
     fontFamily: FONT.bold,
     fontSize: 13,
   },
-  priceStripMeta: {
+  currentPriceMeta: {
     color: TEXT_MUTED,
     fontFamily: FONT.medium,
     fontSize: 10,
@@ -435,28 +401,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  headerCellLeft: {
+  headerQtyLeft: {
     flex: 1,
     color: TEXT_MUTED,
     fontFamily: FONT.medium,
     fontSize: 10,
     textAlign: 'left',
   },
-  headerCellBuy: {
+  headerPriceBuy: {
     flex: 1,
     color: TEXT_MUTED,
     fontFamily: FONT.medium,
     fontSize: 10,
     textAlign: 'center',
   },
-  headerCellSell: {
+  headerPriceSell: {
     flex: 1,
     color: TEXT_MUTED,
     fontFamily: FONT.medium,
     fontSize: 10,
     textAlign: 'center',
   },
-  headerCellRight: {
+  headerQtyRight: {
     flex: 1,
     color: TEXT_MUTED,
     fontFamily: FONT.medium,
@@ -464,11 +430,11 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   bookRows: {
-    gap: 3,
+    gap: 4,
     paddingBottom: 4,
   },
   bookRow: {
-    minHeight: 26,
+    minHeight: 28,
     borderRadius: 9,
     overflow: 'hidden',
     flexDirection: 'row',
@@ -522,12 +488,15 @@ const styles = StyleSheet.create({
   emptyCell: {
     color: TEXT_MUTED,
   },
+  pressed: {
+    opacity: 0.84,
+  },
   emptyState: {
-    flex: 1,
+    minHeight: 180,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
   },
   emptyTitle: {
     color: TEXT,

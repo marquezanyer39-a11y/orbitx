@@ -35,7 +35,7 @@ function buildRadarInsight(symbol: string, change24h: number) {
   }
 
   if (change24h <= -2.5) {
-    return `${symbol} entra en zona de tension.`;
+    return `${symbol} entra en zona de tensión.`;
   }
 
   return `${symbol} cerca de zona de rebote.`;
@@ -43,7 +43,9 @@ function buildRadarInsight(symbol: string, change24h: number) {
 
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
-  const { contentWidth, horizontalMargin, isSmallPhone } = getHomeLayoutMetrics(screenWidth);
+  const { isSmallPhone } = getHomeLayoutMetrics(screenWidth);
+  const horizontalMargin = 16;
+  const contentWidth = Math.max(screenWidth - horizontalMargin * 2, 0);
   const insets = useSafeAreaInsets();
   const profile = useAuthStore((state) => state.profile);
   const selectedNetwork = useWalletStore((state) => state.selectedNetwork);
@@ -177,7 +179,7 @@ export default function HomeScreen() {
       contentContainerStyle={[
         styles.content,
         {
-          paddingBottom: bottomTabHeight + 36,
+          paddingBottom: bottomTabHeight + 32,
         },
       ]}
       backgroundMode="plain"
@@ -260,9 +262,9 @@ export default function HomeScreen() {
           loading={news.loading}
           helperLabel={
             news.loading
-              ? 'Actualizando noticias...'
+              ? 'Actualizando noticias…'
               : news.fromCache
-                ? 'Mostrando el ultimo titular disponible'
+                ? 'Mostrando el último titular disponible'
                 : null
           }
           isSmallPhone={isSmallPhone}
@@ -295,6 +297,6 @@ const styles = StyleSheet.create({
   },
   stack: {
     paddingTop: 12,
-    gap: 24,
+    gap: 22,
   },
 });

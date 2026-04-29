@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../constants/theme';
+import { FONT, withOpacity } from '../../constants/theme';
 import { ORBITX_THEME } from './orbitxTheme';
 
 export type HomeNewsCategory = 'crypto' | 'economy' | 'technology' | 'politics';
@@ -51,7 +51,11 @@ export function NewsSection({
         </Pressable>
       </View>
 
-      <View style={styles.chipsRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipsContent}
+      >
         {categories.map((category) => {
           const active = category.key === activeCategory;
 
@@ -77,7 +81,7 @@ export function NewsSection({
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
 
       {helperLabel ? (
         <View style={styles.helperRow}>
@@ -85,7 +89,7 @@ export function NewsSection({
             {helperLabel}
           </Text>
           <Pressable onPress={onRefresh} style={({ pressed }) => (pressed ? styles.pressed : null)}>
-            <Ionicons name="refresh-outline" size={16} color={ORBITX_THEME.colors.textSecondary} />
+            <Ionicons name="refresh-outline" size={14} color={ORBITX_THEME.colors.textSecondary} />
           </Pressable>
         </View>
       ) : null}
@@ -107,7 +111,7 @@ export function NewsSection({
         )}
 
         <Text style={styles.storyMeta} numberOfLines={1}>
-          {item ? `${item.sourceLabel} - ${item.timeLabel}` : 'CRYPTO HOY - 1H'}
+          {item ? `${item.sourceLabel} • ${item.timeLabel}` : 'CRYPTO HOY • 1H'}
         </Text>
         <Text
           style={[styles.storyTitle, isSmallPhone ? styles.storyTitleSmall : null]}
@@ -123,13 +127,14 @@ export function NewsSection({
 
 const styles = StyleSheet.create({
   root: {
-    gap: 14,
+    gap: 0,
   },
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 10,
+    marginBottom: 14,
   },
   title: {
     color: ORBITX_THEME.colors.textPrimary,
@@ -142,57 +147,62 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'nowrap',
+  chipsContent: {
+    columnGap: 8,
+    paddingRight: 16,
   },
   chip: {
-    minHeight: 32,
+    height: 34,
+    borderRadius: 17,
     paddingHorizontal: 14,
-    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
   },
   chipActive: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FFFFFF',
+    backgroundColor: '#FAFAFA',
+    borderColor: '#FAFAFA',
   },
   chipIdle: {
     backgroundColor: 'transparent',
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.95),
+    borderColor: ORBITX_THEME.colors.border,
   },
   chipLabel: {
-    fontFamily: FONT.medium,
-    fontSize: 12,
+    fontSize: 13,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   chipLabelActive: {
     color: '#08090B',
+    fontFamily: FONT.semibold,
   },
   chipLabelIdle: {
     color: ORBITX_THEME.colors.textSecondary,
+    fontFamily: FONT.medium,
   },
   helperRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 10,
+    marginTop: 12,
+    marginBottom: 12,
   },
   helperText: {
     flex: 1,
     color: ORBITX_THEME.colors.textSecondary,
     fontFamily: FONT.regular,
-    fontSize: 11,
+    fontSize: 12,
   },
   storyWrap: {
-    gap: 10,
+    gap: 0,
   },
   storyImage: {
     width: '100%',
     aspectRatio: 16 / 9,
     borderRadius: 12,
     backgroundColor: ORBITX_THEME.colors.surface,
+    marginBottom: 12,
   },
   storyImageFallback: {
     width: '100%',
@@ -203,13 +213,15 @@ const styles = StyleSheet.create({
     borderColor: withOpacity(ORBITX_THEME.colors.border, 0.5),
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 12,
   },
   storyMeta: {
     color: withOpacity(ORBITX_THEME.colors.textSecondary, 0.9),
     fontFamily: FONT.medium,
-    fontSize: 10,
-    letterSpacing: 0.6,
+    fontSize: 11,
+    letterSpacing: 0.3,
     textTransform: 'uppercase',
+    marginBottom: 8,
   },
   storyTitle: {
     color: ORBITX_THEME.colors.textPrimary,
@@ -219,7 +231,7 @@ const styles = StyleSheet.create({
   },
   storyTitleSmall: {
     fontSize: 15,
-    lineHeight: 20,
+    lineHeight: 21,
   },
   pressed: {
     opacity: 0.8,
