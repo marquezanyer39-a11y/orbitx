@@ -1,4 +1,13 @@
 import { getMarketsList } from '../api/market';
+import { discoverTokensByAddress, isTokenDiscoveryConfigured } from './tokenDiscovery';
+import {
+  EXTERNAL_EVM_NETWORKS,
+  EXTERNAL_EVM_NETWORK_ORDER,
+  EXTERNAL_EVM_SUPPORTED_NETWORKS,
+  getEnabledTokenSpecs,
+  type ExternalEvmNetworkSpec,
+  type ExternalTokenSpec,
+} from './tokenRegistry';
 
 export type ExternalWalletBalanceStatus =
   | 'idle'
@@ -13,7 +22,10 @@ export interface ExternalWalletBalanceAsset {
   symbol: string;
   name: string;
   amount: number;
+  decimals: number;
+  usdPrice?: number;
   usdValue: number;
+  priceAvailable: boolean;
   chainId: number;
   chainLabel: string;
   type: 'native' | 'erc20';
@@ -32,153 +44,37 @@ export interface ExternalWalletBalanceSnapshot {
   failedTokenCount: number;
   status: Exclude<ExternalWalletBalanceStatus, 'idle' | 'loading'>;
   message?: string;
+  discoveryEnabled: boolean;
+  hasUnpricedAssets: boolean;
 }
 
-interface ExternalTokenSpec {
-  symbol: string;
-  name: string;
-  decimals: number;
-  contractAddress: string;
-  priceSymbol?: string;
-}
-
-interface ExternalEvmNetworkSpec {
+export interface ExternalWalletNetworkBalanceState {
   chainId: number;
   chainLabel: string;
-  nativeSymbol: string;
-  nativeName: string;
-  nativeDecimals: number;
-  rpcUrl: string;
-  priceSymbol?: string;
-  tokens: ExternalTokenSpec[];
+  status: Exclude<ExternalWalletBalanceStatus, 'idle' | 'loading'>;
+  assetCount: number;
+  visibleAssetCount: number;
+  failedTokenCount: number;
+  updatedAt?: string;
+  message?: string;
+}
+
+export interface ExternalWalletMultiChainBalanceSnapshot {
+  address: string;
+  fetchedAt: string;
+  assets: ExternalWalletBalanceAsset[];
+  visibleAssets: ExternalWalletBalanceAsset[];
+  totalUsdEstimate: number;
+  networkStates: ExternalWalletNetworkBalanceState[];
+  failedNetworkCount: number;
+  status: Exclude<ExternalWalletBalanceStatus, 'idle' | 'loading'>;
+  message?: string;
+  discoveryEnabled: boolean;
+  hasUnpricedAssets: boolean;
 }
 
 const ERC20_ABI = ['function balanceOf(address owner) view returns (uint256)'];
 const BALANCE_TIMEOUT_MS = 8_000;
-
-const EXTERNAL_EVM_NETWORKS: Record<number, ExternalEvmNetworkSpec> = {
-  1: {
-    chainId: 1,
-    chainLabel: 'Ethereum',
-    nativeSymbol: 'ETH',
-    nativeName: 'Ethereum',
-    nativeDecimals: 18,
-    rpcUrl: process.env.EXPO_PUBLIC_ETHEREUM_RPC_URL || 'https://ethereum-rpc.publicnode.com',
-    priceSymbol: 'ETH',
-    tokens: [
-      {
-        symbol: 'USDT',
-        name: 'Tether USD',
-        decimals: 6,
-        contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-      },
-      {
-        symbol: 'USDC',
-        name: 'USD Coin',
-        decimals: 6,
-        contractAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-      },
-      {
-        symbol: 'WETH',
-        name: 'Wrapped Ether',
-        decimals: 18,
-        contractAddress: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-        priceSymbol: 'ETH',
-      },
-    ],
-  },
-  56: {
-    chainId: 56,
-    chainLabel: 'BNB Chain',
-    nativeSymbol: 'BNB',
-    nativeName: 'BNB',
-    nativeDecimals: 18,
-    rpcUrl: process.env.EXPO_PUBLIC_BNB_RPC_URL || 'https://bsc-dataseed.bnbchain.org',
-    priceSymbol: 'BNB',
-    tokens: [
-      {
-        symbol: 'USDT',
-        name: 'Tether USD',
-        decimals: 18,
-        contractAddress: '0x55d398326f99059fF775485246999027B3197955',
-      },
-      {
-        symbol: 'USDC',
-        name: 'USD Coin',
-        decimals: 18,
-        contractAddress: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
-      },
-      {
-        symbol: 'WBNB',
-        name: 'Wrapped BNB',
-        decimals: 18,
-        contractAddress: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
-        priceSymbol: 'BNB',
-      },
-    ],
-  },
-  137: {
-    chainId: 137,
-    chainLabel: 'Polygon',
-    nativeSymbol: 'MATIC',
-    nativeName: 'Polygon',
-    nativeDecimals: 18,
-    rpcUrl: process.env.EXPO_PUBLIC_POLYGON_RPC_URL || 'https://polygon-rpc.com',
-    priceSymbol: 'MATIC',
-    tokens: [
-      {
-        symbol: 'USDT',
-        name: 'Tether USD',
-        decimals: 6,
-        contractAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
-      },
-      {
-        symbol: 'USDC',
-        name: 'USD Coin',
-        decimals: 6,
-        contractAddress: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
-      },
-      {
-        symbol: 'WETH',
-        name: 'Wrapped Ether',
-        decimals: 18,
-        contractAddress: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
-        priceSymbol: 'ETH',
-      },
-      {
-        symbol: 'WMATIC',
-        name: 'Wrapped MATIC',
-        decimals: 18,
-        contractAddress: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-        priceSymbol: 'MATIC',
-      },
-    ],
-  },
-  8453: {
-    chainId: 8453,
-    chainLabel: 'Base',
-    nativeSymbol: 'ETH',
-    nativeName: 'Ethereum',
-    nativeDecimals: 18,
-    rpcUrl: process.env.EXPO_PUBLIC_BASE_RPC_URL || 'https://mainnet.base.org',
-    priceSymbol: 'ETH',
-    tokens: [
-      {
-        symbol: 'USDC',
-        name: 'USD Coin',
-        decimals: 6,
-        contractAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-      },
-      {
-        symbol: 'WETH',
-        name: 'Wrapped Ether',
-        decimals: 18,
-        contractAddress: '0x4200000000000000000000000000000000000006',
-        priceSymbol: 'ETH',
-      },
-    ],
-  },
-};
 
 let ethersRuntimePromise: Promise<typeof import('ethers').ethers> | null = null;
 const providerCache = new Map<number, unknown>();
@@ -259,12 +155,12 @@ function getPriceForSymbol(
 ) {
   const normalized = symbol.toUpperCase();
 
-  if (normalized === 'USDT' || normalized === 'USDC') {
+  if (normalized === 'USDT' || normalized === 'USDC' || normalized === 'DAI' || normalized === 'BUSD') {
     return 1;
   }
 
   const market = markets.find((item) => item.baseSymbol.toUpperCase() === normalized);
-  return market?.price ?? 0;
+  return market?.price ?? null;
 }
 
 function getImageForSymbol(
@@ -277,6 +173,7 @@ function getImageForSymbol(
 function buildAsset(params: {
   amount: number;
   chain: ExternalEvmNetworkSpec;
+  decimals: number;
   name: string;
   priceSymbol?: string;
   symbol: string;
@@ -285,7 +182,9 @@ function buildAsset(params: {
   markets: Awaited<ReturnType<typeof getMarketsList>>;
 }): ExternalWalletBalanceAsset {
   const priceSymbol = params.priceSymbol ?? params.symbol;
-  const usdValue = params.amount * getPriceForSymbol(priceSymbol, params.markets);
+  const usdPrice = getPriceForSymbol(priceSymbol, params.markets);
+  const priceAvailable = usdPrice !== null;
+  const usdValue = priceAvailable ? params.amount * usdPrice : 0;
 
   return {
     id:
@@ -295,7 +194,10 @@ function buildAsset(params: {
     symbol: params.symbol,
     name: params.name,
     amount: params.amount,
+    decimals: params.decimals,
+    usdPrice: usdPrice ?? undefined,
     usdValue,
+    priceAvailable,
     chainId: params.chain.chainId,
     chainLabel: params.chain.chainLabel,
     type: params.type,
@@ -346,6 +248,7 @@ export async function getNativeBalance(
 
   return buildAsset({
     amount,
+    decimals: chain.nativeDecimals,
     chain,
     markets,
     name: chain.nativeName,
@@ -374,8 +277,20 @@ export async function getTokenBalances(
     getMarketsListCached(),
   ]);
 
+  const discoveredTokens = await discoverTokensByAddress(normalizedAddress, chain.chainId);
+  const tokenMap = new Map<string, ExternalTokenSpec>();
+  [...getEnabledTokenSpecs(chain), ...discoveredTokens].forEach((token) => {
+    const key = token.contractAddress.trim().toLowerCase();
+    if (!key || tokenMap.has(key)) {
+      return;
+    }
+
+    tokenMap.set(key, token);
+  });
+  const tokens = [...tokenMap.values()];
+
   const settled = await Promise.allSettled(
-    chain.tokens.map(async (token) => {
+    tokens.map(async (token) => {
       const contract = new ethers.Contract(token.contractAddress, ERC20_ABI, provider);
       const rawBalance = await withTimeout(
         contract.balanceOf(normalizedAddress),
@@ -393,6 +308,7 @@ export async function getTokenBalances(
         amount,
         chain,
         contractAddress: token.contractAddress,
+        decimals: token.decimals,
         markets,
         name: token.name,
         priceSymbol: token.priceSymbol,
@@ -405,6 +321,125 @@ export async function getTokenBalances(
   return {
     assets: settled.flatMap((entry) => (entry.status === 'fulfilled' ? [entry.value] : [])),
     failedTokenCount: settled.filter((entry) => entry.status === 'rejected').length,
+  };
+}
+
+function sortExternalAssets(assets: ExternalWalletBalanceAsset[]) {
+  return [...assets].sort((left, right) => {
+    if (right.usdValue !== left.usdValue) {
+      return right.usdValue - left.usdValue;
+    }
+
+    if (right.amount !== left.amount) {
+      return right.amount - left.amount;
+    }
+
+    return left.symbol.localeCompare(right.symbol);
+  });
+}
+
+function getVisibleExternalAssets(assets: ExternalWalletBalanceAsset[]) {
+  return sortExternalAssets(assets.filter((asset) => asset.amount > 0));
+}
+
+async function fetchNetworkBalanceSnapshot(
+  address: string,
+  chain: ExternalEvmNetworkSpec,
+): Promise<{
+  snapshot: ExternalWalletBalanceSnapshot;
+  networkState: ExternalWalletNetworkBalanceState;
+}> {
+  const snapshot = await getExternalWalletBalanceSnapshot(address, chain.chainId);
+  const visibleAssets = getVisibleExternalAssets(snapshot.assets);
+
+  return {
+    snapshot,
+    networkState: {
+      chainId: chain.chainId,
+      chainLabel: chain.chainLabel,
+      status: snapshot.status,
+      assetCount: snapshot.assets.length,
+      visibleAssetCount: visibleAssets.length,
+      failedTokenCount: snapshot.failedTokenCount,
+      updatedAt: snapshot.fetchedAt,
+      message: snapshot.message,
+    },
+  };
+}
+
+export async function getExternalWalletMultiChainBalanceSnapshot(
+  address: string,
+): Promise<ExternalWalletMultiChainBalanceSnapshot> {
+  const normalizedAddress = normalizeAddress(address);
+  const fetchedAt = new Date().toISOString();
+  const settled = await Promise.allSettled(
+    EXTERNAL_EVM_SUPPORTED_NETWORKS.map((chain) =>
+      fetchNetworkBalanceSnapshot(normalizedAddress, chain),
+    ),
+  );
+
+  const successfulSnapshots = settled.flatMap((entry) =>
+    entry.status === 'fulfilled' ? [entry.value.snapshot] : [],
+  );
+  const failedNetworkStates = settled.flatMap((entry, index) => {
+    if (entry.status === 'fulfilled') {
+      return [];
+    }
+
+    const chain = EXTERNAL_EVM_SUPPORTED_NETWORKS[index];
+    return [
+      {
+        chainId: chain.chainId,
+        chainLabel: chain.chainLabel,
+        status: 'error' as const,
+        assetCount: 0,
+        visibleAssetCount: 0,
+        failedTokenCount: chain.tokens.length,
+        updatedAt: fetchedAt,
+        message: 'No se pudo actualizar esta red',
+      },
+    ];
+  });
+  const networkStates = [
+    ...settled.flatMap((entry) =>
+      entry.status === 'fulfilled' ? [entry.value.networkState] : [],
+    ),
+    ...failedNetworkStates,
+  ].sort(
+    (left, right) =>
+      EXTERNAL_EVM_NETWORK_ORDER.indexOf(left.chainId as (typeof EXTERNAL_EVM_NETWORK_ORDER)[number]) -
+      EXTERNAL_EVM_NETWORK_ORDER.indexOf(right.chainId as (typeof EXTERNAL_EVM_NETWORK_ORDER)[number]),
+  );
+  const assets = sortExternalAssets(successfulSnapshots.flatMap((snapshot) => snapshot.assets));
+  const visibleAssets = getVisibleExternalAssets(assets);
+  const totalUsdEstimate = visibleAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
+  const hasUnpricedAssets = visibleAssets.some((asset) => !asset.priceAvailable);
+  const failedNetworkCount = networkStates.filter((state) => state.status === 'error').length;
+  const partialNetworkCount = networkStates.filter((state) => state.status === 'partial').length;
+  const status =
+    failedNetworkCount === networkStates.length
+      ? 'error'
+      : failedNetworkCount > 0 || partialNetworkCount > 0
+        ? 'partial'
+        : 'success';
+
+  return {
+    address: normalizedAddress,
+    fetchedAt,
+    assets,
+    visibleAssets,
+    totalUsdEstimate,
+    networkStates,
+    failedNetworkCount,
+    status,
+    discoveryEnabled: isTokenDiscoveryConfigured(),
+    hasUnpricedAssets,
+    message:
+      status === 'error'
+        ? 'No se pudieron actualizar las redes soportadas'
+        : status === 'partial'
+          ? 'Algunas redes no pudieron actualizarse'
+          : undefined,
   };
 }
 
@@ -424,6 +459,8 @@ export async function getExternalWalletBalanceSnapshot(
       failedTokenCount: 0,
       status: 'unsupported',
       message: 'Esta red aun no esta soportada para lectura de balances en OrbitX.',
+      discoveryEnabled: isTokenDiscoveryConfigured(),
+      hasUnpricedAssets: false,
     };
   }
 
@@ -443,6 +480,8 @@ export async function getExternalWalletBalanceSnapshot(
     assets,
     failedTokenCount: tokenResult.failedTokenCount,
     status,
+    discoveryEnabled: isTokenDiscoveryConfigured(),
+    hasUnpricedAssets: assets.some((asset) => asset.amount > 0 && !asset.priceAvailable),
     message:
       status === 'partial'
         ? 'No se pudieron cargar todos los tokens'

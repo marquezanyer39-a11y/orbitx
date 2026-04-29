@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   getExternalWalletBalanceNetworkLabel,
-  getExternalWalletBalanceSnapshot,
+  getExternalWalletMultiChainBalanceSnapshot,
   type ExternalWalletBalanceAsset,
   type ExternalWalletBalanceStatus,
+  type ExternalWalletNetworkBalanceState,
 } from '../services/wallet/externalWalletBalances';
 
 interface UseExternalWalletBalancesOptions {
@@ -16,10 +17,16 @@ interface UseExternalWalletBalancesOptions {
 interface ExternalWalletBalancesState {
   status: ExternalWalletBalanceStatus;
   assets: ExternalWalletBalanceAsset[];
+  visibleAssets: ExternalWalletBalanceAsset[];
   nativeAsset?: ExternalWalletBalanceAsset;
   tokenAssets: ExternalWalletBalanceAsset[];
   chainLabel: string;
+  totalUsdEstimate: number;
+  networkStates: ExternalWalletNetworkBalanceState[];
+  failedNetworkCount: number;
   failedTokenCount: number;
+  discoveryEnabled: boolean;
+  hasUnpricedAssets: boolean;
   updatedAt?: string;
   message?: string;
 }
@@ -27,9 +34,15 @@ interface ExternalWalletBalancesState {
 const EMPTY_STATE: ExternalWalletBalancesState = {
   status: 'idle',
   assets: [],
+  visibleAssets: [],
   tokenAssets: [],
   chainLabel: 'Sin red',
+  totalUsdEstimate: 0,
+  networkStates: [],
+  failedNetworkCount: 0,
   failedTokenCount: 0,
+  discoveryEnabled: false,
+  hasUnpricedAssets: false,
 };
 
 function buildCleanErrorState(
@@ -39,10 +52,19 @@ function buildCleanErrorState(
   return {
     status: 'error',
     assets: currentAssets,
+    visibleAssets: currentAssets.filter((asset) => asset.amount > 0),
     nativeAsset: currentAssets.find((asset) => asset.type === 'native'),
     tokenAssets: currentAssets.filter((asset) => asset.type === 'erc20'),
     chainLabel: getExternalWalletBalanceNetworkLabel(chainId),
+    totalUsdEstimate: currentAssets.reduce(
+      (sum, asset) => (asset.amount > 0 ? sum + asset.usdValue : sum),
+      0,
+    ),
+    networkStates: [],
+    failedNetworkCount: 1,
     failedTokenCount: 0,
+    discoveryEnabled: false,
+    hasUnpricedAssets: currentAssets.some((asset) => asset.amount > 0 && !asset.priceAvailable),
     message: 'No se pudo actualizar esta red',
   };
 }
@@ -69,14 +91,25 @@ export function useExternalWalletBalances({
     }));
 
     try {
-      const snapshot = await getExternalWalletBalanceSnapshot(normalizedAddress, chainId);
+      const snapshot = await getExternalWalletMultiChainBalanceSnapshot(normalizedAddress);
       setState({
         status: snapshot.status,
         assets: snapshot.assets,
-        nativeAsset: snapshot.nativeAsset,
-        tokenAssets: snapshot.tokenAssets,
-        chainLabel: snapshot.chainLabel,
-        failedTokenCount: snapshot.failedTokenCount,
+        visibleAssets: snapshot.visibleAssets,
+        nativeAsset: snapshot.assets.find(
+          (asset) => asset.type === 'native' && asset.chainId === chainId,
+        ),
+        tokenAssets: snapshot.assets.filter((asset) => asset.type === 'erc20'),
+        chainLabel: getExternalWalletBalanceNetworkLabel(chainId),
+        totalUsdEstimate: snapshot.totalUsdEstimate,
+        networkStates: snapshot.networkStates,
+        failedNetworkCount: snapshot.failedNetworkCount,
+        failedTokenCount: snapshot.networkStates.reduce(
+          (sum, network) => sum + network.failedTokenCount,
+          0,
+        ),
+        discoveryEnabled: snapshot.discoveryEnabled,
+        hasUnpricedAssets: snapshot.hasUnpricedAssets,
         updatedAt: snapshot.fetchedAt,
         message: snapshot.message,
       });
@@ -99,7 +132,7 @@ export function useExternalWalletBalances({
       chainLabel: getExternalWalletBalanceNetworkLabel(chainId),
     }));
 
-    getExternalWalletBalanceSnapshot(normalizedAddress, chainId)
+    getExternalWalletMultiChainBalanceSnapshot(normalizedAddress)
       .then((snapshot) => {
         if (!mounted) {
           return;
@@ -108,10 +141,21 @@ export function useExternalWalletBalances({
         setState({
           status: snapshot.status,
           assets: snapshot.assets,
-          nativeAsset: snapshot.nativeAsset,
-          tokenAssets: snapshot.tokenAssets,
-          chainLabel: snapshot.chainLabel,
-          failedTokenCount: snapshot.failedTokenCount,
+          visibleAssets: snapshot.visibleAssets,
+          nativeAsset: snapshot.assets.find(
+            (asset) => asset.type === 'native' && asset.chainId === chainId,
+          ),
+          tokenAssets: snapshot.assets.filter((asset) => asset.type === 'erc20'),
+          chainLabel: getExternalWalletBalanceNetworkLabel(chainId),
+          totalUsdEstimate: snapshot.totalUsdEstimate,
+          networkStates: snapshot.networkStates,
+          failedNetworkCount: snapshot.failedNetworkCount,
+          failedTokenCount: snapshot.networkStates.reduce(
+            (sum, network) => sum + network.failedTokenCount,
+            0,
+          ),
+          discoveryEnabled: snapshot.discoveryEnabled,
+          hasUnpricedAssets: snapshot.hasUnpricedAssets,
           updatedAt: snapshot.fetchedAt,
           message: snapshot.message,
         });

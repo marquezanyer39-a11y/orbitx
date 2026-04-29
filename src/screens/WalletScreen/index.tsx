@@ -4,6 +4,12 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ExternalWalletConnectSheet } from '../../../components/wallet/ExternalWalletConnectSheet';
 import { ExternalWalletBalanceSummary } from '../../../components/wallet/ExternalWalletBalanceSummary';
+import { Web3AssetsList } from '../../../components/wallet/Web3AssetsList';
+import {
+  Web3NetworkFilter,
+  type Web3NetworkFilterValue,
+} from '../../../components/wallet/Web3NetworkFilter';
+import { Web3WalletSummary } from '../../../components/wallet/Web3WalletSummary';
 import { pickLanguageText } from '../../../constants/i18n';
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
@@ -62,6 +68,7 @@ export default function WalletScreen() {
   const [seedModalMode, setSeedModalMode] = useState<SeedModalMode>('reveal');
   const [pinSheetVisible, setPinSheetVisible] = useState(false);
   const [pendingSeedModeAfterPin, setPendingSeedModeAfterPin] = useState<SeedModalMode | null>(null);
+  const [web3NetworkFilter, setWeb3NetworkFilter] = useState<Web3NetworkFilterValue>('all');
   const lastAstraActionRef = useRef<string>('');
   const externalWalletAddress =
     externalWalletRuntime.address?.trim() || wallet.externalWallet.address?.trim() || '';
@@ -158,6 +165,19 @@ export default function WalletScreen() {
   ]);
 
   const totalWeb3 = wallet.assets.reduce((sum, asset) => sum + asset.usdValue, 0);
+  const externalWeb3Total = externalWalletAddress
+    ? externalWalletBalances.totalUsdEstimate
+    : 0;
+  const displayedWeb3Total = externalWalletAddress ? externalWeb3Total : totalWeb3;
+  const displayedWeb3Assets = useMemo(
+    () =>
+      web3NetworkFilter === 'all'
+        ? externalWalletBalances.visibleAssets
+        : externalWalletBalances.visibleAssets.filter(
+            (asset) => asset.chainId === web3NetworkFilter,
+          ),
+    [externalWalletBalances.visibleAssets, web3NetworkFilter],
+  );
   const spotAssets = useMemo(() => {
     const marketMap = new Map(markets.map((item) => [item.baseSymbol.toUpperCase(), item]));
 
@@ -178,7 +198,7 @@ export default function WalletScreen() {
     });
   }, [markets, wallet.spotBalances]);
   const totalSpot = spotAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
-  const totalBalance = totalSpot + totalWeb3;
+  const totalBalance = totalSpot + displayedWeb3Total;
   const activeReceiveAddress = wallet.receiveAddresses[wallet.selectedNetwork] || wallet.walletAddress;
   const isSyncingBalances = wallet.web3Phase === 'balances' || wallet.web3Phase === 'details';
   const hasNetworkIssues = NETWORKS.some(
@@ -187,7 +207,29 @@ export default function WalletScreen() {
   const showSyncStatus =
     wallet.isWalletReady &&
     (isSyncingBalances || wallet.showingCachedBalances || hasNetworkIssues);
+  const walletHeaderTotalLabel =
+    activeTab === 'web3'
+      ? externalWalletBalances.isLoading && displayedWeb3Total === 0
+        ? 'Actualizando...'
+        : formatCurrency(displayedWeb3Total)
+      : formatCurrency(totalBalance);
   const walletHeaderSubtitle = useMemo(() => {
+    if (activeTab === 'web3' && externalWalletAddress) {
+      if (externalWalletBalances.isLoading) {
+        return 'Actualizando activos Web3...';
+      }
+
+      if (externalWalletBalances.failedNetworkCount > 0) {
+        return 'Algunas redes no pudieron actualizarse.';
+      }
+
+      return 'Activos on-chain bajo tu control.';
+    }
+
+    if (activeTab === 'web3') {
+      return 'Conecta una wallet externa para ver tus activos Web3.';
+    }
+
     if (wallet.loading && !wallet.isWalletReady) {
       return t('walletView.searchingLinkedWallet');
     }
@@ -205,7 +247,17 @@ export default function WalletScreen() {
     }
 
     return t('walletView.createOrImport');
-  }, [t, wallet.error, wallet.isWalletReady, wallet.loading, wallet.walletSource]);
+  }, [
+    activeTab,
+    externalWalletAddress,
+    externalWalletBalances.failedNetworkCount,
+    externalWalletBalances.isLoading,
+    t,
+    wallet.error,
+    wallet.isWalletReady,
+    wallet.loading,
+    wallet.walletSource,
+  ]);
   const seedCardConfig = useMemo(() => {
     if (!wallet.mnemonicStored) {
       return null;
@@ -260,8 +312,8 @@ export default function WalletScreen() {
           : `Billetera detecto este problema: ${wallet.error}`
         : wallet.isWalletReady
           ? language === 'en'
-            ? `Your Web3 space is ready on ${wallet.selectedNetwork.toUpperCase()} with ${wallet.assets.length} assets and ${externalWalletAddress ? 'one external wallet connected.' : 'no external wallet connected.'}`
-            : `Tu espacio Web3 esta listo en ${wallet.selectedNetwork.toUpperCase()} con ${wallet.assets.length} activos y ${externalWalletAddress ? 'una billetera externa conectada.' : 'sin billetera externa conectada.'}`
+            ? `Your Web3 space is ready with ${externalWalletBalances.visibleAssets.length || wallet.assets.length} assets and ${externalWalletAddress ? 'one external wallet connected.' : 'no external wallet connected.'}`
+            : `Tu espacio Web3 esta listo con ${externalWalletBalances.visibleAssets.length || wallet.assets.length} activos y ${externalWalletAddress ? 'una billetera externa conectada.' : 'sin billetera externa conectada.'}`
           : language === 'en'
             ? 'You still do not have a created or imported wallet.'
             : 'Todavia no tienes una billetera creada o importada.',
@@ -288,7 +340,7 @@ export default function WalletScreen() {
         networkLabel: wallet.selectedNetwork.toUpperCase(),
         totalBalanceLabel: formatCurrency(totalBalance),
         totalSpotLabel: formatCurrency(totalSpot),
-        totalWeb3Label: formatCurrency(totalWeb3),
+        totalWeb3Label: formatCurrency(displayedWeb3Total),
         activeTabLabel: activeTab,
         externalWalletLabel: externalWalletAddress
           ? maskAddress(externalWalletAddress)
@@ -305,11 +357,12 @@ export default function WalletScreen() {
       spotAssets.length,
       totalBalance,
       totalSpot,
-      totalWeb3,
+      displayedWeb3Total,
       wallet.assets.length,
       wallet.createdTokens.length,
       wallet.error,
       externalWalletAddress,
+      externalWalletBalances.visibleAssets.length,
       wallet.isWalletReady,
       wallet.securityStatus.seedPhraseConfirmedAt,
       wallet.selectedNetwork,
@@ -333,9 +386,13 @@ export default function WalletScreen() {
   return (
     <ScreenContainer contentContainerStyle={styles.content} backgroundMode="plain">
       <WalletHeader
-        totalBalanceLabel={formatCurrency(totalBalance)}
+        totalBalanceLabel={walletHeaderTotalLabel}
         subtitle={walletHeaderSubtitle}
-        onRefresh={() => void wallet.refreshBalances()}
+        onRefresh={() =>
+          activeTab === 'web3' && externalWalletAddress
+            ? void externalWalletBalances.refresh()
+            : void wallet.refreshBalances()
+        }
         onInfo={() =>
             openAstra({
               ...astraWalletContext,
@@ -443,8 +500,16 @@ export default function WalletScreen() {
         />
         <BalanceCard
           title={t('walletView.web3BalanceTitle')}
-          value={formatCurrency(totalWeb3)}
-          body={t('walletView.web3BalanceBody')}
+          value={
+            externalWalletBalances.isLoading && displayedWeb3Total === 0
+              ? 'Actualizando...'
+              : formatCurrency(displayedWeb3Total)
+          }
+          body={
+            externalWalletAddress
+              ? `Activos on-chain bajo tu control · ${externalWalletRuntime.chainLabel}`
+              : t('walletView.web3BalanceBody')
+          }
           icon="git-network-outline"
         />
       </View>
@@ -547,79 +612,111 @@ export default function WalletScreen() {
             }
           />
 
-          {wallet.isWalletReady ? (
+          {wallet.isWalletReady || externalWalletAddress ? (
             <>
-              <View style={styles.networkRow}>
-                {NETWORKS.map((network) => {
-                  const active = wallet.selectedNetwork === network;
-                  return (
-                    <Pressable
-                      key={network}
-                      onPress={() => wallet.setSelectedNetwork(network)}
+              {externalWalletAddress ? (
+                <>
+                  <Web3WalletSummary
+                    address={externalWalletAddress}
+                    chainLabel={externalWalletRuntime.chainLabel}
+                    totalUsdEstimate={externalWalletBalances.totalUsdEstimate}
+                    isLoading={externalWalletBalances.isLoading}
+                    message={externalWalletBalances.message}
+                    onManage={() => setConnectSheetVisible(true)}
+                    onRefresh={() => void externalWalletBalances.refresh()}
+                  />
+
+                  <Web3NetworkFilter
+                    value={web3NetworkFilter}
+                    networks={externalWalletBalances.networkStates}
+                    onChange={setWeb3NetworkFilter}
+                  />
+
+                  <Web3AssetsList
+                    assets={displayedWeb3Assets}
+                    isLoading={externalWalletBalances.isLoading}
+                    discoveryEnabled={externalWalletBalances.discoveryEnabled}
+                    hasUnpricedAssets={externalWalletBalances.hasUnpricedAssets}
+                    onRefresh={() => void externalWalletBalances.refresh()}
+                  />
+                </>
+              ) : null}
+
+              {wallet.isWalletReady ? (
+                <>
+                  <View style={styles.networkRow}>
+                    {NETWORKS.map((network) => {
+                      const active = wallet.selectedNetwork === network;
+                      return (
+                        <Pressable
+                          key={network}
+                          onPress={() => wallet.setSelectedNetwork(network)}
+                          style={[
+                            styles.networkChip,
+                            {
+                              backgroundColor: active ? colors.primarySoft : colors.fieldBackground,
+                              borderColor: active ? colors.borderStrong : colors.border,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.networkLabel,
+                              { color: active ? colors.text : colors.textMuted },
+                            ]}
+                          >
+                            {network.toUpperCase()}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  <AddressCard
+                    network={wallet.selectedNetwork.toUpperCase()}
+                    address={activeReceiveAddress}
+                    onCopy={async () => {
+                      if (!activeReceiveAddress) {
+                        return;
+                      }
+                      await copyToClipboard(activeReceiveAddress);
+                      showToast(t('walletView.addressCopied'), 'success');
+                    }}
+                  />
+
+                  <AssetList assets={wallet.assets} />
+
+                  {seedCardConfig ? (
+                    <SeedRevealCard
+                      title={seedCardConfig.title}
+                      body={seedCardConfig.body}
+                      primaryLabel={seedCardConfig.primaryLabel}
+                      onPrimaryPress={() => openSeedFlow(seedCardConfig.primaryMode)}
+                      secondaryLabel={seedCardConfig.secondaryLabel}
+                      onSecondaryPress={() => openSeedFlow(seedCardConfig.secondaryMode)}
+                    />
+                  ) : (
+                    <View
                       style={[
-                        styles.networkChip,
+                        styles.tokenRow,
                         {
-                          backgroundColor: active ? colors.primarySoft : colors.fieldBackground,
-                          borderColor: active ? colors.borderStrong : colors.border,
+                          backgroundColor: withOpacity(colors.fieldBackground, 0.18),
+                          borderColor: withOpacity(colors.border, 0.54),
                         },
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.networkLabel,
-                          { color: active ? colors.text : colors.textMuted },
-                        ]}
-                      >
-                        {network.toUpperCase()}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <AddressCard
-                network={wallet.selectedNetwork.toUpperCase()}
-                address={activeReceiveAddress}
-                onCopy={async () => {
-                  if (!activeReceiveAddress) {
-                    return;
-                  }
-                  await copyToClipboard(activeReceiveAddress);
-                  showToast(t('walletView.addressCopied'), 'success');
-                }}
-              />
-
-              <AssetList assets={wallet.assets} />
-
-              {seedCardConfig ? (
-                <SeedRevealCard
-                  title={seedCardConfig.title}
-                  body={seedCardConfig.body}
-                  primaryLabel={seedCardConfig.primaryLabel}
-                  onPrimaryPress={() => openSeedFlow(seedCardConfig.primaryMode)}
-                  secondaryLabel={seedCardConfig.secondaryLabel}
-                  onSecondaryPress={() => openSeedFlow(seedCardConfig.secondaryMode)}
-                />
-              ) : (
-                <View
-                  style={[
-                    styles.tokenRow,
-                    {
-                      backgroundColor: withOpacity(colors.fieldBackground, 0.18),
-                      borderColor: withOpacity(colors.border, 0.54),
-                    },
-                  ]}
-                >
-                  <View style={styles.tokenCopy}>
-                    <Text style={[styles.tokenTitle, { color: colors.text }]}>
-                      {t('walletView.walletFoundTitle')}
-                    </Text>
-                    <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
-                      {t('walletView.walletFoundBody')}
-                    </Text>
-                  </View>
-                </View>
-              )}
+                      <View style={styles.tokenCopy}>
+                        <Text style={[styles.tokenTitle, { color: colors.text }]}>
+                          {t('walletView.walletFoundTitle')}
+                        </Text>
+                        <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
+                          {t('walletView.walletFoundBody')}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </>
+              ) : null}
 
               <View style={styles.section}>
                 <SectionHeader
@@ -690,6 +787,7 @@ export default function WalletScreen() {
                     nativeAsset={externalWalletBalances.nativeAsset}
                     tokenAssets={externalWalletBalances.tokenAssets}
                     failedTokenCount={externalWalletBalances.failedTokenCount}
+                    networkStates={externalWalletBalances.networkStates}
                     message={externalWalletBalances.message}
                     updatedAt={externalWalletBalances.updatedAt}
                     onRefresh={() => void externalWalletBalances.refresh()}
@@ -825,6 +923,7 @@ export default function WalletScreen() {
                   nativeAsset={externalWalletBalances.nativeAsset}
                   tokenAssets={externalWalletBalances.tokenAssets}
                   failedTokenCount={externalWalletBalances.failedTokenCount}
+                  networkStates={externalWalletBalances.networkStates}
                   message={externalWalletBalances.message}
                   updatedAt={externalWalletBalances.updatedAt}
                   onRefresh={() => void externalWalletBalances.refresh()}

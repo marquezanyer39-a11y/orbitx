@@ -5,6 +5,7 @@ import { useAppTheme } from '../../hooks/useAppTheme';
 import type {
   ExternalWalletBalanceAsset,
   ExternalWalletBalanceStatus,
+  ExternalWalletNetworkBalanceState,
 } from '../../src/services/wallet/externalWalletBalances';
 import { formatCurrency } from '../../src/utils/formatCurrency';
 
@@ -14,6 +15,7 @@ interface ExternalWalletBalanceSummaryProps {
   nativeAsset?: ExternalWalletBalanceAsset;
   tokenAssets: ExternalWalletBalanceAsset[];
   failedTokenCount: number;
+  networkStates?: ExternalWalletNetworkBalanceState[];
   message?: string;
   updatedAt?: string;
   onRefresh: () => void;
@@ -121,7 +123,7 @@ function AssetRow({ asset }: { asset: ExternalWalletBalanceAsset }) {
           {formatAmount(asset.amount)}
         </Text>
         <Text style={[styles.assetValue, { color: colors.textMuted }]}>
-          {formatCurrency(asset.usdValue)}
+          {asset.priceAvailable ? formatCurrency(asset.usdValue) : 'Valor no disponible'}
         </Text>
       </View>
     </View>
@@ -134,6 +136,7 @@ export function ExternalWalletBalanceSummary({
   nativeAsset,
   tokenAssets,
   failedTokenCount,
+  networkStates = [],
   message,
   updatedAt,
   onRefresh,
@@ -163,7 +166,7 @@ export function ExternalWalletBalanceSummary({
         <View style={styles.headerCopy}>
           <Text style={[styles.title, { color: colors.text }]}>Saldos WalletConnect</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Red conectada: {chainLabel}
+            Red actual: {chainLabel}
           </Text>
         </View>
 
@@ -184,6 +187,43 @@ export function ExternalWalletBalanceSummary({
           </Text>
         </Pressable>
       </View>
+
+      {networkStates.length ? (
+        <View style={styles.networkGrid}>
+          {networkStates.map((network) => {
+            const tone =
+              network.status === 'error' || network.status === 'unsupported'
+                ? colors.loss
+                : network.status === 'partial'
+                  ? colors.warning
+                  : colors.profit;
+
+            return (
+              <View
+                key={network.chainId}
+                style={[
+                  styles.networkChip,
+                  {
+                    backgroundColor: withOpacity(tone, 0.08),
+                    borderColor: withOpacity(tone, 0.24),
+                  },
+                ]}
+              >
+                <Text style={[styles.networkLabel, { color: colors.text }]}>
+                  {network.chainLabel === 'BNB Chain' ? 'BNB' : network.chainLabel}
+                </Text>
+                <Text style={[styles.networkState, { color: tone }]}>
+                  {network.status === 'error'
+                    ? 'Error'
+                    : network.status === 'partial'
+                      ? 'Parcial'
+                      : `${network.visibleAssetCount} activos`}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
 
       <View
         style={[
@@ -289,6 +329,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
+  },
+  networkGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+  },
+  networkChip: {
+    minHeight: 34,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    gap: 1,
+  },
+  networkLabel: {
+    fontFamily: FONT.semibold,
+    fontSize: 10,
+  },
+  networkState: {
+    fontFamily: FONT.medium,
+    fontSize: 9,
   },
   sectionLabel: {
     fontFamily: FONT.medium,
