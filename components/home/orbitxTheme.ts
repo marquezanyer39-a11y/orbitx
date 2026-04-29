@@ -1,6 +1,7 @@
 export const ORBITX_THEME = {
   colors: {
     background: '#08090B',
+    surfaceSoft: '#111318',
     surface: '#141518',
     border: '#2D3139',
     primaryGreen: '#00C853',
@@ -10,11 +11,15 @@ export const ORBITX_THEME = {
     accentGlow: 'rgba(0, 200, 83, 0.15)',
   },
   spacing: {
-    screenMargin: 20,
-    smallScreenMargin: 18,
+    screenMargin: 14,
+    smallScreenMargin: 12,
     cardPadding: 16,
   },
 } as const;
+
+export const SCREEN_PADDING = 14;
+export const SECTION_GAP = 18;
+export const CARD_RADIUS = 18;
 
 export function getHomeLayoutMetrics(screenWidth: number) {
   const isSmallPhone = screenWidth < 380;

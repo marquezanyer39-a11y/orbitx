@@ -51,10 +51,11 @@ export function QuickActions({
 
 const styles = StyleSheet.create({
   row: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 6,
   },
   item: {
     flex: 1,
@@ -68,9 +69,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#162116',
+    backgroundColor: withOpacity(ORBITX_THEME.colors.surface, 0.92),
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.8),
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.26),
   },
   iconWrapSmall: {
     width: 44,

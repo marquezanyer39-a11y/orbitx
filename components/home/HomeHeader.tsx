@@ -2,13 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, withOpacity } from '../../constants/theme';
-import { ORBITX_THEME } from './orbitxTheme';
+import { ORBITX_THEME, SCREEN_PADDING } from './orbitxTheme';
 
 interface HomeHeaderProps {
   avatarLabel: string;
   avatarUri?: string | null;
   isSmallPhone?: boolean;
-  horizontalMargin: number;
   onProfilePress: () => void;
   onSearchPress: () => void;
 }
@@ -17,7 +16,6 @@ export function HomeHeader({
   avatarLabel,
   avatarUri,
   isSmallPhone = false,
-  horizontalMargin,
   onProfilePress,
   onSearchPress,
 }: HomeHeaderProps) {
@@ -27,7 +25,7 @@ export function HomeHeader({
         style={[
           styles.row,
           {
-            paddingHorizontal: horizontalMargin,
+            paddingHorizontal: isSmallPhone ? 12 : SCREEN_PADDING,
           },
         ]}
       >
@@ -73,13 +71,15 @@ export function HomeHeader({
 
 const styles = StyleSheet.create({
   shell: {
+    width: '100%',
     height: 64,
     backgroundColor: ORBITX_THEME.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: ORBITX_THEME.colors.border,
+    borderBottomColor: withOpacity(ORBITX_THEME.colors.border, 0.28),
     justifyContent: 'center',
   },
   row: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: ORBITX_THEME.colors.surface,
     borderWidth: 1,
-    borderColor: ORBITX_THEME.colors.border,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.32),
     overflow: 'hidden',
   },
   avatarImage: {

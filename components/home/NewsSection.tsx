@@ -70,10 +70,7 @@ export function NewsSection({
               ]}
             >
               <Text
-                style={[
-                  styles.chipLabel,
-                  active ? styles.chipLabelActive : styles.chipLabelIdle,
-                ]}
+                style={[styles.chipLabel, active ? styles.chipLabelActive : styles.chipLabelIdle]}
                 numberOfLines={1}
               >
                 {category.label}
@@ -127,6 +124,7 @@ export function NewsSection({
 
 const styles = StyleSheet.create({
   root: {
+    width: '100%',
     gap: 0,
   },
   headerRow: {
@@ -195,6 +193,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   storyWrap: {
+    width: '100%',
     gap: 0,
   },
   storyImage: {

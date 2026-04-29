@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../constants/theme';
-import { ORBITX_THEME } from './orbitxTheme';
+import { CARD_RADIUS, ORBITX_THEME } from './orbitxTheme';
 
 interface RewardsPoolCardProps {
   currentAmountLabel: string;
@@ -69,7 +69,7 @@ export function RewardsPoolCard({
   isSmallPhone = false,
   onParticipate,
 }: RewardsPoolCardProps) {
-  const rightColumnWidth = Math.min(isSmallPhone ? 92 : 102, Math.floor(contentWidth * 0.26));
+  const rightColumnWidth = Math.min(isSmallPhone ? 84 : 92, Math.floor(contentWidth * 0.22));
   const currentAmount = keepTogether(currentAmountLabel);
   const targetAmount = compactTargetLabel(targetAmountLabel);
   const compactRemaining = normalizeRemainingLabel(remainingLabel);
@@ -174,15 +174,16 @@ export function RewardsPoolCard({
 
 const styles = StyleSheet.create({
   card: {
+    width: '100%',
     minHeight: 208,
-    borderRadius: 16,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.42),
-    padding: 16,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.24),
+    padding: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     overflow: 'hidden',
-    gap: 10,
+    gap: 8,
   },
   cardSmall: {
     minHeight: 198,
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     justifyContent: 'space-between',
-    paddingRight: 2,
+    paddingRight: 6,
   },
   badge: {
     alignSelf: 'flex-start',
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
   titleSmall: {
-    fontSize: 16,
+    fontSize: 15,
   },
   amountRow: {
     flexDirection: 'row',
@@ -298,6 +299,7 @@ const styles = StyleSheet.create({
   rightColumn: {
     alignItems: 'flex-end',
     justifyContent: 'space-between',
+    paddingTop: 4,
   },
   ctaButton: {
     minWidth: 96,

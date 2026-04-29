@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, withOpacity } from '../../constants/theme';
-import { ORBITX_THEME } from './orbitxTheme';
+import { CARD_RADIUS, ORBITX_THEME } from './orbitxTheme';
 
 interface AstraRadarStripProps {
   insight: string;
@@ -52,20 +52,21 @@ export function AstraRadarStrip({
 
 const styles = StyleSheet.create({
   root: {
+    width: '100%',
     minHeight: 86,
-    borderRadius: 16,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.42),
-    backgroundColor: withOpacity(ORBITX_THEME.colors.surface, 0.56),
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.18),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.surface, 0.44),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     gap: 12,
   },
   rootSmall: {
     minHeight: 82,
-    paddingHorizontal: 13,
+    paddingHorizontal: 14,
   },
   leftRow: {
     flex: 1,
@@ -111,8 +112,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    alignSelf: 'flex-end',
-    paddingBottom: 2,
+    alignSelf: 'center',
   },
   cta: {
     color: ORBITX_THEME.colors.primaryGreen,

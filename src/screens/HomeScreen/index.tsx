@@ -12,8 +12,15 @@ import { NewsSection, type HomeNewsCategory } from '../../../components/home/New
 import { PromoBanner } from '../../../components/home/PromoBanner';
 import { QuickActions } from '../../../components/home/QuickActions';
 import { RewardsPoolCard } from '../../../components/home/RewardsPoolCard';
-import { ORBITX_THEME, getHomeLayoutMetrics } from '../../../components/home/orbitxTheme';
+import { SocialEntryStrip } from '../../../components/home/SocialEntryStrip';
+import {
+  ORBITX_THEME,
+  SCREEN_PADDING,
+  SECTION_GAP,
+  getHomeLayoutMetrics,
+} from '../../../components/home/orbitxTheme';
 import { formatRelativeTimeByLanguage } from '../../../constants/i18n';
+import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { useAstra } from '../../hooks/useAstra';
 import { useLiveMarkets } from '../../hooks/useLiveMarkets';
 import { useNewsFeed } from '../../hooks/useNewsFeed';
@@ -27,7 +34,6 @@ import {
 } from '../../navigation/AppNavigator';
 import { useAuthStore } from '../../store/authStore';
 import { useWalletStore } from '../../store/walletStore';
-import { ScreenContainer } from '../../components/common/ScreenContainer';
 
 function buildRadarInsight(symbol: string, change24h: number) {
   if (change24h >= 2.5) {
@@ -44,8 +50,8 @@ function buildRadarInsight(symbol: string, change24h: number) {
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const { isSmallPhone } = getHomeLayoutMetrics(screenWidth);
-  const horizontalMargin = 16;
-  const contentWidth = Math.max(screenWidth - horizontalMargin * 2, 0);
+  const horizontalPadding = isSmallPhone ? 12 : SCREEN_PADDING;
+  const contentWidth = Math.max(screenWidth - horizontalPadding * 2, 0);
   const insets = useSafeAreaInsets();
   const profile = useAuthStore((state) => state.profile);
   const selectedNetwork = useWalletStore((state) => state.selectedNetwork);
@@ -187,13 +193,12 @@ export default function HomeScreen() {
       <HomeHeader
         avatarLabel={profile.avatar}
         avatarUri={profile.avatarUri}
-        horizontalMargin={horizontalMargin}
         isSmallPhone={isSmallPhone}
         onProfilePress={() => router.push('/profile')}
         onSearchPress={() => router.push(buildPairSelectorHref())}
       />
 
-      <View style={[styles.stack, { paddingHorizontal: horizontalMargin }]}>
+      <View style={[styles.stack, { paddingHorizontal: horizontalPadding }]}>
         <BalanceHero
           amountLabel={portfolio.totalBalanceLabel}
           deltaLabel={portfolio.changeLabel}
@@ -217,10 +222,7 @@ export default function HomeScreen() {
 
         <MainShortcuts items={mainShortcuts} isSmallPhone={isSmallPhone} />
 
-        <PromoBanner
-          isSmallPhone={isSmallPhone}
-          onPress={() => router.push('/pool')}
-        />
+        <PromoBanner isSmallPhone={isSmallPhone} onPress={() => router.push('/pool')} />
 
         <RewardsPoolCard
           currentAmountLabel={currentPoolAmount}
@@ -252,6 +254,11 @@ export default function HomeScreen() {
               currentTask: 'market_radar',
             })
           }
+        />
+
+        <SocialEntryStrip
+          isSmallPhone={isSmallPhone}
+          onPress={() => router.push('/social')}
         />
 
         <NewsSection
@@ -297,6 +304,6 @@ const styles = StyleSheet.create({
   },
   stack: {
     paddingTop: 12,
-    gap: 22,
+    gap: SECTION_GAP,
   },
 });

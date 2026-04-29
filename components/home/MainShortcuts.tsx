@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { FONT } from '../../constants/theme';
-import { ORBITX_THEME } from './orbitxTheme';
+import { FONT, withOpacity } from '../../constants/theme';
+import { CARD_RADIUS, ORBITX_THEME } from './orbitxTheme';
 
 interface ShortcutItem {
   key: string;
@@ -20,7 +20,7 @@ export function MainShortcuts({
 }) {
   return (
     <View style={styles.row}>
-      {items.map((item) => {
+      {items.map((item, index) => {
         const splitCreateToken = item.key === 'crear-token';
         const iconColor =
           item.key === 'operar'
@@ -56,6 +56,7 @@ export function MainShortcuts({
                 {item.label}
               </Text>
             )}
+            {index < items.length - 1 ? <View style={styles.divider} /> : null}
           </Pressable>
         );
       })}
@@ -65,17 +66,23 @@ export function MainShortcuts({
 
 const styles = StyleSheet.create({
   row: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
+    borderRadius: CARD_RADIUS,
+    borderWidth: 1,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.18),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.surfaceSoft, 0.72),
+    overflow: 'hidden',
   },
   item: {
     flex: 1,
     minWidth: 0,
-    minHeight: 70,
+    minHeight: 78,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
+    position: 'relative',
   },
   label: {
     color: ORBITX_THEME.colors.textPrimary,
@@ -92,6 +99,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
     alignItems: 'center',
     gap: 1,
+  },
+  divider: {
+    position: 'absolute',
+    right: 0,
+    top: 16,
+    bottom: 16,
+    width: 1,
+    backgroundColor: withOpacity(ORBITX_THEME.colors.border, 0.32),
   },
   pressed: {
     opacity: 0.78,

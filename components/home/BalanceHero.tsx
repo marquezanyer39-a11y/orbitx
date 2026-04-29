@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../constants/theme';
 import { MiniSparkline } from './MiniSparkline';
-import { ORBITX_THEME } from './orbitxTheme';
+import { CARD_RADIUS, ORBITX_THEME } from './orbitxTheme';
 
 interface BalanceHeroProps {
   amountLabel: string;
@@ -48,7 +48,7 @@ export function BalanceHero({
   onToggleVisibility,
   onViewAnalysis,
 }: BalanceHeroProps) {
-  const chartWidth = Math.min(isSmallPhone ? 110 : 130, Math.floor(contentWidth * 0.4));
+  const chartWidth = Math.min(isSmallPhone ? 126 : 150, Math.floor(contentWidth * 0.42));
   const parsedAmount = extractNumericValue(amountLabel);
   const hasReliableDelta = (parsedAmount ?? 0) > 0 && extractNumericValue(deltaLabel) !== null;
   const accent = positive ? ORBITX_THEME.colors.primaryGreen : ORBITX_THEME.colors.lossRed;
@@ -87,16 +87,12 @@ export function BalanceHero({
               </Pressable>
 
               <View style={styles.deltaRow}>
-                {hasReliableDelta ? (
-                  <Ionicons name="trending-up" size={14} color={accent} />
-                ) : null}
+                {hasReliableDelta ? <Ionicons name="trending-up" size={14} color={accent} /> : null}
                 <Text
                   style={[
                     styles.deltaLabel,
                     {
-                      color: hasReliableDelta
-                        ? accent
-                        : ORBITX_THEME.colors.textSecondary,
+                      color: hasReliableDelta ? accent : ORBITX_THEME.colors.textSecondary,
                     },
                   ]}
                   numberOfLines={1}
@@ -110,10 +106,7 @@ export function BalanceHero({
 
           <Pressable
             onPress={onViewAnalysis}
-            style={({ pressed }) => [
-              styles.analysisButton,
-              pressed ? styles.pressed : null,
-            ]}
+            style={({ pressed }) => [styles.analysisButton, pressed ? styles.pressed : null]}
           >
             <Text style={styles.analysisLabel} numberOfLines={1}>
               Ver análisis
@@ -147,17 +140,18 @@ export function BalanceHero({
 
 const styles = StyleSheet.create({
   card: {
+    width: '100%',
     minHeight: 178,
-    borderRadius: 16,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.42),
-    backgroundColor: ORBITX_THEME.colors.background,
-    paddingHorizontal: 16,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.24),
+    backgroundColor: ORBITX_THEME.colors.surfaceSoft,
+    paddingHorizontal: 18,
     paddingVertical: 18,
   },
   cardSmall: {
     minHeight: 170,
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 16,
   },
   headerRow: {
@@ -174,7 +168,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: 10,
+    gap: 12,
     marginTop: 14,
   },
   copyColumn: {
@@ -219,7 +213,7 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: withOpacity('#FFFFFF', 0.04),
     borderWidth: 1,
-    borderColor: withOpacity('#FFFFFF', 0.08),
+    borderColor: withOpacity('#FFFFFF', 0.06),
   },
   analysisLabel: {
     color: withOpacity(ORBITX_THEME.colors.textPrimary, 0.82),
@@ -229,7 +223,7 @@ const styles = StyleSheet.create({
   chartWrap: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    paddingBottom: 22,
+    paddingBottom: 18,
   },
   cacheLabel: {
     marginTop: 6,

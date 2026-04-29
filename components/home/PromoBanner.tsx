@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../constants/theme';
-import { ORBITX_THEME } from './orbitxTheme';
+import { CARD_RADIUS, ORBITX_THEME } from './orbitxTheme';
 
 interface PromoBannerProps {
   isSmallPhone?: boolean;
@@ -38,10 +38,7 @@ export function PromoBanner({ isSmallPhone = false, onPress }: PromoBannerProps)
       <View style={styles.rightColumn}>
         <Pressable
           onPress={onPress}
-          style={({ pressed }) => [
-            styles.ctaButton,
-            pressed ? styles.pressed : null,
-          ]}
+          style={({ pressed }) => [styles.ctaButton, pressed ? styles.pressed : null]}
         >
           <Text style={styles.ctaLabel} numberOfLines={1}>
             Ver más
@@ -64,11 +61,12 @@ export function PromoBanner({ isSmallPhone = false, onPress }: PromoBannerProps)
 
 const styles = StyleSheet.create({
   card: {
+    width: '100%',
     minHeight: 90,
-    borderRadius: 16,
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.42),
-    paddingHorizontal: 16,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.24),
+    paddingHorizontal: 18,
     paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -82,7 +80,7 @@ const styles = StyleSheet.create({
   copyColumn: {
     flex: 1,
     minWidth: 0,
-    paddingRight: 12,
+    paddingRight: 16,
   },
   title: {
     color: ORBITX_THEME.colors.textPrimary,
@@ -103,6 +101,7 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
   },
   rightColumn: {
+    minWidth: 86,
     alignItems: 'flex-end',
     justifyContent: 'center',
     gap: 8,
@@ -111,9 +110,9 @@ const styles = StyleSheet.create({
     minHeight: 30,
     paddingHorizontal: 14,
     borderRadius: 15,
-    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.16),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.14),
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.12),
+    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.1),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -137,15 +136,15 @@ const styles = StyleSheet.create({
   },
   giftHalo: {
     position: 'absolute',
-    right: 88,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    right: 82,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.08),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.06),
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.14),
+    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.1),
   },
   pressed: {
     opacity: 0.78,
