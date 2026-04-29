@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export const ORBITX_THEME = {
   colors: {
     background: '#08090B',
@@ -11,14 +13,16 @@ export const ORBITX_THEME = {
     accentGlow: 'rgba(0, 200, 83, 0.15)',
   },
   spacing: {
-    screenMargin: 14,
-    smallScreenMargin: 12,
-    cardPadding: 16,
+    screenMargin: Platform.OS === 'android' ? 10 : 12,
+    smallScreenMargin: 8,
+    cardPadding: 14,
   },
 } as const;
 
-export const SCREEN_PADDING = 14;
-export const SECTION_GAP = 18;
+export const SCREEN_PADDING = Platform.OS === 'android' ? 10 : 12;
+export const SCREEN_PADDING_SMALL = 8;
+export const BLOCK_GAP = 14;
+export const SECTION_GAP = BLOCK_GAP;
 export const CARD_RADIUS = 18;
 
 export function getHomeLayoutMetrics(screenWidth: number) {

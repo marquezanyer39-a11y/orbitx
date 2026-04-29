@@ -38,7 +38,7 @@ export function MainShortcuts({
           >
             <Ionicons
               name={item.icon}
-              size={24}
+              size={isSmallPhone ? 21 : 22}
               color={iconColor}
             />
 
@@ -71,24 +71,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.18),
-    backgroundColor: withOpacity(ORBITX_THEME.colors.surfaceSoft, 0.72),
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.12),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.surfaceSoft, 0.5),
     overflow: 'hidden',
   },
   item: {
     flex: 1,
     minWidth: 0,
-    minHeight: 78,
+    minHeight: 68,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 7,
     position: 'relative',
   },
   label: {
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.medium,
-    fontSize: 12,
-    lineHeight: 14,
+    fontSize: 11.5,
+    lineHeight: 13,
     textAlign: 'center',
   },
   labelSmall: {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     top: 16,
     bottom: 16,
     width: 1,
-    backgroundColor: withOpacity(ORBITX_THEME.colors.border, 0.32),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.border, 0.22),
   },
   pressed: {
     opacity: 0.78,

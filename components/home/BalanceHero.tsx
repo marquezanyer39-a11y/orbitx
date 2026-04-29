@@ -48,7 +48,7 @@ export function BalanceHero({
   onToggleVisibility,
   onViewAnalysis,
 }: BalanceHeroProps) {
-  const chartWidth = Math.min(isSmallPhone ? 126 : 150, Math.floor(contentWidth * 0.42));
+  const chartWidth = Math.min(isSmallPhone ? 138 : 168, Math.floor(contentWidth * 0.46));
   const parsedAmount = extractNumericValue(amountLabel);
   const hasReliableDelta = (parsedAmount ?? 0) > 0 && extractNumericValue(deltaLabel) !== null;
   const accent = positive ? ORBITX_THEME.colors.primaryGreen : ORBITX_THEME.colors.lossRed;
@@ -62,9 +62,9 @@ export function BalanceHero({
 
   return (
     <View style={[styles.card, isSmallPhone ? styles.cardSmall : null]}>
-      <View style={styles.headerRow}>
-        <Text style={styles.eyebrow}>Balance total</Text>
-      </View>
+      <View style={styles.glow} />
+
+      <Text style={styles.eyebrow}>Balance total</Text>
 
       <View style={styles.mainRow}>
         <View style={styles.copyColumn}>
@@ -80,14 +80,14 @@ export function BalanceHero({
                   style={[styles.amount, isSmallPhone ? styles.amountSmall : null]}
                   numberOfLines={1}
                   adjustsFontSizeToFit
-                  minimumFontScale={0.74}
+                  minimumFontScale={0.72}
                 >
                   {displayAmount}
                 </Text>
               </Pressable>
 
               <View style={styles.deltaRow}>
-                {hasReliableDelta ? <Ionicons name="trending-up" size={14} color={accent} /> : null}
+                {hasReliableDelta ? <Ionicons name="trending-up" size={13} color={accent} /> : null}
                 <Text
                   style={[
                     styles.deltaLabel,
@@ -99,8 +99,8 @@ export function BalanceHero({
                 >
                   {displayDelta}
                 </Text>
+                {hasReliableDelta ? <Text style={styles.rangePill}>{rangeLabel}</Text> : null}
               </View>
-              <Text style={styles.rangeLabel}>{rangeLabel}</Text>
             </>
           )}
 
@@ -108,10 +108,11 @@ export function BalanceHero({
             onPress={onViewAnalysis}
             style={({ pressed }) => [styles.analysisButton, pressed ? styles.pressed : null]}
           >
+            <Ionicons name="analytics-outline" size={12} color={withOpacity('#FAFAFA', 0.58)} />
             <Text style={styles.analysisLabel} numberOfLines={1}>
               Ver análisis
             </Text>
-            <Ionicons name="analytics-outline" size={13} color={withOpacity('#FAFAFA', 0.42)} />
+            <Ionicons name="chevron-forward" size={12} color={withOpacity('#FAFAFA', 0.46)} />
           </Pressable>
 
           {cacheLabel ? (
@@ -125,7 +126,7 @@ export function BalanceHero({
           <MiniSparkline
             data={series}
             width={chartWidth}
-            height={26}
+            height={42}
             color={ORBITX_THEME.colors.primaryGreen}
             negativeColor={ORBITX_THEME.colors.lossRed}
             positive={positive}
@@ -141,23 +142,28 @@ export function BalanceHero({
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    minHeight: 178,
+    minHeight: 156,
     borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.24),
-    backgroundColor: ORBITX_THEME.colors.surfaceSoft,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.12),
+    backgroundColor: '#0B100D',
+    paddingHorizontal: 14,
+    paddingVertical: 15,
+    overflow: 'hidden',
   },
   cardSmall: {
-    minHeight: 170,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    minHeight: 150,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  glow: {
+    position: 'absolute',
+    right: -12,
+    top: -8,
+    width: 170,
+    height: 132,
+    borderRadius: 80,
+    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.08),
   },
   eyebrow: {
     color: ORBITX_THEME.colors.textSecondary,
@@ -168,55 +174,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: 12,
-    marginTop: 14,
+    gap: 8,
+    marginTop: 9,
   },
   copyColumn: {
     flex: 1,
     minWidth: 0,
-    gap: 6,
+    gap: 5,
   },
   amount: {
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.regular,
-    fontSize: 35,
-    letterSpacing: -0.8,
+    fontSize: 34,
+    letterSpacing: 0,
   },
   amountSmall: {
-    fontSize: 31,
+    fontSize: 30,
   },
   deltaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     minWidth: 0,
-    minHeight: 18,
+    minHeight: 19,
   },
   deltaLabel: {
     fontFamily: FONT.semibold,
-    fontSize: 13,
+    fontSize: 12.5,
     flexShrink: 1,
   },
-  rangeLabel: {
-    color: '#71717A',
+  rangePill: {
+    color: withOpacity('#FAFAFA', 0.72),
     fontFamily: FONT.medium,
-    fontSize: 12,
+    fontSize: 11,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: RADII.pill,
+    backgroundColor: withOpacity('#FFFFFF', 0.08),
+    overflow: 'hidden',
   },
   analysisButton: {
-    marginTop: 12,
+    marginTop: 8,
     alignSelf: 'flex-start',
-    minHeight: 32,
-    paddingHorizontal: 12,
-    borderRadius: RADII.pill,
+    minHeight: 28,
+    paddingHorizontal: 10,
+    borderRadius: 11,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: withOpacity('#FFFFFF', 0.04),
+    backgroundColor: withOpacity('#FFFFFF', 0.045),
     borderWidth: 1,
-    borderColor: withOpacity('#FFFFFF', 0.06),
+    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.16),
   },
   analysisLabel: {
-    color: withOpacity(ORBITX_THEME.colors.textPrimary, 0.82),
+    color: withOpacity(ORBITX_THEME.colors.textPrimary, 0.86),
     fontFamily: FONT.medium,
     fontSize: 11,
   },
@@ -226,20 +237,20 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
   },
   cacheLabel: {
-    marginTop: 6,
+    marginTop: 4,
     color: ORBITX_THEME.colors.textSecondary,
     fontFamily: FONT.regular,
-    fontSize: 11,
+    fontSize: 10.5,
   },
   amountSkeleton: {
     width: 182,
-    height: 38,
+    height: 36,
     borderRadius: 14,
     backgroundColor: withOpacity('#FAFAFA', 0.08),
   },
   amountSkeletonSmall: {
     width: 158,
-    height: 34,
+    height: 32,
   },
   deltaSkeleton: {
     width: 116,

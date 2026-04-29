@@ -16,6 +16,7 @@ import { SocialEntryStrip } from '../../../components/home/SocialEntryStrip';
 import {
   ORBITX_THEME,
   SCREEN_PADDING,
+  SCREEN_PADDING_SMALL,
   SECTION_GAP,
   getHomeLayoutMetrics,
 } from '../../../components/home/orbitxTheme';
@@ -50,7 +51,7 @@ function buildRadarInsight(symbol: string, change24h: number) {
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const { isSmallPhone } = getHomeLayoutMetrics(screenWidth);
-  const horizontalPadding = isSmallPhone ? 12 : SCREEN_PADDING;
+  const horizontalPadding = isSmallPhone ? SCREEN_PADDING_SMALL : SCREEN_PADDING;
   const contentWidth = Math.max(screenWidth - horizontalPadding * 2, 0);
   const insets = useSafeAreaInsets();
   const profile = useAuthStore((state) => state.profile);
@@ -185,7 +186,7 @@ export default function HomeScreen() {
       contentContainerStyle={[
         styles.content,
         {
-          paddingBottom: bottomTabHeight + 32,
+          paddingBottom: bottomTabHeight + 48,
         },
       ]}
       backgroundMode="plain"
@@ -256,10 +257,7 @@ export default function HomeScreen() {
           }
         />
 
-        <SocialEntryStrip
-          isSmallPhone={isSmallPhone}
-          onPress={() => router.push('/social')}
-        />
+        <SocialEntryStrip isSmallPhone={isSmallPhone} onPress={() => router.push('/social')} />
 
         <NewsSection
           categories={news.categories}
@@ -269,7 +267,7 @@ export default function HomeScreen() {
           loading={news.loading}
           helperLabel={
             news.loading
-              ? 'Actualizando noticias…'
+              ? 'Actualizando noticias...'
               : news.fromCache
                 ? 'Mostrando el último titular disponible'
                 : null
@@ -303,7 +301,7 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   stack: {
-    paddingTop: 12,
+    paddingTop: 6,
     gap: SECTION_GAP,
   },
 });

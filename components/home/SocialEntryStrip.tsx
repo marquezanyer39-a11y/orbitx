@@ -45,7 +45,7 @@ export function SocialEntryStrip({ isSmallPhone = false, onPress }: SocialEntryS
 const styles = StyleSheet.create({
   root: {
     width: '100%',
-    minHeight: 72,
+    minHeight: 66,
     borderRadius: CARD_RADIUS,
     borderWidth: 1,
     borderColor: withOpacity(ORBITX_THEME.colors.border, 0.2),
@@ -53,17 +53,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
   },
   rootSmall: {
-    minHeight: 68,
-    paddingHorizontal: 14,
+    minHeight: 64,
+    paddingHorizontal: 12,
     gap: 10,
   },
   iconShell: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.1),

@@ -32,7 +32,7 @@ export function QuickActions({
           <View style={[styles.iconWrap, isSmallPhone ? styles.iconWrapSmall : null]}>
             <Ionicons
               name={item.icon}
-              size={isSmallPhone ? 21 : 22}
+              size={isSmallPhone ? 19 : 20}
               color={ORBITX_THEME.colors.textPrimary}
             />
           </View>
@@ -55,18 +55,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 6,
+    gap: 4,
   },
   item: {
     flex: 1,
     minWidth: 0,
     alignItems: 'center',
-    gap: 10,
+    gap: 7,
   },
   iconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: withOpacity(ORBITX_THEME.colors.surface, 0.92),
@@ -74,18 +74,18 @@ const styles = StyleSheet.create({
     borderColor: withOpacity(ORBITX_THEME.colors.border, 0.26),
   },
   iconWrapSmall: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
   },
   label: {
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.medium,
-    fontSize: 12,
+    fontSize: 11.5,
     textAlign: 'center',
   },
   labelSmall: {
-    fontSize: 11.5,
+    fontSize: 11,
   },
   pressed: {
     opacity: 0.78,

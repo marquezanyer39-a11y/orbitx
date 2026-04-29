@@ -39,7 +39,7 @@ function StandardTabIcon({
       <Ionicons
         name={icon ?? 'ellipse-outline'}
         color={focused ? colors.profit : withOpacity(colors.text, 0.6)}
-        size={18}
+        size={focused ? 18 : 17}
       />
     </View>
   );
@@ -57,8 +57,8 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
             ? withOpacity(colors.profit, 0.16)
             : withOpacity(colors.profit, 0.06),
           borderColor: focused
-            ? withOpacity(colors.profit, 0.28)
-            : withOpacity(colors.borderStrong, 0.8),
+            ? withOpacity(colors.profit, 0.22)
+            : withOpacity(colors.borderStrong, 0.45),
         },
       ]}
     >
@@ -68,15 +68,15 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
           {
             backgroundColor: focused ? withOpacity(colors.profit, 0.9) : colors.card,
             borderColor: focused
-              ? withOpacity(colors.profit, 0.72)
-              : withOpacity(colors.profit, 0.18),
+              ? withOpacity(colors.profit, 0.58)
+              : withOpacity(colors.profit, 0.12),
           },
         ]}
       >
         <Ionicons
           name="swap-horizontal"
           color={focused ? colors.background : colors.text}
-          size={20}
+          size={19}
         />
       </View>
     </View>
@@ -102,9 +102,9 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
       style={[
         styles.tabBarShell,
         {
-          backgroundColor: withOpacity(colors.card, 0.98),
-          borderTopColor: colors.border,
-          paddingBottom: Math.max(insets.bottom, 10),
+          backgroundColor: withOpacity(colors.card, 0.9),
+          borderTopColor: withOpacity(colors.text, 0.06),
+          paddingBottom: Math.max(insets.bottom, 6),
         },
       ]}
     >
@@ -212,17 +212,17 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   standardTabIconShell: {
-    width: 34,
-    height: 34,
-    borderRadius: 13,
+    width: 29,
+    height: 29,
+    borderRadius: 11,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabBarShell: {
     borderTopWidth: 1,
-    paddingTop: 8,
-    paddingHorizontal: 12,
+    paddingTop: 5,
+    paddingHorizontal: 8,
   },
   tabBarRow: {
     flexDirection: 'row',
@@ -231,41 +231,41 @@ const styles = StyleSheet.create({
   },
   tabBarItem: {
     flex: 1,
-    minHeight: 58,
+    minHeight: 51,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
-    paddingTop: 2,
+    gap: 1,
+    paddingTop: 1,
   },
   tabBarItemTrade: {
-    gap: 5,
+    gap: 2,
   },
   tradeTabOuter: {
-    width: 54,
-    height: 54,
+    width: 46,
+    height: 46,
     borderRadius: RADII.pill,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tradeTabButton: {
-    width: 42,
-    height: 42,
+    width: 38,
+    height: 38,
     borderRadius: RADII.pill,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   standardTabLabel: {
-    fontFamily: FONT.medium,
-    fontSize: 10,
-    lineHeight: 13,
-    marginTop: 2,
+    fontFamily: FONT.semibold,
+    fontSize: 9.5,
+    lineHeight: 12,
+    marginTop: 1,
   },
   tradeTabLabel: {
     fontFamily: FONT.semibold,
     fontSize: 10,
-    lineHeight: 13,
-    marginTop: 2,
+    lineHeight: 12,
+    marginTop: 1,
   },
 });

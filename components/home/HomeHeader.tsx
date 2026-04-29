@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, withOpacity } from '../../constants/theme';
-import { ORBITX_THEME, SCREEN_PADDING } from './orbitxTheme';
+import { ORBITX_THEME, SCREEN_PADDING, SCREEN_PADDING_SMALL } from './orbitxTheme';
 
 interface HomeHeaderProps {
   avatarLabel: string;
@@ -25,7 +25,7 @@ export function HomeHeader({
         style={[
           styles.row,
           {
-            paddingHorizontal: isSmallPhone ? 12 : SCREEN_PADDING,
+            paddingHorizontal: isSmallPhone ? SCREEN_PADDING_SMALL : SCREEN_PADDING,
           },
         ]}
       >
@@ -72,7 +72,7 @@ export function HomeHeader({
 const styles = StyleSheet.create({
   shell: {
     width: '100%',
-    height: 64,
+    height: 56,
     backgroundColor: ORBITX_THEME.colors.background,
     borderBottomWidth: 1,
     borderBottomColor: withOpacity(ORBITX_THEME.colors.border, 0.28),
@@ -85,9 +85,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   avatarButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: ORBITX_THEME.colors.surface,
@@ -103,14 +103,14 @@ const styles = StyleSheet.create({
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.bold,
     fontSize: 18,
-    letterSpacing: -1,
+    letterSpacing: 0,
   },
   brandSmall: {
     fontSize: 17,
   },
   searchButton: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     alignItems: 'center',
     justifyContent: 'center',
   },

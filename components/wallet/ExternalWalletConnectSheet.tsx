@@ -68,6 +68,18 @@ export function ExternalWalletConnectSheet({
     isConnected &&
     selectedNetwork !== 'solana' &&
     selectedNetwork !== orbitNetwork;
+  const unavailableTitle = !configured
+    ? 'WalletConnect no configurado'
+    : 'WalletConnect no disponible';
+  const unavailableBody = !configured
+    ? 'La conexión con wallets externas estará disponible pronto.'
+    : disabledReason ?? 'WalletConnect estará disponible en la APK o development build.';
+  const connectButtonLabel =
+    !configured || !runtimeSupported
+      ? 'No disponible'
+      : isBusy
+        ? 'Abriendo wallets...'
+        : 'Conectar wallet';
 
   useEffect(() => {
     if (visible && isConnected) {
@@ -94,9 +106,13 @@ export function ExternalWalletConnectSheet({
           <View style={styles.header}>
             <View style={styles.headerCopy}>
               <Text style={[styles.eyebrow, { color: colors.textMuted }]}>WalletConnect</Text>
-              <Text style={[styles.title, { color: colors.text }]}>Conectar wallet externa</Text>
+              <Text style={[styles.title, { color: colors.text }]}>
+                {isConnected ? 'Wallet conectada' : 'Billetera externa'}
+              </Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                Usa MetaMask, Trust Wallet, Coinbase Wallet u otra wallet compatible.
+                {isConnected
+                  ? 'Conectada mediante WalletConnect.'
+                  : 'Conecta MetaMask, Trust Wallet, Coinbase Wallet u otra wallet compatible.'}
               </Text>
             </View>
 
@@ -115,11 +131,10 @@ export function ExternalWalletConnectSheet({
             ]}
           >
             <Text style={[styles.helperTitle, { color: colors.text }]}>
-              Wallet externa conectada con aprobacion real
+              OrbitX no guarda tu frase semilla
             </Text>
             <Text style={[styles.helperBody, { color: colors.textMuted }]}>
-              OrbitX no guarda tu frase semilla. Las aprobaciones y firmas se hacen desde tu
-              wallet.
+              Las aprobaciones y firmas se hacen desde tu wallet externa.
             </Text>
           </View>
 
@@ -158,11 +173,9 @@ export function ExternalWalletConnectSheet({
                 },
               ]}
             >
-              <Text style={[styles.stateTitle, { color: colors.text }]}>
-                WalletConnect no disponible
-              </Text>
+              <Text style={[styles.stateTitle, { color: colors.text }]}>{unavailableTitle}</Text>
               <Text style={[styles.stateBody, { color: colors.textMuted }]}>
-                {disabledReason}
+                {unavailableBody}
               </Text>
             </View>
           ) : null}
@@ -228,7 +241,7 @@ export function ExternalWalletConnectSheet({
 
           {!isConnected ? (
             <PrimaryButton
-              label={isBusy ? 'Abriendo wallets...' : 'Conectar wallet externa'}
+              label={connectButtonLabel}
               onPress={() => void connect()}
               disabled={isBusy || !configured || !runtimeSupported}
               style={isBusy || !configured || !runtimeSupported ? styles.disabledAction : undefined}

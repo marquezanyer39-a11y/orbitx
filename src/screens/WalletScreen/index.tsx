@@ -61,6 +61,13 @@ export default function WalletScreen() {
   const [pinSheetVisible, setPinSheetVisible] = useState(false);
   const [pendingSeedModeAfterPin, setPendingSeedModeAfterPin] = useState<SeedModalMode | null>(null);
   const lastAstraActionRef = useRef<string>('');
+  const externalWalletUnavailableTitle = !externalWalletRuntime.configured
+    ? 'WalletConnect no configurado'
+    : 'WalletConnect no disponible';
+  const externalWalletUnavailableBody = !externalWalletRuntime.configured
+    ? 'La conexión con wallets externas estará disponible pronto.'
+    : externalWalletRuntime.disabledReason ??
+      'WalletConnect estará disponible en la APK o development build.';
 
   useEffect(() => {
     wallet.syncCreatedTokens();
@@ -634,15 +641,17 @@ export default function WalletScreen() {
                       {externalWalletRuntime.isConnected
                         ? 'Wallet externa conectada'
                         : externalWalletRuntime.disabledReason
-                          ? 'WalletConnect no disponible'
+                          ? externalWalletUnavailableTitle
                           : t('walletView.noExternalWallet')}
                     </Text>
                     <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
                       {externalWalletRuntime.isConnected
-                        ? `${externalWalletRuntime.walletName ?? 'Wallet externa'} · ${maskAddress(
+                        ? `${externalWalletRuntime.walletName ?? 'Wallet externa'} - ${maskAddress(
                             wallet.externalWallet.address,
                           )}`
-                        : externalWalletRuntime.disabledReason ?? t('walletView.externalWalletHint')}
+                        : externalWalletRuntime.disabledReason
+                          ? externalWalletUnavailableBody
+                          : t('walletView.externalWalletHint')}
                     </Text>
                     {externalWalletRuntime.isConnected ? (
                       <Text style={[styles.tokenBody, { color: colors.textSoft }]}>
@@ -773,7 +782,7 @@ export default function WalletScreen() {
                     </Text>
                     {externalWalletRuntime.isConnected ? (
                       <Text style={[styles.tokenBody, { color: colors.textSoft }]}>
-                        {externalWalletRuntime.walletName ?? 'Wallet externa'} · {externalWalletRuntime.chainLabel}
+                        {externalWalletRuntime.walletName ?? 'Wallet externa'} - {externalWalletRuntime.chainLabel}
                       </Text>
                     ) : null}
                   </View>

@@ -53,9 +53,9 @@ interface ExternalWalletContextValue {
 }
 
 const disabledConfigMessage =
-  'WalletConnect no esta configurado. Falta EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID.';
-const expoGoMessage =
-  'WalletConnect requiere development build o APK. Expo Go no soporta esta integracion.';
+  'La conexion con wallets externas estara disponible pronto.';
+const runtimeUnavailableMessage =
+  'WalletConnect estara disponible en la APK o development build.';
 
 const defaultContextValue: ExternalWalletContextValue = {
   configured: walletConnectConfigured,
@@ -63,7 +63,7 @@ const defaultContextValue: ExternalWalletContextValue = {
   disabledReason: !walletConnectConfigured
     ? disabledConfigMessage
     : !walletConnectRuntimeSupported
-      ? expoGoMessage
+      ? runtimeUnavailableMessage
       : undefined,
   status: 'disconnected',
   isConnected: false,
@@ -462,7 +462,7 @@ export function ExternalWalletProvider({ children }: { children: ReactNode }) {
           ...defaultContextValue,
           configured: walletConnectConfigured,
           runtimeSupported: false,
-          disabledReason: expoGoMessage,
+          disabledReason: runtimeUnavailableMessage,
         }}
       >
         {children}

@@ -44,12 +44,18 @@ const NETWORKS: AppKitNetwork[] = [
   BNB_NETWORK,
   POLYGON_NETWORK,
 ];
-const PROJECT_ID =
-  process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID ??
-  (typeof Constants.expoConfig?.extra?.walletConnectProjectId === 'string'
-    ? Constants.expoConfig.extra.walletConnectProjectId
-    : '') ??
-  '';
+
+function readWalletConnectProjectId() {
+  const envProjectId = process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID;
+  const extraProjectId =
+    typeof Constants.expoConfig?.extra?.walletConnectProjectId === 'string'
+      ? Constants.expoConfig.extra.walletConnectProjectId
+      : '';
+
+  return (envProjectId ?? extraProjectId ?? '').trim();
+}
+
+const PROJECT_ID = readWalletConnectProjectId();
 
 const asyncStorageAdapter: Storage = {
   async getKeys() {
@@ -105,7 +111,7 @@ const asyncStorageAdapter: Storage = {
 let appKitInstance: ReturnType<typeof createAppKit> | null = null;
 
 function createWalletConnectAppKit() {
-  if (!PROJECT_ID.trim()) {
+  if (!PROJECT_ID) {
     return null;
   }
 
@@ -114,7 +120,7 @@ function createWalletConnectAppKit() {
   }
 
   appKitInstance = createAppKit({
-    projectId: PROJECT_ID.trim(),
+    projectId: PROJECT_ID,
     adapters: [new EthersAdapter()],
     networks: NETWORKS,
     defaultNetwork: BASE_NETWORK,
@@ -137,7 +143,7 @@ function createWalletConnectAppKit() {
   return appKitInstance;
 }
 
-export const walletConnectProjectId = PROJECT_ID.trim();
+export const walletConnectProjectId = PROJECT_ID;
 export const walletConnectConfigured = Boolean(walletConnectProjectId);
 export const walletConnectRuntimeSupported = Constants.executionEnvironment !== 'storeClient';
 export const walletConnectAppKit = createWalletConnectAppKit();

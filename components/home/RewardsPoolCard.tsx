@@ -27,11 +27,7 @@ function compactTargetLabel(value: string) {
     return keepTogether(`/ ${safe}`);
   }
 
-  if (numeric >= 1000) {
-    return keepTogether(`/ $${Math.round(numeric / 1000)}k`);
-  }
-
-  return keepTogether(`/ ${safe}`);
+  return keepTogether(`/ $${Math.round(numeric / 1000)}k`);
 }
 
 function normalizeRemainingLabel(value: string) {
@@ -48,11 +44,11 @@ function RewardsArt({ isSmallPhone = false }: { isSmallPhone?: boolean }) {
   return (
     <View style={[styles.artWrap, isSmallPhone ? styles.artWrapSmall : null]}>
       <LinearGradient
-        colors={['rgba(0,200,83,0.28)', 'rgba(0,200,83,0.04)']}
+        colors={['rgba(0,200,83,0.24)', 'rgba(0,200,83,0.03)']}
         style={[styles.artGlow, isSmallPhone ? styles.artGlowSmall : null]}
       />
       <View style={[styles.artCore, isSmallPhone ? styles.artCoreSmall : null]}>
-        <Ionicons name="planet-outline" size={isSmallPhone ? 17 : 19} color="#D8FDE6" />
+        <Ionicons name="planet-outline" size={isSmallPhone ? 15 : 17} color="#D8FDE6" />
       </View>
       <View style={styles.artOrbitRing} />
     </View>
@@ -69,41 +65,37 @@ export function RewardsPoolCard({
   isSmallPhone = false,
   onParticipate,
 }: RewardsPoolCardProps) {
-  const rightColumnWidth = Math.min(isSmallPhone ? 84 : 92, Math.floor(contentWidth * 0.22));
+  const rightColumnWidth = Math.min(isSmallPhone ? 76 : 86, Math.floor(contentWidth * 0.2));
   const currentAmount = keepTogether(currentAmountLabel);
   const targetAmount = compactTargetLabel(targetAmountLabel);
   const compactRemaining = normalizeRemainingLabel(remainingLabel);
 
   return (
     <LinearGradient
-      colors={['#0F1114', '#101A14']}
+      colors={['#0D1012', '#0E1711']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.card, isSmallPhone ? styles.cardSmall : null]}
     >
       <LinearGradient
-        colors={['rgba(0,200,83,0.14)', 'rgba(0,200,83,0)']}
+        colors={['rgba(0,200,83,0.12)', 'rgba(0,200,83,0)']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.topGlow}
       />
 
       <View style={styles.leftColumn}>
-        <View style={styles.badge}>
-          <Ionicons name="sparkles-outline" size={11} color={ORBITX_THEME.colors.primaryGreen} />
-          <Text style={styles.badgeLabel} numberOfLines={1}>
-            POZO MENSUAL
+        <View style={styles.titleRow}>
+          <Text
+            style={[styles.title, isSmallPhone ? styles.titleSmall : null]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.9}
+          >
+            Pozo de recompensas
           </Text>
+          <Ionicons name="information-circle-outline" size={15} color={withOpacity('#FAFAFA', 0.5)} />
         </View>
-
-        <Text
-          style={[styles.title, isSmallPhone ? styles.titleSmall : null]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.9}
-        >
-          Pozo de recompensas
-        </Text>
 
         <View style={styles.amountRow}>
           <Text
@@ -114,12 +106,7 @@ export function RewardsPoolCard({
           >
             {currentAmount}
           </Text>
-          <Text
-            style={[styles.target, isSmallPhone ? styles.targetSmall : null]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.92}
-          >
+          <Text style={styles.target} numberOfLines={1}>
             {targetAmount}
           </Text>
         </View>
@@ -140,16 +127,14 @@ export function RewardsPoolCard({
           </Text>
         </View>
 
-        <View style={styles.bottomRow}>
-          <View style={styles.timeRow}>
-            <Ionicons name="time-outline" size={14} color={withOpacity('#FAFAFA', 0.42)} />
-            <Text
-              style={[styles.remainingLabel, isSmallPhone ? styles.remainingLabelSmall : null]}
-              numberOfLines={1}
-            >
-              {compactRemaining}
-            </Text>
-          </View>
+        <View style={styles.timeRow}>
+          <Ionicons name="time-outline" size={13} color={withOpacity('#FAFAFA', 0.42)} />
+          <Text
+            style={[styles.remainingLabel, isSmallPhone ? styles.remainingLabelSmall : null]}
+            numberOfLines={1}
+          >
+            {compactRemaining}
+          </Text>
         </View>
       </View>
 
@@ -175,26 +160,26 @@ export function RewardsPoolCard({
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    minHeight: 208,
+    minHeight: 160,
     borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.24),
-    padding: 18,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.12),
+    padding: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     overflow: 'hidden',
     gap: 8,
   },
   cardSmall: {
-    minHeight: 198,
-    padding: 14,
+    minHeight: 154,
+    padding: 12,
   },
   topGlow: {
     position: 'absolute',
     top: -10,
-    right: -6,
-    width: 142,
-    height: 116,
+    right: -10,
+    width: 140,
+    height: 104,
     borderRadius: 80,
   },
   leftColumn: {
@@ -203,29 +188,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingRight: 6,
   },
-  badge: {
-    alignSelf: 'flex-start',
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    minHeight: 24,
-    paddingHorizontal: 10,
-    borderRadius: RADII.pill,
-    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.1),
-    borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.16),
-  },
-  badgeLabel: {
-    color: ORBITX_THEME.colors.primaryGreen,
-    fontFamily: FONT.semibold,
-    fontSize: 10,
-    letterSpacing: 0.6,
+    gap: 5,
+    minWidth: 0,
   },
   title: {
-    marginTop: 10,
+    flexShrink: 1,
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
-    fontSize: 17,
+    fontSize: 16.5,
   },
   titleSmall: {
     fontSize: 15,
@@ -233,34 +206,34 @@ const styles = StyleSheet.create({
   amountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 6,
-    marginTop: 8,
+    gap: 5,
+    marginTop: 10,
     minWidth: 0,
   },
   amount: {
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.bold,
-    fontSize: 24,
-    letterSpacing: -0.5,
+    fontSize: 23,
+    letterSpacing: 0,
     flexShrink: 1,
   },
   amountSmall: {
-    fontSize: 22,
+    fontSize: 21,
   },
   target: {
     color: ORBITX_THEME.colors.textSecondary,
     fontFamily: FONT.medium,
     fontSize: 12,
-    flexShrink: 1,
-  },
-  targetSmall: {
-    fontSize: 11,
+    flexShrink: 0,
   },
   progressRow: {
-    marginTop: 16,
-    gap: 8,
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
   },
   progressTrack: {
+    flex: 1,
     height: 4,
     borderRadius: RADII.pill,
     overflow: 'hidden',
@@ -272,15 +245,12 @@ const styles = StyleSheet.create({
     backgroundColor: ORBITX_THEME.colors.primaryGreen,
   },
   progressLabel: {
-    alignSelf: 'flex-end',
     color: ORBITX_THEME.colors.primaryGreen,
     fontFamily: FONT.semibold,
     fontSize: 12,
   },
-  bottomRow: {
-    marginTop: 18,
-  },
   timeRow: {
+    marginTop: 11,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -289,81 +259,79 @@ const styles = StyleSheet.create({
   remainingLabel: {
     color: withOpacity('#FAFAFA', 0.48),
     fontFamily: FONT.medium,
-    fontSize: 10.8,
-    letterSpacing: 0.3,
+    fontSize: 10.4,
     flex: 1,
   },
   remainingLabelSmall: {
-    fontSize: 10.2,
+    fontSize: 9.8,
   },
   rightColumn: {
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    paddingTop: 4,
+    paddingTop: 2,
   },
   ctaButton: {
-    minWidth: 96,
-    minHeight: 40,
-    borderRadius: 8,
+    minWidth: 82,
+    minHeight: 34,
+    borderRadius: 9,
     backgroundColor: ORBITX_THEME.colors.primaryGreen,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
   },
   ctaButtonSmall: {
-    minWidth: 90,
-    minHeight: 38,
+    minWidth: 76,
+    minHeight: 32,
   },
   ctaLabel: {
     color: ORBITX_THEME.colors.background,
     fontFamily: FONT.bold,
-    fontSize: 14,
+    fontSize: 12,
   },
   artWrap: {
-    width: 50,
-    height: 50,
+    width: 42,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    marginTop: 4,
   },
   artWrapSmall: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
   },
   artGlow: {
     position: 'absolute',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
   },
   artGlowSmall: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   artCore: {
-    width: 32,
-    height: 32,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: withOpacity('#06150D', 0.8),
     borderWidth: 1,
-    borderColor: withOpacity('#FFFFFF', 0.12),
+    borderColor: withOpacity('#FFFFFF', 0.1),
   },
   artCoreSmall: {
-    width: 28,
-    height: 28,
+    width: 25,
+    height: 25,
     borderRadius: 9,
   },
   artOrbitRing: {
     position: 'absolute',
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.18),
+    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.16),
   },
   pressed: {
     opacity: 0.8,

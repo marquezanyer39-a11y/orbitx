@@ -54,8 +54,8 @@ export function LiveMarketSection({
   onRetry,
   onViewAll,
 }: LiveMarketSectionProps) {
-  const assetWidth = Math.max(isSmallPhone ? 118 : 126, Math.floor(contentWidth * 0.34));
-  const chartWidth = Math.max(isSmallPhone ? 88 : 96, Math.floor(contentWidth * 0.28));
+  const assetWidth = Math.max(isSmallPhone ? 112 : 122, Math.floor(contentWidth * 0.34));
+  const chartWidth = Math.max(isSmallPhone ? 96 : 108, Math.floor(contentWidth * 0.32));
   const priceWidth = Math.max(isSmallPhone ? 116 : 126, contentWidth - assetWidth - chartWidth);
 
   return (
@@ -165,7 +165,7 @@ export function LiveMarketSection({
 const styles = StyleSheet.create({
   root: {
     width: '100%',
-    gap: 12,
+    gap: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -235,13 +235,13 @@ const styles = StyleSheet.create({
   },
   row: {
     width: '100%',
-    minHeight: 58,
+    minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
     position: 'relative',
   },
   rowSmall: {
-    minHeight: 54,
+    minHeight: 50,
   },
   rowPressed: {
     opacity: 0.74,
