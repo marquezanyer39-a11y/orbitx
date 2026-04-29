@@ -22,6 +22,15 @@ interface ProfileHeroCardProps {
   onEdit: () => void;
 }
 
+function formatOrbitId(orbitId: string) {
+  const cleaned = orbitId.trim();
+  if (cleaned.length <= 10) {
+    return cleaned;
+  }
+
+  return `${cleaned.slice(0, 9)}...`;
+}
+
 export function ProfileHeroCard({
   identity,
   handle,
@@ -42,14 +51,19 @@ export function ProfileHeroCard({
       <View style={styles.avatarShell}>
         <View style={styles.avatarRing}>
           {identity.avatarUri ? (
-            <Image source={{ uri: identity.avatarUri }} style={styles.avatar} />
+            <Image source={{ uri: identity.avatarUri }} style={styles.avatar} resizeMode="cover" />
           ) : (
             <View style={styles.avatarFallback}>
               <Text style={styles.avatarInitial}>{identity.avatarInitial}</Text>
             </View>
           )}
         </View>
-        <Pressable onPress={onEdit} style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}>
+        <Pressable
+          onPress={onEdit}
+          accessibilityRole="button"
+          accessibilityLabel="Cambiar foto de perfil"
+          style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
+        >
           <Ionicons name="pencil" size={12} color={PROFILE_THEME.colors.textPrimary} />
         </Pressable>
       </View>
@@ -73,9 +87,17 @@ export function ProfileHeroCard({
         <Text style={styles.handle} numberOfLines={1}>
           {handle}
         </Text>
-        <Text style={styles.meta} numberOfLines={1}>
-          {identity.email} • ID: {identity.orbitId}
-        </Text>
+
+        <View style={styles.metaBlock}>
+          <Text style={styles.email} numberOfLines={1} ellipsizeMode="middle">
+            {identity.email}
+          </Text>
+          <View style={styles.idPill}>
+            <Text style={styles.idText} numberOfLines={1}>
+              ID: {formatOrbitId(identity.orbitId)}
+            </Text>
+          </View>
+        </View>
       </View>
 
       <View style={styles.chips}>
@@ -95,13 +117,13 @@ const styles = StyleSheet.create({
   card: {
     overflow: 'hidden',
     borderRadius: PROFILE_THEME.radius.hero,
-    paddingHorizontal: 18,
-    paddingTop: 20,
-    paddingBottom: 18,
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 16,
     borderWidth: 1,
-    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.62),
+    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.52),
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
     backgroundColor: PROFILE_THEME.colors.surface,
   },
   glow: {
@@ -117,9 +139,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   avatarRing: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     padding: 3,
     backgroundColor: withProfileAlpha(PROFILE_THEME.colors.primary, 0.2),
     borderWidth: 1,
@@ -128,11 +150,11 @@ const styles = StyleSheet.create({
   avatar: {
     width: '100%',
     height: '100%',
-    borderRadius: 43,
+    borderRadius: 41,
   },
   avatarFallback: {
     flex: 1,
-    borderRadius: 43,
+    borderRadius: 41,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceLow, 0.96),
@@ -176,13 +198,13 @@ const styles = StyleSheet.create({
   name: {
     color: PROFILE_THEME.colors.textPrimary,
     fontFamily: PROFILE_THEME.typography.title,
-    fontSize: 28,
-    lineHeight: 32,
+    fontSize: 26,
+    lineHeight: 30,
     textAlign: 'center',
     minWidth: 0,
   },
   nameSmall: {
-    fontSize: 25,
+    fontSize: 24,
   },
   verifiedBadge: {
     width: 16,
@@ -197,10 +219,32 @@ const styles = StyleSheet.create({
     fontFamily: PROFILE_THEME.typography.bodyMedium,
     fontSize: 14,
   },
-  meta: {
+  metaBlock: {
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
+    width: '100%',
+  },
+  email: {
     color: PROFILE_THEME.colors.textMuted,
     fontFamily: PROFILE_THEME.typography.body,
     fontSize: 13,
+    textAlign: 'center',
+    maxWidth: '100%',
+  },
+  idPill: {
+    maxWidth: '82%',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: PROFILE_THEME.radius.pill,
+    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceLowest, 0.72),
+    borderWidth: 1,
+    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.36),
+  },
+  idText: {
+    color: PROFILE_THEME.colors.textSecondary,
+    fontFamily: PROFILE_THEME.typography.bodyMedium,
+    fontSize: 12,
     textAlign: 'center',
   },
   chips: {
@@ -214,12 +258,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
     borderRadius: PROFILE_THEME.radius.pill,
     backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceLowest, 0.96),
     borderWidth: 1,
-    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.55),
+    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.5),
   },
   statusDot: {
     width: 8,
@@ -233,12 +277,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   infoChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
     borderRadius: PROFILE_THEME.radius.pill,
     backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceLowest, 0.9),
     borderWidth: 1,
-    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.5),
+    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.46),
   },
   infoChipText: {
     color: PROFILE_THEME.colors.textSecondary,

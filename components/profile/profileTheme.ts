@@ -20,7 +20,7 @@ export const PROFILE_THEME = {
   },
   spacing: {
     horizontal: 16,
-    section: 20,
+    section: 18,
     block: 16,
   },
   radius: {
@@ -35,7 +35,7 @@ export const PROFILE_THEME = {
     bodyMedium: FONT.medium,
     bodyStrong: FONT.semibold,
   },
-  bottomSpacing: 132,
+  bottomSpacing: 142,
 } as const;
 
 export function withProfileAlpha(color: string, alpha: number) {

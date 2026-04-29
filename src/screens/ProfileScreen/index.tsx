@@ -1,8 +1,11 @@
 import Constants from 'expo-constants';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ProfileAstraCard } from '../../../components/profile/ProfileAstraCard';
 import { ProfileCustomizationCard } from '../../../components/profile/ProfileCustomizationCard';
@@ -21,6 +24,7 @@ import { useAstra } from '../../hooks/useAstra';
 import { useProfileData } from '../../hooks/useProfileData';
 import { useSecurityStatus } from '../../hooks/useSecurityStatus';
 import { useAuthStore } from '../../store/authStore';
+import { useUiStore } from '../../store/uiStore';
 
 const ACCENT_LABELS = {
   violet: 'Violeta',
@@ -36,11 +40,45 @@ const MOTION_LABELS = {
   battle: 'Batalla',
 } as const;
 
+const PROFILE_AVATAR_DIR = `${FileSystem.documentDirectory ?? ''}orbitx-profile/`;
+
+function guessImageExtension(uri: string) {
+  const cleanUri = uri.split('?')[0] ?? uri;
+  const match = cleanUri.match(/\.([a-zA-Z0-9]{3,5})$/);
+  return match?.[1] ? `.${match[1].toLowerCase()}` : '.jpg';
+}
+
+async function persistProfileAvatarUri(sourceUri: string) {
+  if (!sourceUri.trim()) {
+    throw new Error('No recibimos una imagen valida.');
+  }
+
+  if (!FileSystem.documentDirectory || /^https?:\/\//i.test(sourceUri)) {
+    return sourceUri;
+  }
+
+  if (sourceUri.startsWith(PROFILE_AVATAR_DIR)) {
+    return sourceUri;
+  }
+
+  const directory = await FileSystem.getInfoAsync(PROFILE_AVATAR_DIR);
+  if (!directory.exists) {
+    await FileSystem.makeDirectoryAsync(PROFILE_AVATAR_DIR, { intermediates: true });
+  }
+
+  const destinationUri = `${PROFILE_AVATAR_DIR}avatar-${Date.now()}${guessImageExtension(sourceUri)}`;
+  await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
+  return destinationUri;
+}
+
 export default function ProfileScreen() {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isSmallPhone = width < 380;
   const profile = useAuthStore((state) => state.profile);
   const signOut = useAuthStore((state) => state.signOut);
+  const updateAvatar = useAuthStore((state) => state.updateAvatar);
+  const showToast = useUiStore((state) => state.showToast);
   const settings = useOrbitStore((state) => state.settings);
   const { identity, metrics } = useProfileData();
   const { alert, resendConfirmationEmail, securityStatus } = useSecurityStatus();
@@ -53,6 +91,8 @@ export default function ProfileScreen() {
   const customizationSummary = `${ACCENT_LABELS[settings.orbitAccentPreset]} | ${
     settings.orbitMotionEnabled ? MOTION_LABELS[settings.orbitMotionPreset] : 'Pausado'
   }`;
+  const bottomPadding = Math.max(PROFILE_THEME.bottomSpacing, 74 + insets.bottom + 48);
+  const topPadding = isSmallPhone ? 12 : 14;
 
   const quickActions = [
     {
@@ -105,8 +145,8 @@ export default function ProfileScreen() {
       label: 'Seguridad',
       value:
         securityStatus.pinEnabled || securityStatus.biometricsEnabled
-          ? 'Acceso seguro activo'
-          : 'Configurar acceso seguro',
+          ? 'Acceso seguro'
+          : 'Configurar',
       icon: 'shield-checkmark-outline' as const,
       onPress: () => router.push('/security'),
     },
@@ -154,6 +194,39 @@ export default function ProfileScreen() {
     router.push('/security');
   };
 
+  const handlePickAvatar = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      showToast('Necesitamos acceso a tu galería para cambiar la foto.', 'error');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.86,
+      selectionLimit: 1,
+    });
+
+    if (result.canceled || !result.assets?.length) {
+      return;
+    }
+
+    const assetUri = result.assets[0]?.uri;
+    if (!assetUri) {
+      showToast('No pudimos leer la imagen seleccionada.', 'error');
+      return;
+    }
+
+    try {
+      const storedAvatarUri = await persistProfileAvatarUri(assetUri);
+      updateAvatar(storedAvatarUri);
+    } catch {
+      updateAvatar(assetUri);
+    }
+  };
+
   const handleSignOut = async () => {
     if (signingOut) return;
     setSigningOut(true);
@@ -168,7 +241,13 @@ export default function ProfileScreen() {
   return (
     <>
       <StatusBar style="light" />
-      <ScreenContainer contentContainerStyle={styles.content} backgroundMode="plain">
+      <ScreenContainer
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: topPadding, paddingBottom: bottomPadding },
+        ]}
+        backgroundMode="plain"
+      >
         <ProfileHeader
           onBack={() => router.replace('/(tabs)/home')}
           onGrid={() => router.push('/history')}
@@ -179,7 +258,7 @@ export default function ProfileScreen() {
           identity={identity}
           handle={handle}
           isSmallPhone={isSmallPhone}
-          onEdit={() => router.push('/personalization')}
+          onEdit={handlePickAvatar}
         />
 
         <ProfileMetricsGrid
@@ -233,19 +312,17 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: PROFILE_THEME.spacing.horizontal,
-    paddingTop: 10,
-    paddingBottom: PROFILE_THEME.bottomSpacing,
     gap: PROFILE_THEME.spacing.section,
     backgroundColor: PROFILE_THEME.colors.background,
   },
   footer: {
     alignItems: 'center',
-    paddingTop: 8,
+    paddingTop: 6,
   },
   footerText: {
     color: PROFILE_THEME.colors.textSecondary,
     fontFamily: PROFILE_THEME.typography.body,
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'center',
   },
 });

@@ -40,7 +40,8 @@ export function ProfileHeader({ onBack, onGrid, onSettings }: ProfileHeaderProps
 
 const styles = StyleSheet.create({
   container: {
-    gap: 14,
+    gap: 10,
+    paddingTop: 2,
   },
   row: {
     flexDirection: 'row',
@@ -52,9 +53,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceHigh, 0.9),
@@ -71,8 +72,8 @@ const styles = StyleSheet.create({
   title: {
     color: PROFILE_THEME.colors.textPrimary,
     fontFamily: PROFILE_THEME.typography.title,
-    fontSize: 31,
-    lineHeight: 34,
+    fontSize: 28,
+    lineHeight: 31,
   },
   subtitle: {
     color: PROFILE_THEME.colors.textSecondary,

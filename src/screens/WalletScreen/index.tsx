@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ExternalWalletConnectSheet } from '../../../components/wallet/ExternalWalletConnectSheet';
+import { ExternalWalletBalanceSummary } from '../../../components/wallet/ExternalWalletBalanceSummary';
 import { pickLanguageText } from '../../../constants/i18n';
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
@@ -29,6 +30,7 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import { useAstra } from '../../hooks/useAstra';
 import { useAstraStore } from '../../store/astraStore';
 import { useExternalWallet } from '../../hooks/useExternalWallet';
+import { useExternalWalletBalances } from '../../hooks/useExternalWalletBalances';
 
 const NETWORKS = ['base', 'ethereum', 'bnb', 'solana'] as const;
 type SeedModalMode = 'reveal' | 'export' | 'backup';
@@ -61,6 +63,15 @@ export default function WalletScreen() {
   const [pinSheetVisible, setPinSheetVisible] = useState(false);
   const [pendingSeedModeAfterPin, setPendingSeedModeAfterPin] = useState<SeedModalMode | null>(null);
   const lastAstraActionRef = useRef<string>('');
+  const externalWalletAddress =
+    externalWalletRuntime.address?.trim() || wallet.externalWallet.address?.trim() || '';
+  const externalWalletChainId =
+    externalWalletRuntime.chainId ?? wallet.externalWallet.chainId;
+  const externalWalletBalances = useExternalWalletBalances({
+    address: externalWalletAddress,
+    chainId: externalWalletChainId,
+    enabled: Boolean(externalWalletAddress),
+  });
   const externalWalletUnavailableTitle = !externalWalletRuntime.configured
     ? 'WalletConnect no configurado'
     : 'WalletConnect no disponible';
@@ -75,10 +86,10 @@ export default function WalletScreen() {
   }, [wallet.refreshSecurityStatus, wallet.syncCreatedTokens]);
 
   useEffect(() => {
-    if (!wallet.isWalletReady && activeTab === 'web3') {
+    if (!wallet.isWalletReady && !externalWalletAddress && activeTab === 'web3') {
       setActiveTab('spot');
     }
-  }, [activeTab, wallet.isWalletReady]);
+  }, [activeTab, externalWalletAddress, wallet.isWalletReady]);
 
   useEffect(() => {
     if (!wallet.error) {
@@ -249,8 +260,8 @@ export default function WalletScreen() {
           : `Billetera detecto este problema: ${wallet.error}`
         : wallet.isWalletReady
           ? language === 'en'
-            ? `Your Web3 space is ready on ${wallet.selectedNetwork.toUpperCase()} with ${wallet.assets.length} assets and ${wallet.externalWallet.address ? 'one external wallet connected.' : 'no external wallet connected.'}`
-            : `Tu espacio Web3 esta listo en ${wallet.selectedNetwork.toUpperCase()} con ${wallet.assets.length} activos y ${wallet.externalWallet.address ? 'una billetera externa conectada.' : 'sin billetera externa conectada.'}`
+            ? `Your Web3 space is ready on ${wallet.selectedNetwork.toUpperCase()} with ${wallet.assets.length} assets and ${externalWalletAddress ? 'one external wallet connected.' : 'no external wallet connected.'}`
+            : `Tu espacio Web3 esta listo en ${wallet.selectedNetwork.toUpperCase()} con ${wallet.assets.length} activos y ${externalWalletAddress ? 'una billetera externa conectada.' : 'sin billetera externa conectada.'}`
           : language === 'en'
             ? 'You still do not have a created or imported wallet.'
             : 'Todavia no tienes una billetera creada o importada.',
@@ -270,7 +281,7 @@ export default function WalletScreen() {
         assetsCount: wallet.assets.length,
         spotAssetsCount: spotAssets.length,
         createdTokensCount: wallet.createdTokens.length,
-        hasExternalWallet: Boolean(wallet.externalWallet.address),
+        hasExternalWallet: Boolean(externalWalletAddress),
         walletError: wallet.error ?? null,
       },
       labels: {
@@ -279,13 +290,13 @@ export default function WalletScreen() {
         totalSpotLabel: formatCurrency(totalSpot),
         totalWeb3Label: formatCurrency(totalWeb3),
         activeTabLabel: activeTab,
-        externalWalletLabel: wallet.externalWallet.address
-          ? maskAddress(wallet.externalWallet.address)
+        externalWalletLabel: externalWalletAddress
+          ? maskAddress(externalWalletAddress)
           : undefined,
       },
       walletReady: wallet.isWalletReady,
       seedBackedUp: Boolean(wallet.securityStatus.seedPhraseConfirmedAt),
-      externalWalletConnected: Boolean(wallet.externalWallet.address),
+      externalWalletConnected: Boolean(externalWalletAddress),
       errorBody: wallet.error ?? undefined,
     }),
     [
@@ -298,7 +309,7 @@ export default function WalletScreen() {
       wallet.assets.length,
       wallet.createdTokens.length,
       wallet.error,
-      wallet.externalWallet.address,
+      externalWalletAddress,
       wallet.isWalletReady,
       wallet.securityStatus.seedPhraseConfirmedAt,
       wallet.selectedNetwork,
@@ -617,7 +628,7 @@ export default function WalletScreen() {
                   rightSlot={
                     <PrimaryButton
                       label={
-                        wallet.externalWallet.address
+                        externalWalletAddress
                           ? t('walletView.updateConnection')
                           : t('walletView.connectConnection')
                       }
@@ -647,7 +658,7 @@ export default function WalletScreen() {
                     <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
                       {externalWalletRuntime.isConnected
                         ? `${externalWalletRuntime.walletName ?? 'Wallet externa'} - ${maskAddress(
-                            wallet.externalWallet.address,
+                            externalWalletAddress,
                           )}`
                         : externalWalletRuntime.disabledReason
                           ? externalWalletUnavailableBody
@@ -663,7 +674,7 @@ export default function WalletScreen() {
                     </Text>
                   </View>
 
-                  {wallet.externalWallet.address ? (
+                  {externalWalletAddress ? (
                     <PrimaryButton
                       label={t('walletView.disconnectConnection')}
                       tone="ghost"
@@ -671,6 +682,19 @@ export default function WalletScreen() {
                     />
                   ) : null}
                 </View>
+
+                {externalWalletAddress ? (
+                  <ExternalWalletBalanceSummary
+                    status={externalWalletBalances.status}
+                    chainLabel={externalWalletBalances.chainLabel}
+                    nativeAsset={externalWalletBalances.nativeAsset}
+                    tokenAssets={externalWalletBalances.tokenAssets}
+                    failedTokenCount={externalWalletBalances.failedTokenCount}
+                    message={externalWalletBalances.message}
+                    updatedAt={externalWalletBalances.updatedAt}
+                    onRefresh={() => void externalWalletBalances.refresh()}
+                  />
+                ) : null}
               </View>
 
               <View style={styles.section}>
@@ -761,7 +785,7 @@ export default function WalletScreen() {
                 onPress={() => setConnectSheetVisible(true)}
               />
 
-              {wallet.externalWallet.address ? (
+              {externalWalletAddress ? (
                 <View
                   style={[
                     styles.tokenRow,
@@ -778,7 +802,7 @@ export default function WalletScreen() {
                         : t('walletView.externalLinkedTitle')}
                     </Text>
                     <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
-                      {maskAddress(wallet.externalWallet.address)}
+                      {maskAddress(externalWalletAddress)}
                     </Text>
                     {externalWalletRuntime.isConnected ? (
                       <Text style={[styles.tokenBody, { color: colors.textSoft }]}>
@@ -792,6 +816,19 @@ export default function WalletScreen() {
                     onPress={() => void externalWalletRuntime.disconnect()}
                   />
                 </View>
+              ) : null}
+
+              {externalWalletAddress ? (
+                <ExternalWalletBalanceSummary
+                  status={externalWalletBalances.status}
+                  chainLabel={externalWalletBalances.chainLabel}
+                  nativeAsset={externalWalletBalances.nativeAsset}
+                  tokenAssets={externalWalletBalances.tokenAssets}
+                  failedTokenCount={externalWalletBalances.failedTokenCount}
+                  message={externalWalletBalances.message}
+                  updatedAt={externalWalletBalances.updatedAt}
+                  onRefresh={() => void externalWalletBalances.refresh()}
+                />
               ) : null}
             </View>
           )}

@@ -17,7 +17,7 @@ export function ProfileCustomizationCard({
     <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <LinearGradient
         colors={[
-          withProfileAlpha(PROFILE_THEME.colors.primary, 0.16),
+          withProfileAlpha(PROFILE_THEME.colors.primary, 0.14),
           withProfileAlpha(PROFILE_THEME.colors.surfaceHigh, 0.98),
         ]}
         start={{ x: 0, y: 0 }}
@@ -26,10 +26,10 @@ export function ProfileCustomizationCard({
       >
         <View style={styles.left}>
           <View style={styles.iconWrap}>
-            <Ionicons name="color-palette-outline" size={18} color={PROFILE_THEME.colors.textPrimary} />
+            <Ionicons name="color-palette-outline" size={17} color={PROFILE_THEME.colors.textPrimary} />
           </View>
           <View style={styles.copy}>
-            <Text style={styles.title} numberOfLines={1}>
+            <Text style={styles.title} numberOfLines={2}>
               Colores, temas y movimiento
             </Text>
             <Text style={styles.body} numberOfLines={2}>
@@ -42,7 +42,7 @@ export function ProfileCustomizationCard({
           <Text style={styles.summary} numberOfLines={2}>
             {summary}
           </Text>
-          <Ionicons name="chevron-forward" size={18} color={PROFILE_THEME.colors.textSecondary} />
+          <Ionicons name="chevron-forward" size={17} color={PROFILE_THEME.colors.textSecondary} />
         </View>
       </LinearGradient>
     </Pressable>
@@ -59,28 +59,28 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   gradient: {
-    minHeight: 92,
+    minHeight: 88,
     borderRadius: PROFILE_THEME.radius.card,
     borderWidth: 1,
-    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.46),
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.4),
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 14,
+    gap: 12,
   },
   left: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 11,
     flex: 1,
     minWidth: 0,
   },
   iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 33,
+    height: 33,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceLowest, 0.88),
@@ -88,31 +88,33 @@ const styles = StyleSheet.create({
   copy: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
+    gap: 3,
   },
   title: {
     color: PROFILE_THEME.colors.textPrimary,
     fontFamily: PROFILE_THEME.typography.bodyStrong,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 19,
   },
   body: {
     color: PROFILE_THEME.colors.textSecondary,
     fontFamily: PROFILE_THEME.typography.body,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
   },
   right: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    maxWidth: 110,
+    justifyContent: 'flex-end',
+    gap: 7,
+    maxWidth: 96,
+    flexShrink: 0,
   },
   summary: {
     color: PROFILE_THEME.colors.textSecondary,
     fontFamily: PROFILE_THEME.typography.bodyMedium,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     textAlign: 'right',
     flexShrink: 1,
   },
