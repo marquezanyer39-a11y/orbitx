@@ -1,4 +1,5 @@
 import { ONCHAIN_ASSET_SPECS, PUBLIC_RPC_URLS } from '../constants/onchain';
+import { FEATURE_STATUS } from '../src/constants/featureStatus';
 import type { WalletNetwork } from '../types';
 import { getStoredWalletBundle } from './wallet';
 
@@ -63,7 +64,7 @@ export function getOrbitWalletTransferSupport(tokenId: string) {
   if (!canSendOrbitWalletToken(tokenId)) {
     return {
       supported: false,
-      message: 'Este token todavia no puede enviarse desde OrbitX Wallet.',
+      message: 'Este token todavia no puede enviarse desde QVEX Wallet.',
     };
   }
 
@@ -75,6 +76,15 @@ export async function sendOrbitWalletAsset(
   destination: string,
   amount: number,
 ): Promise<OrbitWalletTransferResult> {
+  if (
+    !Boolean(FEATURE_STATUS.web3.realExecutionEnabled as boolean) ||
+    !Boolean(FEATURE_STATUS.web3.localSendEnabled as boolean)
+  ) {
+    throw new Error(
+      'WEB3_LOCAL_SEND_DISABLED: El envio local real esta deshabilitado por configuracion.',
+    );
+  }
+
   const support = getOrbitWalletTransferSupport(tokenId);
   if (!support.supported) {
     throw new Error(support.message);
@@ -86,7 +96,7 @@ export async function sendOrbitWalletAsset(
 
   const bundle = await getStoredWalletBundle();
   if (!bundle) {
-    throw new Error('Primero crea o importa tu wallet OrbitX.');
+    throw new Error('Primero crea o importa tu wallet QVEX.');
   }
 
   const spec = ONCHAIN_ASSET_SPECS.find((item) => item.tokenId === tokenId);

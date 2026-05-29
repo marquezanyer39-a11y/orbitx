@@ -258,7 +258,7 @@ function recordAstraWalletFlow(
     const { useAstraStore } = require('./astraStore') as typeof import('./astraStore');
     useAstraStore.getState().recordWalletFlow(guideId, status, error);
   } catch (astraError) {
-    devWarn('[OrbitX][Wallet] Astra wallet flow bridge failed', astraError);
+    devWarn('[QVEX][Wallet] Astra wallet flow bridge failed', astraError);
   }
 }
 
@@ -322,7 +322,7 @@ export const useWalletStore = create<WalletState>()(
                 externalWallet: localExternalWallet,
               });
             } catch (syncError) {
-              devWarn('[OrbitX][Wallet] remote wallet association sync failed', syncError);
+              devWarn('[QVEX][Wallet] remote wallet association sync failed', syncError);
             }
           }
 
@@ -392,7 +392,7 @@ export const useWalletStore = create<WalletState>()(
 
           await get().refreshBalances();
         } catch (error) {
-          devWarn('[OrbitX][Wallet] hydrateWallet failed', error);
+          devWarn('[QVEX][Wallet] hydrateWallet failed', error);
           set({
             hasHydrated: true,
             loading: false,
@@ -421,7 +421,7 @@ export const useWalletStore = create<WalletState>()(
             securityStatus,
             externalWallet,
             history: [
-              buildHistoryEntry('Billetera creada', 'Tu billetera OrbitX quedo lista para operar.'),
+              buildHistoryEntry('Billetera creada', 'Tu billetera QVEX quedo lista para operar.'),
               ...state.history,
             ].slice(0, 24),
             hasHydrated: true,
@@ -435,13 +435,13 @@ export const useWalletStore = create<WalletState>()(
               externalWallet,
             });
           } catch (syncError) {
-            devWarn('[OrbitX][Wallet] remote wallet sync after create failed', syncError);
+            devWarn('[QVEX][Wallet] remote wallet sync after create failed', syncError);
           }
           recordAstraWalletFlow('create_wallet', 'completed');
           await get().refreshBalances();
           return wallet;
         } catch (error) {
-          devWarn('[OrbitX][Wallet] createWallet failed', error);
+          devWarn('[QVEX][Wallet] createWallet failed', error);
           const message =
             error instanceof Error ? error.message : 'No se pudo crear la billetera.';
           set({
@@ -486,13 +486,13 @@ export const useWalletStore = create<WalletState>()(
               externalWallet,
             });
           } catch (syncError) {
-            devWarn('[OrbitX][Wallet] remote wallet sync after import failed', syncError);
+            devWarn('[QVEX][Wallet] remote wallet sync after import failed', syncError);
           }
           recordAstraWalletFlow('import_wallet', 'completed');
           await get().refreshBalances();
           return wallet;
         } catch (error) {
-          devWarn('[OrbitX][Wallet] importWallet failed', error);
+          devWarn('[QVEX][Wallet] importWallet failed', error);
           const message =
             error instanceof Error ? error.message : 'No se pudo importar la billetera.';
           set({
@@ -562,7 +562,7 @@ export const useWalletStore = create<WalletState>()(
               snapshot.assets.length &&
               !state.history.some((entry) => entry.title === 'Balances actualizados')
                 ? [
-                    buildHistoryEntry('Balances actualizados', 'OrbitX refresco tus activos on-chain.'),
+                    buildHistoryEntry('Balances actualizados', 'QVEX refresco tus activos on-chain.'),
                     ...state.history,
                   ].slice(0, 24)
                 : state.history,
@@ -572,7 +572,7 @@ export const useWalletStore = create<WalletState>()(
                 : null,
           }));
         } catch (error) {
-          devWarn('[OrbitX][Wallet] refreshBalances failed', error);
+          devWarn('[QVEX][Wallet] refreshBalances failed', error);
           set({
             loading: false,
             web3Phase: 'error',
@@ -592,7 +592,7 @@ export const useWalletStore = create<WalletState>()(
           const securityStatus = await getWalletSecurityStatus();
           set({ securityStatus, error: null });
         } catch (error) {
-          devWarn('[OrbitX][Wallet] refreshSecurityStatus failed', error);
+          devWarn('[QVEX][Wallet] refreshSecurityStatus failed', error);
           set({
             error:
               error instanceof Error
@@ -737,7 +737,7 @@ export const useWalletStore = create<WalletState>()(
               externalWallet: normalizedConnection,
             });
           } catch (syncError) {
-            devWarn('[OrbitX][Wallet] remote external wallet sync failed', syncError);
+            devWarn('[QVEX][Wallet] remote external wallet sync failed', syncError);
           }
         }
       },
@@ -795,13 +795,13 @@ export const useWalletStore = create<WalletState>()(
                 externalWallet,
               });
             } catch (syncError) {
-              devWarn('[OrbitX][Wallet] remote external wallet sync failed', syncError);
+              devWarn('[QVEX][Wallet] remote external wallet sync failed', syncError);
             }
           }
           recordAstraWalletFlow('connect_external_wallet', 'completed');
           return true;
         } catch (error) {
-          devWarn('[OrbitX][Wallet] connectExternalWallet failed', error);
+          devWarn('[QVEX][Wallet] connectExternalWallet failed', error);
           const message =
             error instanceof Error
               ? error.message
@@ -825,7 +825,7 @@ export const useWalletStore = create<WalletState>()(
           history: [
             buildHistoryEntry(
               'Billetera externa desconectada',
-              'La conexion externa se elimino sin afectar tu billetera OrbitX.',
+              'La conexion externa se elimino sin afectar tu billetera QVEX.',
             ),
             ...state.history,
           ].slice(0, 24),
@@ -841,7 +841,7 @@ export const useWalletStore = create<WalletState>()(
             },
             externalWallet: emptyExternalWallet,
           }).catch((syncError) => {
-            devWarn('[OrbitX][Wallet] remote external wallet disconnect sync failed', syncError);
+            devWarn('[QVEX][Wallet] remote external wallet disconnect sync failed', syncError);
           });
         }
       },

@@ -1,183 +1,307 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 import { ExternalWalletConnectSheet } from '../../../components/wallet/ExternalWalletConnectSheet';
-import { ExternalWalletBalanceSummary } from '../../../components/wallet/ExternalWalletBalanceSummary';
-import { Web3AssetsList } from '../../../components/wallet/Web3AssetsList';
-import {
-  Web3NetworkFilter,
-  type Web3NetworkFilterValue,
-} from '../../../components/wallet/Web3NetworkFilter';
-import { Web3WalletSummary } from '../../../components/wallet/Web3WalletSummary';
-import { pickLanguageText } from '../../../constants/i18n';
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
-import { useAppTheme } from '../../../hooks/useAppTheme';
-import { useI18n } from '../../../hooks/useI18n';
-import { AddressCard } from '../../components/wallet/AddressCard';
-import { AssetList } from '../../components/wallet/AssetList';
-import { BalanceCard } from '../../components/wallet/BalanceCard';
-import { SeedRevealCard } from '../../components/wallet/SeedRevealCard';
-import { WalletActions } from '../../components/wallet/WalletActions';
-import { WalletHeader } from '../../components/wallet/WalletHeader';
-import { WalletPinSheet } from '../../../components/wallet/WalletPinSheet';
-import { WalletSeedSecurityScreen } from '../../../components/wallet/WalletSeedSecurityScreen';
-import { WalletTabs } from '../../components/wallet/WalletTabs';
-import { RampActionGrid } from '../../components/wallet/RampActionGrid';
-import { PrimaryButton } from '../../components/common/PrimaryButton';
+import { FONT, ORBITX_COLORS, RADII, withOpacity } from '../../../constants/theme';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
-import { SectionHeader } from '../../components/common/SectionHeader';
-import { useWallet } from '../../hooks/useWallet';
-import { useMarketData } from '../../hooks/useMarketData';
-import { navigateToTrade } from '../../navigation/AppNavigator';
-import { useUiStore } from '../../store/uiStore';
-import { copyToClipboard } from '../../utils/copyToClipboard';
-import { formatCurrency } from '../../utils/formatCurrency';
-import { useAstra } from '../../hooks/useAstra';
-import { useAstraStore } from '../../store/astraStore';
+import { FEATURE_STATUS } from '../../constants/featureStatus';
 import { useExternalWallet } from '../../hooks/useExternalWallet';
 import { useExternalWalletBalances } from '../../hooks/useExternalWalletBalances';
+import { useMarketData } from '../../hooks/useMarketData';
+import { useWallet } from '../../hooks/useWallet';
+import { getPortfolioDistribution, getTotalPortfolioBalanceUsd } from '../../utils/portfolioTotals';
 
-const NETWORKS = ['base', 'ethereum', 'bnb', 'solana'] as const;
-type SeedModalMode = 'reveal' | 'export' | 'backup';
+const COLORS = {
+  ...ORBITX_COLORS,
+  text: ORBITX_COLORS.textPrimary,
+  textSecondary: ORBITX_COLORS.textSecondary,
+  textMuted: ORBITX_COLORS.textMuted,
+  greenBright: ORBITX_COLORS.green,
+  blue: ORBITX_COLORS.web3Blue,
+  amber: ORBITX_COLORS.warning,
+};
 
-function maskAddress(address: string) {
-  if (!address) {
-    return '';
+const QUICK_ACTIONS = [
+  { key: 'deposit', label: 'Depositar', icon: 'download-outline' as const, route: '/wallet-local' },
+  { key: 'receive', label: 'Recibir', icon: 'arrow-down-outline' as const, route: '/wallet-web3' },
+  { key: 'send', label: 'Enviar', icon: 'arrow-up-outline' as const, route: '/send' },
+  { key: 'withdraw', label: 'Retirar', icon: 'share-outline' as const, route: '/wallet-local' },
+  { key: 'transfer', label: 'Transferir', icon: 'swap-horizontal-outline' as const, route: '/convert' },
+] as const;
+
+type WalletActivityItem = {
+  id: string;
+  title: string;
+  subtitle: string;
+  value: string;
+  tone: 'positive' | 'negative' | 'neutral';
+  icon: keyof typeof Ionicons.glyphMap;
+};
+
+const FALLBACK_ACTIVITY: WalletActivityItem[] = [
+  {
+    id: 'deposit-pen',
+    title: 'Ejemplo demo: Depósito PEN',
+    subtitle: 'Vista de ejemplo, no historial real',
+    value: '+ S/ 1,200.00',
+    tone: 'positive' as const,
+    icon: 'wallet-outline' as const,
+  },
+  {
+    id: 'buy-btc',
+    title: 'Ejemplo demo: Compra BTC',
+    subtitle: 'Vista de ejemplo, no historial real',
+    value: '- USD 350.00',
+    tone: 'negative' as const,
+    icon: 'logo-bitcoin' as const,
+  },
+  {
+    id: 'web3-transfer',
+    title: 'Ejemplo demo: Transferencia Web3',
+    subtitle: 'Vista de ejemplo, no historial real',
+    value: '0.15 SOL',
+    tone: 'neutral' as const,
+    icon: 'swap-horizontal-outline' as const,
+  },
+  {
+    id: 'service-payment',
+    title: 'Ejemplo demo: Pago de Servicio',
+    subtitle: 'Vista de ejemplo, no historial real',
+    value: '- S/ 120.50',
+    tone: 'negative' as const,
+    icon: 'receipt-outline' as const,
+  },
+];
+
+function formatUsd(value: number) {
+  const safeValue = Number.isFinite(value) ? value : 0;
+
+  return `USD ${new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(safeValue)}`;
+}
+
+function formatPEN(value: number) {
+  const safeValue = Number.isFinite(value) ? value : 0;
+
+  return `S/ ${new Intl.NumberFormat('es-PE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(safeValue)}`;
+}
+
+function clampPercent(value: number) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return 0;
   }
 
-  return `${address.slice(0, 6)}...${address.slice(-6)}`;
+  return Math.min(Math.max(value, 0), 100);
+}
+
+function MiniBalanceChart() {
+  const segments = [
+    { width: 42, rotate: '-7deg', top: 50, left: 4 },
+    { width: 44, rotate: '4deg', top: 47, left: 42 },
+    { width: 50, rotate: '-13deg', top: 42, left: 82 },
+    { width: 48, rotate: '17deg', top: 36, left: 126 },
+    { width: 52, rotate: '20deg', top: 45, left: 168 },
+    { width: 58, rotate: '-22deg', top: 39, left: 210 },
+    { width: 52, rotate: '-30deg', top: 27, left: 262 },
+  ];
+
+  return (
+    <View pointerEvents="none" style={styles.chartStage}>
+      <View style={styles.chartGridLineTop} />
+      <View style={styles.chartGridLineBottom} />
+      {segments.map((segment, index) => (
+        <View key={`${segment.left}-${segment.top}`} style={styles.chartSegmentGroup}>
+          <View
+            style={[
+              styles.chartLineGlow,
+              {
+                left: segment.left,
+                top: segment.top - 1,
+                width: segment.width,
+                opacity: index > 4 ? 0.3 : 0.2,
+                transform: [{ rotate: segment.rotate }],
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.chartLine,
+              {
+                left: segment.left,
+                top: segment.top,
+                width: segment.width,
+                opacity: index > 4 ? 0.95 : 0.76,
+                transform: [{ rotate: segment.rotate }],
+              },
+            ]}
+          />
+        </View>
+      ))}
+      <View style={styles.chartEndpoint} />
+    </View>
+  );
+}
+
+function Header() {
+  return (
+    <View style={styles.header}>
+      <Text style={styles.headerTitle}>Billetera</Text>
+    </View>
+  );
+}
+
+function DistributionLegend({
+  spotPercent,
+  localPercent,
+  web3Percent,
+}: {
+  spotPercent: number;
+  localPercent: number;
+  web3Percent: number;
+}) {
+  return (
+    <View style={styles.distributionBlock}>
+      <Text style={styles.distributionTitle}>Distribución</Text>
+      <View style={styles.distributionBar}>
+        <View style={[styles.distributionFill, { width: `${spotPercent}%`, backgroundColor: COLORS.purple }]} />
+        <View style={[styles.distributionFill, { width: `${localPercent}%`, backgroundColor: COLORS.green }]} />
+        <View style={[styles.distributionFill, { width: `${web3Percent}%`, backgroundColor: COLORS.blue }]} />
+      </View>
+      <View style={styles.legendRow}>
+        <LegendItem color={COLORS.purple} label={`Spot ${spotPercent.toFixed(1)}%`} />
+        <LegendItem color={COLORS.green} label={`Cuenta Local ${localPercent.toFixed(1)}%`} />
+        <LegendItem color={COLORS.blue} label={`Web3 ${web3Percent.toFixed(1)}%`} />
+      </View>
+    </View>
+  );
+}
+
+function LegendItem({ color, label }: { color: string; label: string }) {
+  return (
+    <View style={styles.legendItem}>
+      <View style={[styles.legendDot, { backgroundColor: color }]} />
+      <Text style={styles.legendText} numberOfLines={1}>{label}</Text>
+    </View>
+  );
+}
+
+function QuickActions() {
+  return (
+    <View style={styles.quickActions}>
+      {QUICK_ACTIONS.map((action) => (
+        <Pressable
+          key={action.key}
+          onPress={() => {
+            router.push(action.route as never);
+          }}
+          style={({ pressed }) => [styles.quickAction, pressed && styles.pressed]}
+        >
+          <View style={styles.quickIconWrap}>
+            <Ionicons name={action.icon} size={22} color={COLORS.purple} />
+          </View>
+          <Text style={styles.quickLabel} numberOfLines={1}>{action.label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+function SummaryCard({
+  title,
+  value,
+  change,
+  body,
+  icon,
+  color,
+  badge,
+  onPress,
+}: {
+  title: string;
+  value: string;
+  change?: string;
+  body: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  badge?: string;
+  onPress?: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.summaryCard, pressed && styles.pressed]}>
+      {badge ? (
+        <View style={styles.summaryBadge}>
+          <Text style={styles.summaryBadgeText}>{badge}</Text>
+        </View>
+      ) : null}
+      <View style={[styles.summaryIconWrap, { backgroundColor: withOpacity(color, 0.16) }]}>
+        <Ionicons name={icon} size={20} color={color} />
+      </View>
+      <Text style={styles.summaryTitle} numberOfLines={2}>{title}</Text>
+      <Text style={styles.summaryValue} numberOfLines={1}>{value}</Text>
+      {change ? <Text style={styles.summaryChange}>{change}</Text> : null}
+      <Text style={styles.summaryBody} numberOfLines={2}>{body}</Text>
+    </Pressable>
+  );
+}
+
+function ActivityRow({ item }: { item: WalletActivityItem }) {
+  const toneColor =
+    item.tone === 'positive'
+      ? COLORS.greenBright
+      : item.tone === 'negative'
+        ? COLORS.red
+        : COLORS.text;
+
+  return (
+    <Pressable style={({ pressed }) => [styles.activityRow, pressed && styles.pressed]}>
+      <View style={[styles.activityIcon, { backgroundColor: withOpacity(toneColor, 0.14) }]}>
+        <Ionicons name={item.icon} size={19} color={toneColor} />
+      </View>
+      <View style={styles.activityCopy}>
+        <Text style={styles.activityTitle} numberOfLines={1}>{item.title}</Text>
+        <Text style={styles.activitySubtitle} numberOfLines={1}>{item.subtitle}</Text>
+      </View>
+      <Text style={[styles.activityValue, { color: toneColor }]} numberOfLines={1}>
+        {item.value}
+      </Text>
+    </Pressable>
+  );
 }
 
 export default function WalletScreen() {
-  const params = useLocalSearchParams<{ astraAction?: string; astraTab?: string }>();
-  const { colors } = useAppTheme();
-  const { t } = useI18n();
+  const { width } = useWindowDimensions();
   const wallet = useWallet();
   const externalWalletRuntime = useExternalWallet();
-  const showToast = useUiStore((state) => state.showToast);
   const { markets } = useMarketData('markets');
-  const { openAstra, language } = useAstra();
-  const rememberAstraContext = useAstraStore((state) => state.rememberContext);
-  const recordAstraError = useAstraStore((state) => state.recordError);
-  const { createWallet, isWalletReady } = wallet;
-  const [activeTab, setActiveTab] = useState<'spot' | 'web3'>('spot');
-  const [seedPhraseInput, setSeedPhraseInput] = useState('');
   const [connectSheetVisible, setConnectSheetVisible] = useState(false);
-  const [seedModalVisible, setSeedModalVisible] = useState(false);
-  const [seedModalMode, setSeedModalMode] = useState<SeedModalMode>('reveal');
-  const [pinSheetVisible, setPinSheetVisible] = useState(false);
-  const [pendingSeedModeAfterPin, setPendingSeedModeAfterPin] = useState<SeedModalMode | null>(null);
-  const [web3NetworkFilter, setWeb3NetworkFilter] = useState<Web3NetworkFilterValue>('all');
-  const lastAstraActionRef = useRef<string>('');
+
   const externalWalletAddress =
     externalWalletRuntime.address?.trim() || wallet.externalWallet.address?.trim() || '';
-  const externalWalletChainId =
-    externalWalletRuntime.chainId ?? wallet.externalWallet.chainId;
+  const externalWalletChainId = externalWalletRuntime.chainId ?? wallet.externalWallet.chainId;
   const externalWalletBalances = useExternalWalletBalances({
     address: externalWalletAddress,
     chainId: externalWalletChainId,
     enabled: Boolean(externalWalletAddress),
   });
-  const externalWalletUnavailableTitle = !externalWalletRuntime.configured
-    ? 'WalletConnect no configurado'
-    : 'WalletConnect no disponible';
-  const externalWalletUnavailableBody = !externalWalletRuntime.configured
-    ? 'La conexión con wallets externas estará disponible pronto.'
-    : externalWalletRuntime.disabledReason ??
-      'WalletConnect estará disponible en la APK o development build.';
 
   useEffect(() => {
     wallet.syncCreatedTokens();
     void wallet.refreshSecurityStatus();
   }, [wallet.refreshSecurityStatus, wallet.syncCreatedTokens]);
 
-  useEffect(() => {
-    if (!wallet.isWalletReady && !externalWalletAddress && activeTab === 'web3') {
-      setActiveTab('spot');
-    }
-  }, [activeTab, externalWalletAddress, wallet.isWalletReady]);
-
-  useEffect(() => {
-    if (!wallet.error) {
-      return;
-    }
-
-    recordAstraError({
-      surface: 'wallet',
-      title: pickLanguageText(
-        language,
-        {
-          en: 'Wallet issue',
-          es: 'Problema de billetera',
-          pt: 'Problema na carteira',
-          'zh-Hans': '\u94b1\u5305\u95ee\u9898',
-          hi: 'Wallet \u0938\u092e\u0938\u094d\u092f\u093e',
-          ru: '\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0430 \u043a\u043e\u0448\u0435\u043b\u044c\u043a\u0430',
-          ar: '\u0645\u0634\u0643\u0644\u0629 \u0641\u064a \u0627\u0644\u0645\u062d\u0641\u0638\u0629',
-          id: 'Masalah wallet',
-        },
-        'en',
-      ),
-      body: wallet.error,
-      linkedGuideId: 'resolve_error',
-    });
-  }, [language, recordAstraError, wallet.error]);
-
-  useEffect(() => {
-    if (params.astraTab === 'web3' && activeTab !== 'web3') {
-      setActiveTab('web3');
-    }
-  }, [activeTab, params.astraTab]);
-
-  useEffect(() => {
-    const action = params.astraAction?.trim();
-    if (!action) {
-      lastAstraActionRef.current = '';
-      return;
-    }
-
-    const key = `${params.astraTab ?? ''}:${action}:${isWalletReady ? 'ready' : 'empty'}`;
-    if (lastAstraActionRef.current === key) {
-      return;
-    }
-
-    lastAstraActionRef.current = key;
-
-    if (params.astraTab === 'web3' && activeTab !== 'web3') {
-      setActiveTab('web3');
-    }
-
-    if (action === 'create' && !isWalletReady) {
-      void createWallet();
-      return;
-    }
-
-    if (action === 'connect-external') {
-      setConnectSheetVisible(true);
-    }
-  }, [
-    activeTab,
-    createWallet,
-    isWalletReady,
-    params.astraAction,
-    params.astraTab,
-  ]);
-
-  const totalWeb3 = wallet.assets.reduce((sum, asset) => sum + asset.usdValue, 0);
-  const externalWeb3Total = externalWalletAddress
-    ? externalWalletBalances.totalUsdEstimate
-    : 0;
-  const displayedWeb3Total = externalWalletAddress ? externalWeb3Total : totalWeb3;
-  const displayedWeb3Assets = useMemo(
-    () =>
-      web3NetworkFilter === 'all'
-        ? externalWalletBalances.visibleAssets
-        : externalWalletBalances.visibleAssets.filter(
-            (asset) => asset.chainId === web3NetworkFilter,
-          ),
-    [externalWalletBalances.visibleAssets, web3NetworkFilter],
-  );
   const spotAssets = useMemo(() => {
     const marketMap = new Map(markets.map((item) => [item.baseSymbol.toUpperCase(), item]));
 
@@ -186,869 +310,154 @@ export default function WalletScreen() {
       const price = balance.symbol === 'USDT' || balance.symbol === 'USDC' ? 1 : market?.price ?? 0;
 
       return {
-        id: `spot-${balance.symbol}`,
         symbol: balance.symbol,
-        name: balance.symbol,
         amount: balance.amount,
         usdValue: balance.amount * price,
-        network: 'spot' as const,
-        environment: 'spot' as const,
-        image: market?.image,
       };
     });
   }, [markets, wallet.spotBalances]);
-  const totalSpot = spotAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
-  const totalBalance = totalSpot + displayedWeb3Total;
-  const activeReceiveAddress = wallet.receiveAddresses[wallet.selectedNetwork] || wallet.walletAddress;
-  const isSyncingBalances = wallet.web3Phase === 'balances' || wallet.web3Phase === 'details';
-  const hasNetworkIssues = NETWORKS.some(
-    (network) => wallet.networkSyncState[network].status === 'error',
-  );
-  const showSyncStatus =
-    wallet.isWalletReady &&
-    (isSyncingBalances || wallet.showingCachedBalances || hasNetworkIssues);
-  const walletHeaderTotalLabel =
-    activeTab === 'web3'
-      ? externalWalletBalances.isLoading && displayedWeb3Total === 0
-        ? 'Actualizando...'
-        : formatCurrency(displayedWeb3Total)
-      : formatCurrency(totalBalance);
-  const walletHeaderSubtitle = useMemo(() => {
-    if (activeTab === 'web3' && externalWalletAddress) {
-      if (externalWalletBalances.isLoading) {
-        return 'Actualizando activos Web3...';
-      }
 
-      if (externalWalletBalances.failedNetworkCount > 0) {
-        return 'Algunas redes no pudieron actualizarse.';
-      }
+  const demoSpotTotal = spotAssets.reduce((sum, asset) => sum + asset.usdValue, 0);
+  const totalSpot = FEATURE_STATUS.trade.isDemoMode ? 0 : demoSpotTotal;
+  const totalLocal = 0;
+  const totalLocalWalletWeb3 = wallet.assets.reduce((sum, asset) => sum + asset.usdValue, 0);
+  const totalExternalWeb3 = externalWalletAddress ? externalWalletBalances.totalUsdEstimate : 0;
+  const totalWeb3 = totalLocalWalletWeb3 + totalExternalWeb3;
+  const hasCombinedWeb3Sources = totalLocalWalletWeb3 > 0 && totalExternalWeb3 > 0;
+  const totalBalance = getTotalPortfolioBalanceUsd({
+    spotBalanceUsd: totalSpot,
+    localAccountBalanceUsd: totalLocal,
+    web3BalanceUsd: totalWeb3,
+  });
+  const distribution = getPortfolioDistribution({
+    spotBalanceUsd: totalSpot,
+    localAccountBalanceUsd: totalLocal,
+    web3BalanceUsd: totalWeb3,
+  });
 
-      return 'Activos on-chain bajo tu control.';
+  const spotPercent = clampPercent(distribution.spotPercent);
+  const localPercent = clampPercent(distribution.localPercent);
+  const web3Percent = clampPercent(distribution.web3Percent);
+  const penEstimate = totalBalance * 3.755;
+  const isSmallPhone = width < 380;
+
+  const activityRows = useMemo(() => {
+    if (!wallet.history.length) {
+      return FEATURE_STATUS.web3.showDemoActivity ? FALLBACK_ACTIVITY : [];
     }
 
-    if (activeTab === 'web3') {
-      return 'Conecta una wallet externa para ver tus activos Web3.';
-    }
-
-    if (wallet.loading && !wallet.isWalletReady) {
-      return t('walletView.searchingLinkedWallet');
-    }
-
-    if (wallet.error) {
-      return wallet.error;
-    }
-
-    if (wallet.isWalletReady && wallet.walletSource === 'remote') {
-      return t('walletView.remoteWalletFound');
-    }
-
-    if (wallet.isWalletReady) {
-      return t('walletView.localWalletReady');
-    }
-
-    return t('walletView.createOrImport');
-  }, [
-    activeTab,
-    externalWalletAddress,
-    externalWalletBalances.failedNetworkCount,
-    externalWalletBalances.isLoading,
-    t,
-    wallet.error,
-    wallet.isWalletReady,
-    wallet.loading,
-    wallet.walletSource,
-  ]);
-  const seedCardConfig = useMemo(() => {
-    if (!wallet.mnemonicStored) {
-      return null;
-    }
-
-    if (!wallet.securityStatus.seedPhraseConfirmedAt) {
-      return {
-        title: t('seedReveal.title'),
-        body: t('seedReveal.backupBody'),
-        primaryLabel: t('seedReveal.backupAction'),
-        primaryMode: 'backup' as const,
-        secondaryLabel: t('seedReveal.exportAction'),
-        secondaryMode: 'export' as const,
-      };
-    }
-
-    return {
-      title: t('seedReveal.title'),
-      body: t('seedReveal.revealBody'),
-      primaryLabel: t('seedReveal.revealAction'),
-      primaryMode: 'reveal' as const,
-      secondaryLabel: t('seedReveal.exportAction'),
-      secondaryMode: 'export' as const,
-    };
-  }, [
-    t,
-    wallet.mnemonicStored,
-    wallet.securityStatus.seedPhraseConfirmedAt,
-  ]);
-  const astraWalletContext = useMemo(
-    () => ({
-      surface: 'wallet' as const,
-      path: '/wallet',
-      language,
-      screenName: pickLanguageText(
-        language,
-        {
-          en: 'Wallet',
-          es: 'Billetera',
-          pt: 'Carteira',
-          'zh-Hans': '\u94b1\u5305',
-          hi: 'Wallet',
-          ru: '\u041a\u043e\u0448\u0435\u043b\u0435\u043a',
-          ar: '\u0627\u0644\u0645\u062d\u0641\u0638\u0629',
-          id: 'Wallet',
-        },
-        'en',
-      ),
-      summary: wallet.error
-        ? language === 'en'
-          ? `Wallet detected this issue: ${wallet.error}`
-          : `Billetera detecto este problema: ${wallet.error}`
-        : wallet.isWalletReady
-          ? language === 'en'
-            ? `Your Web3 space is ready with ${externalWalletBalances.visibleAssets.length || wallet.assets.length} assets and ${externalWalletAddress ? 'one external wallet connected.' : 'no external wallet connected.'}`
-            : `Tu espacio Web3 esta listo con ${externalWalletBalances.visibleAssets.length || wallet.assets.length} activos y ${externalWalletAddress ? 'una billetera externa conectada.' : 'sin billetera externa conectada.'}`
-          : language === 'en'
-            ? 'You still do not have a created or imported wallet.'
-            : 'Todavia no tienes una billetera creada o importada.',
-      currentTask: wallet.isWalletReady
-        ? activeTab === 'web3'
-          ? 'wallet_web3_management'
-          : 'wallet_spot_overview'
-        : 'wallet_setup',
-      selectedEntity: {
-        type: 'wallet_network',
-        network: wallet.selectedNetwork,
-        status: wallet.isWalletReady ? 'ready' : 'missing',
-      },
-      uiState: {
-        activeTab,
-        selectedNetwork: wallet.selectedNetwork,
-        assetsCount: wallet.assets.length,
-        spotAssetsCount: spotAssets.length,
-        createdTokensCount: wallet.createdTokens.length,
-        hasExternalWallet: Boolean(externalWalletAddress),
-        walletError: wallet.error ?? null,
-      },
-      labels: {
-        networkLabel: wallet.selectedNetwork.toUpperCase(),
-        totalBalanceLabel: formatCurrency(totalBalance),
-        totalSpotLabel: formatCurrency(totalSpot),
-        totalWeb3Label: formatCurrency(displayedWeb3Total),
-        activeTabLabel: activeTab,
-        externalWalletLabel: externalWalletAddress
-          ? maskAddress(externalWalletAddress)
-          : undefined,
-      },
-      walletReady: wallet.isWalletReady,
-      seedBackedUp: Boolean(wallet.securityStatus.seedPhraseConfirmedAt),
-      externalWalletConnected: Boolean(externalWalletAddress),
-      errorBody: wallet.error ?? undefined,
-    }),
-    [
-      activeTab,
-      language,
-      spotAssets.length,
-      totalBalance,
-      totalSpot,
-      displayedWeb3Total,
-      wallet.assets.length,
-      wallet.createdTokens.length,
-      wallet.error,
-      externalWalletAddress,
-      externalWalletBalances.visibleAssets.length,
-      wallet.isWalletReady,
-      wallet.securityStatus.seedPhraseConfirmedAt,
-      wallet.selectedNetwork,
-    ],
-  );
-
-  useEffect(() => {
-    rememberAstraContext(astraWalletContext);
-  }, [astraWalletContext, rememberAstraContext]);
-
-  function openSeedFlow(mode: SeedModalMode) {
-    setSeedModalMode(mode);
-    setSeedModalVisible(true);
-  }
-
-  function closeSeedFlow() {
-    setSeedModalVisible(false);
-    void wallet.refreshSecurityStatus();
-  }
+    return wallet.history.slice(0, 4).map<WalletActivityItem>((entry, index) => ({
+      id: entry.id,
+      title: entry.title,
+      subtitle: entry.body,
+      value: index === 0 ? 'Actualizado' : '',
+      tone: 'neutral' as const,
+      icon: 'receipt-outline' as const,
+    }));
+  }, [wallet.history]);
 
   return (
-    <ScreenContainer contentContainerStyle={styles.content} backgroundMode="plain">
-      <WalletHeader
-        totalBalanceLabel={walletHeaderTotalLabel}
-        subtitle={walletHeaderSubtitle}
-        onRefresh={() =>
-          activeTab === 'web3' && externalWalletAddress
-            ? void externalWalletBalances.refresh()
-            : void wallet.refreshBalances()
-        }
-        onInfo={() =>
-            openAstra({
-              ...astraWalletContext,
-              surfaceTitle: pickLanguageText(
-                language,
-                {
-                  en: 'Wallet',
-                  es: 'Billetera',
-                  pt: 'Carteira',
-                  'zh-Hans': '\u94b1\u5305',
-                  hi: 'Wallet',
-                  ru: '\u041a\u043e\u0448\u0435\u043b\u0435\u043a',
-                  ar: '\u0627\u0644\u0645\u062d\u0641\u0638\u0629',
-                  id: 'Wallet',
-                },
-                'en',
-              ),
-            })
-        }
-      />
+    <ScreenContainer
+      backgroundMode="plain"
+      contentContainerStyle={[styles.content, isSmallPhone && styles.contentSmall]}
+    >
+      <Header />
 
-      <WalletTabs value={activeTab} onChange={setActiveTab} />
-
-      {showSyncStatus ? (
-        <View
-          style={[
-            styles.syncCard,
-            {
-              backgroundColor: withOpacity(colors.fieldBackground, 0.24),
-              borderColor: withOpacity(colors.borderStrong, 0.42),
-            },
-          ]}
-        >
-          <View style={styles.syncHeaderRow}>
-            <View style={styles.syncCopy}>
-              <Text style={[styles.syncTitle, { color: colors.text }]}>
-                {isSyncingBalances
-                  ? t('walletView.syncingBalances')
-                  : hasNetworkIssues
-                    ? t('walletView.partialNetworkUpdate')
-                    : t('walletView.usingCachedBalances')}
-              </Text>
-              <Text style={[styles.syncBody, { color: colors.textMuted }]}>
-                {wallet.showingCachedBalances
-                  ? t('walletView.usingCachedBalances')
-                  : hasNetworkIssues
-                    ? wallet.error ?? t('walletView.partialNetworkUpdate')
-                    : t('walletView.syncingBalances')}
-              </Text>
-            </View>
-
-            {(hasNetworkIssues || wallet.web3Phase === 'error') ? (
-              <PrimaryButton
-                label={t('walletView.retryUpdate')}
-                tone="secondary"
-                onPress={() => void wallet.refreshBalances()}
-              />
-            ) : null}
-          </View>
-
-          <View style={styles.syncNetworkRow}>
-            {NETWORKS.map((network) => {
-              const state = wallet.networkSyncState[network];
-              const tone =
-                state.status === 'error'
-                  ? colors.loss
-                  : state.status === 'loading'
-                    ? colors.primary
-                    : colors.profit;
-              const statusLabel =
-                state.status === 'error'
-                  ? t('walletView.networkStatusError')
-                  : state.status === 'loading'
-                    ? t('walletView.networkStatusUpdating')
-                    : t('walletView.networkStatusUpdated');
-
-              return (
-                <View
-                  key={network}
-                  style={[
-                    styles.syncNetworkChip,
-                    {
-                      backgroundColor: withOpacity(tone, 0.08),
-                      borderColor: withOpacity(tone, 0.28),
-                    },
-                  ]}
-                >
-                  <Text style={[styles.syncNetworkLabel, { color: colors.text }]}>
-                    {network.toUpperCase()}
-                  </Text>
-                  <Text style={[styles.syncNetworkState, { color: tone }]}>{statusLabel}</Text>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      ) : null}
-
-      <View style={styles.balanceRow}>
-        <BalanceCard
-          title={t('walletView.spotBalanceTitle')}
-          value={formatCurrency(totalSpot)}
-          body={t('walletView.spotBalanceBody')}
-          icon="server-outline"
-        />
-        <BalanceCard
-          title={t('walletView.web3BalanceTitle')}
-          value={
-            externalWalletBalances.isLoading && displayedWeb3Total === 0
-              ? 'Actualizando...'
-              : formatCurrency(displayedWeb3Total)
-          }
-          body={
-            externalWalletAddress
-              ? `Activos on-chain bajo tu control · ${externalWalletRuntime.chainLabel}`
-              : t('walletView.web3BalanceBody')
-          }
-          icon="git-network-outline"
-        />
-      </View>
-
-      <WalletActions
-        onDeposit={() => router.push('/receive')}
-        onReceive={() => router.push('/receive')}
-        onSend={() => router.push('/send')}
-        onWithdraw={() => router.push('/send')}
-        onTrade={() => navigateToTrade(router)}
-      />
-
-      <View
-        style={[
-          styles.transakCard,
-          {
-            backgroundColor: withOpacity(colors.surfaceElevated, 0.24),
-            borderColor: withOpacity(colors.borderStrong, 0.42),
-          },
-        ]}
+      <LinearGradient
+        colors={[COLORS.surfaceSoft, COLORS.surface, COLORS.background]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
       >
-        <View style={styles.transakHeaderRow}>
-          <View style={styles.transakCopy}>
-            <Text style={[styles.transakTitle, { color: colors.text }]}>{t('walletView.buySellCrypto')}</Text>
-            <Text style={[styles.transakSubtitle, { color: colors.textMuted }]}>{t('walletView.externalProviderPartner')}</Text>
-          </View>
-
-          <View style={styles.transakBrandBlock}>
-            <View style={styles.transakBrandRow}>
-              <View style={[styles.transakBadge, { backgroundColor: '#FFFFFF' }]}>
-                <Text style={styles.transakBadgeText}>TR</Text>
-              </View>
-              <Text style={[styles.transakBrandName, { color: colors.textSoft }]}>transak</Text>
+        <View style={styles.heroGlow} pointerEvents="none" />
+        <View style={styles.heroHeader}>
+          <View>
+            <View style={styles.balanceLabelRow}>
+              <Text style={styles.heroLabel}>
+                {hasCombinedWeb3Sources ? 'Total estimado combinado' : 'Saldo total estimado'}
+              </Text>
+              <Ionicons name="eye-outline" size={16} color={COLORS.textSecondary} />
             </View>
-            <Text style={[styles.transakBrandNote, { color: colors.textMuted }]}>{t('walletView.externalProviderRegulated')}</Text>
+            <Text style={[styles.heroValue, isSmallPhone && styles.heroValueSmall]} numberOfLines={1}>
+              {formatUsd(totalBalance)}
+            </Text>
+            <View style={styles.heroMetaRow}>
+              <Text style={styles.heroPen}>≈ {formatPEN(penEstimate)}</Text>
+              <Text style={styles.heroHint}>Sin variacion disponible</Text>
+            </View>
           </View>
         </View>
 
-        <RampActionGrid
-          buyLabel={t('common.buy')}
-          sellLabel={t('common.sell')}
-          convertLabel={pickLanguageText(
-            language,
-            {
-              en: 'Convert',
-              es: 'Convertir',
-              pt: 'Converter',
-              'zh-Hans': '\u5151\u6362',
-              hi: '\u0915\u0928\u094d\u0935\u0930\u094d\u091f',
-              ru: '\u041a\u043e\u043d\u0432\u0435\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c',
-              ar: '\u062a\u062d\u0648\u064a\u0644',
-              id: 'Konversi',
-            },
-            'en',
-          )}
-          payLabel={pickLanguageText(
-            language,
-            {
-              en: 'Pay',
-              es: 'Pagar',
-              pt: 'Pagar',
-              'zh-Hans': '\u652f\u4ed8',
-              hi: '\u092d\u0941\u0917\u0924\u093e\u0928',
-              ru: '\u041e\u043f\u043b\u0430\u0442\u0438\u0442\u044c',
-              ar: '\u062f\u0641\u0639',
-              id: 'Bayar',
-            },
-            'en',
-          )}
-          onBuy={() => router.push({ pathname: '/ramp/summary', params: { mode: 'buy' } })}
-          onSell={() => router.push({ pathname: '/ramp/summary', params: { mode: 'sell' } })}
-          onConvert={() => router.push('/convert')}
-          onPay={() => router.push({ pathname: '/ramp/summary', params: { mode: 'pay' } })}
+        <MiniBalanceChart />
+
+        <DistributionLegend
+          spotPercent={spotPercent}
+          localPercent={localPercent}
+          web3Percent={web3Percent}
+        />
+      </LinearGradient>
+
+      <QuickActions />
+
+      <View style={styles.summaryGrid}>
+        <SummaryCard
+          title="Spot"
+          value={FEATURE_STATUS.trade.isDemoMode ? 'Modo demo' : formatUsd(totalSpot)}
+          change={undefined}
+          body={FEATURE_STATUS.trade.isDemoMode ? 'Órdenes simuladas, no fondos reales' : 'Trading y compra/venta'}
+          icon="repeat-outline"
+          color={COLORS.purple}
+          onPress={() => router.push('/wallet-spot')}
+        />
+        <SummaryCard
+          title="Cuenta Local"
+          value="Sin crear"
+          change={undefined}
+          body="Pagos y transferencias"
+          icon="business-outline"
+          color={COLORS.green}
+          badge="Más usado"
+          onPress={() => router.push('/wallet-local')}
+        />
+        <SummaryCard
+          title="Web3"
+          value={
+            externalWalletBalances.isLoading && totalWeb3 === 0
+              ? 'Actualizando'
+              : formatUsd(totalWeb3)
+          }
+          change={undefined}
+          body={externalWalletAddress ? 'Activos on-chain y dApps' : 'Conectar billetera externa'}
+          icon="cube-outline"
+          color={COLORS.blue}
+          onPress={() => router.push('/wallet-web3')}
         />
       </View>
 
-      {activeTab === 'spot' ? (
-        <>
-          <View style={styles.spotSection}>
-            <Text style={[styles.spotSectionTitle, { color: colors.text }]}>{t('walletView.spotAssetsTitle')}</Text>
-            <Text style={[styles.spotSectionBody, { color: colors.textMuted }]}>
-              {t('walletView.spotAssetsBody')}
-            </Text>
-          </View>
-          {spotAssets.length ? <AssetList assets={spotAssets} /> : null}
-        </>
-      ) : (
-        <>
-          <SectionHeader
-              title={t('walletView.web3SpaceTitle')}
-              subtitle={
-                wallet.walletSource === 'remote'
-                  ? t('walletView.web3SpaceRemoteBody')
-                  : t('walletView.web3SpaceBody')
-              }
-              rightSlot={
-              wallet.isWalletReady || wallet.loading ? null : (
-                <PrimaryButton label={t('walletView.createWallet')} onPress={() => void wallet.createWallet()} />
-              )
-            }
-          />
-
-          {wallet.isWalletReady || externalWalletAddress ? (
-            <>
-              {externalWalletAddress ? (
-                <>
-                  <Web3WalletSummary
-                    address={externalWalletAddress}
-                    chainLabel={externalWalletRuntime.chainLabel}
-                    totalUsdEstimate={externalWalletBalances.totalUsdEstimate}
-                    isLoading={externalWalletBalances.isLoading}
-                    message={externalWalletBalances.message}
-                    onManage={() => setConnectSheetVisible(true)}
-                    onRefresh={() => void externalWalletBalances.refresh()}
-                  />
-
-                  <Web3NetworkFilter
-                    value={web3NetworkFilter}
-                    networks={externalWalletBalances.networkStates}
-                    onChange={setWeb3NetworkFilter}
-                  />
-
-                  <Web3AssetsList
-                    assets={displayedWeb3Assets}
-                    isLoading={externalWalletBalances.isLoading}
-                    discoveryEnabled={externalWalletBalances.discoveryEnabled}
-                    hasUnpricedAssets={externalWalletBalances.hasUnpricedAssets}
-                    onRefresh={() => void externalWalletBalances.refresh()}
-                  />
-                </>
-              ) : null}
-
-              {wallet.isWalletReady ? (
-                <>
-                  <View style={styles.networkRow}>
-                    {NETWORKS.map((network) => {
-                      const active = wallet.selectedNetwork === network;
-                      return (
-                        <Pressable
-                          key={network}
-                          onPress={() => wallet.setSelectedNetwork(network)}
-                          style={[
-                            styles.networkChip,
-                            {
-                              backgroundColor: active ? colors.primarySoft : colors.fieldBackground,
-                              borderColor: active ? colors.borderStrong : colors.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.networkLabel,
-                              { color: active ? colors.text : colors.textMuted },
-                            ]}
-                          >
-                            {network.toUpperCase()}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-
-                  <AddressCard
-                    network={wallet.selectedNetwork.toUpperCase()}
-                    address={activeReceiveAddress}
-                    onCopy={async () => {
-                      if (!activeReceiveAddress) {
-                        return;
-                      }
-                      await copyToClipboard(activeReceiveAddress);
-                      showToast(t('walletView.addressCopied'), 'success');
-                    }}
-                  />
-
-                  <AssetList assets={wallet.assets} />
-
-                  {seedCardConfig ? (
-                    <SeedRevealCard
-                      title={seedCardConfig.title}
-                      body={seedCardConfig.body}
-                      primaryLabel={seedCardConfig.primaryLabel}
-                      onPrimaryPress={() => openSeedFlow(seedCardConfig.primaryMode)}
-                      secondaryLabel={seedCardConfig.secondaryLabel}
-                      onSecondaryPress={() => openSeedFlow(seedCardConfig.secondaryMode)}
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        styles.tokenRow,
-                        {
-                          backgroundColor: withOpacity(colors.fieldBackground, 0.18),
-                          borderColor: withOpacity(colors.border, 0.54),
-                        },
-                      ]}
-                    >
-                      <View style={styles.tokenCopy}>
-                        <Text style={[styles.tokenTitle, { color: colors.text }]}>
-                          {t('walletView.walletFoundTitle')}
-                        </Text>
-                        <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
-                          {t('walletView.walletFoundBody')}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </>
-              ) : null}
-
-              <View style={styles.section}>
-                <SectionHeader
-                  title={t('walletView.externalWalletTitle')}
-                  subtitle={t('walletView.externalWalletBody')}
-                  rightSlot={
-                    <PrimaryButton
-                      label={
-                        externalWalletAddress
-                          ? t('walletView.updateConnection')
-                          : t('walletView.connectConnection')
-                      }
-                      tone="secondary"
-                      onPress={() => setConnectSheetVisible(true)}
-                    />
-                  }
-                />
-
-                <View
-                    style={[
-                      styles.tokenRow,
-                      {
-                        backgroundColor: withOpacity(colors.fieldBackground, 0.18),
-                        borderColor: withOpacity(colors.border, 0.54),
-                      },
-                    ]}
-                >
-                  <View style={styles.tokenCopy}>
-                    <Text style={[styles.tokenTitle, { color: colors.text }]}>
-                      {externalWalletRuntime.isConnected
-                        ? 'Wallet externa conectada'
-                        : externalWalletRuntime.disabledReason
-                          ? externalWalletUnavailableTitle
-                          : t('walletView.noExternalWallet')}
-                    </Text>
-                    <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
-                      {externalWalletRuntime.isConnected
-                        ? `${externalWalletRuntime.walletName ?? 'Wallet externa'} - ${maskAddress(
-                            externalWalletAddress,
-                          )}`
-                        : externalWalletRuntime.disabledReason
-                          ? externalWalletUnavailableBody
-                          : t('walletView.externalWalletHint')}
-                    </Text>
-                    {externalWalletRuntime.isConnected ? (
-                      <Text style={[styles.tokenBody, { color: colors.textSoft }]}>
-                        Red actual: {externalWalletRuntime.chainLabel}
-                      </Text>
-                    ) : null}
-                    <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
-                      OrbitX no guarda tu frase semilla. Las firmas se aprueban desde tu wallet externa.
-                    </Text>
-                  </View>
-
-                  {externalWalletAddress ? (
-                    <PrimaryButton
-                      label={t('walletView.disconnectConnection')}
-                      tone="ghost"
-                      onPress={() => void externalWalletRuntime.disconnect()}
-                    />
-                  ) : null}
-                </View>
-
-                {externalWalletAddress ? (
-                  <ExternalWalletBalanceSummary
-                    status={externalWalletBalances.status}
-                    chainLabel={externalWalletBalances.chainLabel}
-                    nativeAsset={externalWalletBalances.nativeAsset}
-                    tokenAssets={externalWalletBalances.tokenAssets}
-                    failedTokenCount={externalWalletBalances.failedTokenCount}
-                    networkStates={externalWalletBalances.networkStates}
-                    message={externalWalletBalances.message}
-                    updatedAt={externalWalletBalances.updatedAt}
-                    onRefresh={() => void externalWalletBalances.refresh()}
-                  />
-                ) : null}
-              </View>
-
-              <View style={styles.section}>
-                <SectionHeader
-                  title={t('walletView.createdTokensTitle')}
-                  subtitle={t('walletView.createdTokensBody')}
-                />
-                {wallet.createdTokens.length ? (
-                  wallet.createdTokens.map((token) => (
-                    <View
-                      key={token.id}
-                    style={[
-                      styles.tokenRow,
-                      {
-                        backgroundColor: withOpacity(colors.fieldBackground, 0.18),
-                        borderColor: withOpacity(colors.border, 0.54),
-                      },
-                    ]}
-                    >
-                      <View style={styles.tokenCopy}>
-                        <Text style={[styles.tokenTitle, { color: colors.text }]}>{token.symbol}</Text>
-                        <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
-                          {token.name} - {token.network}
-                        </Text>
-                      </View>
-                      <Text style={[styles.tokenState, { color: colors.primary }]}>
-                        {token.status.replace('_', ' ')}
-                      </Text>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={[styles.helper, { color: colors.textMuted }]}>
-                    {t('walletView.createdTokensEmpty')}
-                  </Text>
-                )}
-              </View>
-            </>
-          ) : (
-            <View style={styles.importCard}>
-              <Text style={[styles.importTitle, { color: colors.text }]}>
-                {wallet.loading ? t('walletView.importSearchingTitle') : t('walletView.importTitle')}
-              </Text>
-              <Text style={[styles.importBody, { color: colors.textMuted }]}>
-                {wallet.loading
-                  ? t('walletView.importSearchingBody')
-                  : t('walletView.importBody')}
-              </Text>
-              <View
-                style={[
-                  styles.importWarningCard,
-                  {
-                    backgroundColor: withOpacity(colors.fieldBackground, 0.24),
-                    borderColor: withOpacity(colors.borderStrong, 0.42),
-                  },
-                ]}
-              >
-                <Text style={[styles.importWarningTitle, { color: colors.text }]}>
-                  {t('walletView.importWarningTitle')}
-                </Text>
-                <Text style={[styles.importWarningBody, { color: colors.textMuted }]}>
-                  {t('walletView.importWarningBody')}
-                </Text>
-              </View>
-              <TextInput
-                value={seedPhraseInput}
-                onChangeText={setSeedPhraseInput}
-                multiline
-                placeholder={t('walletView.importPlaceholder')}
-                placeholderTextColor={colors.textMuted}
-                style={[
-                  styles.seedInput,
-                  {
-                    color: colors.text,
-                    backgroundColor: colors.fieldBackground,
-                    borderColor: colors.border,
-                  },
-                ]}
-              />
-              <PrimaryButton
-                label={t('walletView.importButton')}
-                tone="secondary"
-                onPress={() => void wallet.importWallet(seedPhraseInput)}
-              />
-
-              <PrimaryButton
-                label={t('walletView.connectExternalButton')}
-                tone="secondary"
-                onPress={() => setConnectSheetVisible(true)}
-              />
-
-              {externalWalletAddress ? (
-                <View
-                  style={[
-                    styles.tokenRow,
-                    {
-                      backgroundColor: colors.fieldBackground,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <View style={styles.tokenCopy}>
-                    <Text style={[styles.tokenTitle, { color: colors.text }]}>
-                      {externalWalletRuntime.isConnected
-                        ? 'Wallet externa conectada'
-                        : t('walletView.externalLinkedTitle')}
-                    </Text>
-                    <Text style={[styles.tokenBody, { color: colors.textMuted }]}>
-                      {maskAddress(externalWalletAddress)}
-                    </Text>
-                    {externalWalletRuntime.isConnected ? (
-                      <Text style={[styles.tokenBody, { color: colors.textSoft }]}>
-                        {externalWalletRuntime.walletName ?? 'Wallet externa'} - {externalWalletRuntime.chainLabel}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <PrimaryButton
-                    label={t('walletView.disconnectConnection')}
-                    tone="ghost"
-                    onPress={() => void externalWalletRuntime.disconnect()}
-                  />
-                </View>
-              ) : null}
-
-              {externalWalletAddress ? (
-                <ExternalWalletBalanceSummary
-                  status={externalWalletBalances.status}
-                  chainLabel={externalWalletBalances.chainLabel}
-                  nativeAsset={externalWalletBalances.nativeAsset}
-                  tokenAssets={externalWalletBalances.tokenAssets}
-                  failedTokenCount={externalWalletBalances.failedTokenCount}
-                  networkStates={externalWalletBalances.networkStates}
-                  message={externalWalletBalances.message}
-                  updatedAt={externalWalletBalances.updatedAt}
-                  onRefresh={() => void externalWalletBalances.refresh()}
-                />
-              ) : null}
-            </View>
-          )}
-        </>
-      )}
-
-      {wallet.error ? (
-        <View
-          style={[
-            styles.errorCard,
-            { backgroundColor: colors.lossSoft, borderColor: colors.loss },
-          ]}
-        >
-          <Text style={[styles.errorText, { color: colors.loss }]}>{wallet.error}</Text>
-          <PrimaryButton
-            label={pickLanguageText(
-              language,
-              {
-                en: 'Ask Astra',
-                es: 'Preguntar a Astra',
-                pt: 'Perguntar para Astra',
-                'zh-Hans': '\u95ee Astra',
-                hi: 'Astra se puchho',
-                ru: '\u0421\u043f\u0440\u043e\u0441\u0438\u0442\u044c Astra',
-                ar: '\u0627\u0633\u0623\u0644 Astra',
-                id: 'Tanya Astra',
-              },
-              'en',
-            )}
-            tone="secondary"
-            onPress={() =>
-              openAstra({
-                surface: 'error',
-                surfaceTitle: pickLanguageText(
-                  language,
-                  {
-                    en: 'Wallet',
-                    es: 'Billetera',
-                    pt: 'Carteira',
-                    'zh-Hans': '\u94b1\u5305',
-                    hi: 'Wallet',
-                    ru: '\u041a\u043e\u0448\u0435\u043b\u0435\u043a',
-                    ar: '\u0627\u0644\u0645\u062d\u0641\u0638\u0629',
-                    id: 'Wallet',
-                  },
-                  'en',
-                ),
-                summary: pickLanguageText(
-                  language,
-                  {
-                    en: 'Astra can help you recover the Wallet flow without losing context.',
-                    es: 'Astra puede ayudarte a recuperar el flujo de Billetera sin perder contexto.',
-                    pt: 'A Astra pode ajudar voce a recuperar o fluxo da carteira sem perder contexto.',
-                    'zh-Hans': 'Astra \u53ef\u4ee5\u5e2e\u4f60\u5728\u4e0d\u4e22\u5931\u4e0a\u4e0b\u6587\u7684\u60c5\u51b5\u4e0b\u6062\u590d Wallet \u6d41\u7a0b\u3002',
-                    hi: 'Astra context khoye bina Wallet flow recover karne mein madad kar sakti hai.',
-                    ru: 'Astra \u043f\u043e\u043c\u043e\u0436\u0435\u0442 \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u043f\u043e\u0442\u043e\u043a Wallet \u0431\u0435\u0437 \u043f\u043e\u0442\u0435\u0440\u0438 \u043a\u043e\u043d\u0442\u0435\u043a\u0441\u0442\u0430.',
-                    ar: '\u064a\u0645\u0643\u0646 Astra \u0623\u0646 \u062a\u0633\u0627\u0639\u062f\u0643 \u0639\u0644\u0649 \u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u062a\u062f\u0641\u0642 Wallet \u062f\u0648\u0646 \u0641\u0642\u062f\u0627\u0646 \u0627\u0644\u0633\u064a\u0627\u0642.',
-                    id: 'Astra bisa membantumu memulihkan alur Wallet tanpa kehilangan konteks.',
-                  },
-                  'en',
-                ),
-                currentTask: astraWalletContext.currentTask,
-                selectedEntity: astraWalletContext.selectedEntity,
-                uiState: astraWalletContext.uiState,
-                labels: astraWalletContext.labels,
-                errorTitle: pickLanguageText(
-                  language,
-                  {
-                    en: 'Wallet error',
-                    es: 'Error de billetera',
-                    pt: 'Erro da carteira',
-                    'zh-Hans': '\u94b1\u5305\u9519\u8bef',
-                    hi: 'Wallet error',
-                    ru: '\u041e\u0448\u0438\u0431\u043a\u0430 wallet',
-                    ar: '\u062e\u0637\u0623 \u0641\u064a wallet',
-                    id: 'Error wallet',
-                  },
-                  'en',
-                ),
-                errorBody: wallet.error ?? undefined,
-              })
-            }
-          />
+      <View style={styles.activitySection}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Actividad reciente</Text>
+          <Pressable onPress={() => router.push('/history')} hitSlop={8}>
+            <Text style={styles.seeAllText}>Ver todo</Text>
+          </Pressable>
         </View>
-      ) : null}
+
+        <View style={styles.activityList}>
+          {activityRows.length ? (
+            activityRows.map((item) => (
+              <ActivityRow key={item.id} item={item} />
+            ))
+          ) : (
+            <Text style={styles.emptyActivityText}>
+              Sin actividad real confirmada. Las vistas demo estan ocultas por seguridad.
+            </Text>
+          )}
+        </View>
+      </View>
 
       <ExternalWalletConnectSheet
         visible={connectSheetVisible}
         onClose={() => setConnectSheetVisible(false)}
-      />
-
-      <WalletSeedSecurityScreen
-        visible={seedModalVisible}
-        mode={seedModalMode}
-        biometricsEnabled={wallet.securityStatus.biometricsEnabled}
-        pinEnabled={wallet.securityStatus.pinEnabled}
-        onClose={closeSeedFlow}
-        onRequirePinSetup={() => {
-          setPendingSeedModeAfterPin(seedModalMode);
-          setSeedModalVisible(false);
-          setPinSheetVisible(true);
-        }}
-        onConfirmed={() => void wallet.refreshSecurityStatus()}
-      />
-
-      <WalletPinSheet
-        visible={pinSheetVisible}
-        onClose={() => {
-          setPendingSeedModeAfterPin(null);
-          setPinSheetVisible(false);
-        }}
-        onSaved={() => {
-          void wallet.refreshSecurityStatus();
-          if (pendingSeedModeAfterPin) {
-            const resumeMode = pendingSeedModeAfterPin;
-            setPendingSeedModeAfterPin(null);
-            setPinSheetVisible(false);
-            setSeedModalMode(resumeMode);
-            setSeedModalVisible(true);
-          }
-        }}
       />
     </ScreenContainer>
   );
@@ -1056,232 +465,353 @@ export default function WalletScreen() {
 
 const styles = StyleSheet.create({
   content: {
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 132,
+    gap: 16,
+    backgroundColor: COLORS.background,
+  },
+  contentSmall: {
+    paddingHorizontal: 12,
     gap: 14,
   },
-  syncCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    gap: 10,
+  pressed: {
+    opacity: 0.84,
+    transform: [{ scale: 0.99 }],
   },
-  syncHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 10,
+  header: {
+    minHeight: 42,
+    justifyContent: 'center',
   },
-  syncCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  syncTitle: {
-    fontFamily: FONT.semibold,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  syncBody: {
-    fontFamily: FONT.regular,
-    fontSize: 10,
-    lineHeight: 15,
-  },
-  syncNetworkRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  syncNetworkChip: {
-    borderWidth: 1,
-    borderRadius: RADII.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 2,
-  },
-  syncNetworkLabel: {
-    fontFamily: FONT.semibold,
-    fontSize: 10,
-  },
-  syncNetworkState: {
-    fontFamily: FONT.medium,
-    fontSize: 9,
-  },
-  balanceRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  transakCard: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 12,
-    gap: 12,
-  },
-  transakHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  transakCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  transakTitle: {
+  headerTitle: {
+    color: COLORS.text,
     fontFamily: FONT.bold,
+    fontSize: 32,
+    lineHeight: 38,
+    letterSpacing: -0.8,
+  },
+  hero: {
+    width: '100%',
+    minHeight: 246,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 14,
+    borderWidth: 1,
+    borderColor: withOpacity('#FFFFFF', 0.075),
+    overflow: 'hidden',
+  },
+  heroGlow: {
+    position: 'absolute',
+    right: -18,
+    top: 52,
+    width: 180,
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: withOpacity(COLORS.purpleSoft, 0.14),
+    transform: [{ rotate: '-18deg' }],
+  },
+  heroHeader: {
+    zIndex: 2,
+  },
+  balanceLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heroLabel: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.semibold,
     fontSize: 14,
-    letterSpacing: 0.2,
+    lineHeight: 18,
   },
-  transakSubtitle: {
-    fontFamily: FONT.regular,
-    fontSize: 11,
-    lineHeight: 15,
-  },
-  transakBrandBlock: {
-    alignItems: 'flex-end',
-    gap: 4,
-    paddingTop: 2,
-  },
-  transakBrandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  transakBadge: {
-    minWidth: 22,
-    height: 22,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  transakBadgeText: {
+  heroValue: {
+    color: COLORS.text,
     fontFamily: FONT.bold,
-    fontSize: 11,
-    color: '#101015',
-    letterSpacing: -0.1,
+    fontSize: 38,
+    lineHeight: 44,
+    letterSpacing: -0.9,
+    marginTop: 5,
   },
-  transakBrandName: {
-    fontFamily: FONT.semibold,
-    fontSize: 15,
+  heroValueSmall: {
+    fontSize: 33,
+    lineHeight: 39,
   },
-  transakBrandNote: {
-    fontFamily: FONT.regular,
-    fontSize: 10,
-    lineHeight: 14,
-    textAlign: 'right',
-  },
-  spotSection: {
-    gap: 4,
-    paddingTop: 2,
-  },
-  spotSectionTitle: {
-    fontFamily: FONT.bold,
-    fontSize: 15,
-  },
-  spotSectionBody: {
-    fontFamily: FONT.regular,
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  networkRow: {
+  heroMetaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-  },
-  networkChip: {
-    minHeight: 34,
-    borderWidth: 1,
-    borderRadius: RADII.pill,
-    paddingHorizontal: 12,
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 9,
+    marginTop: 5,
   },
-  networkLabel: {
-    fontFamily: FONT.semibold,
-    fontSize: 11,
+  heroPen: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 14,
   },
-  section: {
-    gap: 8,
-  },
-  tokenRow: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  tokenCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  tokenTitle: {
+  heroHint: {
+    color: COLORS.textSecondary,
     fontFamily: FONT.semibold,
     fontSize: 13,
   },
-  tokenBody: {
-    fontFamily: FONT.regular,
-    fontSize: 10,
+  chartStage: {
+    height: 72,
+    marginTop: 10,
+    overflow: 'hidden',
   },
-  tokenState: {
-    fontFamily: FONT.semibold,
-    fontSize: 11,
-    textTransform: 'capitalize',
+  chartGridLineTop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 25,
+    height: 1,
+    backgroundColor: withOpacity('#FFFFFF', 0.045),
   },
-  helper: {
-    fontFamily: FONT.regular,
-    fontSize: 11,
-    lineHeight: 16,
+  chartGridLineBottom: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 15,
+    height: 1,
+    backgroundColor: withOpacity('#FFFFFF', 0.035),
   },
-  importCard: {
-    gap: 10,
+  chartSegmentGroup: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
-  importWarningCard: {
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 4,
+  chartLineGlow: {
+    position: 'absolute',
+    height: 6,
+    borderRadius: 2,
+    backgroundColor: COLORS.purpleSoft,
+    shadowColor: COLORS.purpleSoft,
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
   },
-  importWarningTitle: {
-    fontFamily: FONT.semibold,
-    fontSize: 12,
+  chartLine: {
+    position: 'absolute',
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: COLORS.purpleSoft,
   },
-  importWarningBody: {
-    fontFamily: FONT.regular,
-    fontSize: 10,
-    lineHeight: 15,
+  chartEndpoint: {
+    position: 'absolute',
+    right: 2,
+    top: 23,
+    width: 20,
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: withOpacity(COLORS.purpleSoft, 0.78),
+    shadowColor: COLORS.purpleSoft,
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
   },
-  errorCard: {
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 10,
+  distributionBlock: {
+    marginTop: 10,
+    gap: 8,
   },
-  errorText: {
-    fontFamily: FONT.medium,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  importTitle: {
-    fontFamily: FONT.semibold,
+  distributionTitle: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.bold,
     fontSize: 14,
   },
-  importBody: {
-    fontFamily: FONT.regular,
-    fontSize: 11,
-    lineHeight: 16,
+  distributionBar: {
+    height: 5,
+    borderRadius: 999,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    backgroundColor: withOpacity('#FFFFFF', 0.1),
   },
-  seedInput: {
-    minHeight: 96,
+  distributionFill: {
+    height: '100%',
+  },
+  legendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 10,
+    rowGap: 6,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
+  },
+  legendDot: {
+    width: 12,
+    height: 2,
+    borderRadius: 1,
+  },
+  legendText: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+  },
+  quickActions: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  quickAction: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
+  },
+  quickIconWrap: {
+    width: 48,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: withOpacity(COLORS.surface, 0.72),
     borderWidth: 1,
-    borderRadius: RADII.md,
+    borderColor: COLORS.border,
+  },
+  quickLabel: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.semibold,
+    fontSize: 12.5,
+  },
+  summaryGrid: {
+    width: '100%',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  summaryCard: {
+    flex: 1,
+    minHeight: 156,
+    borderRadius: 18,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     paddingHorizontal: 12,
     paddingVertical: 12,
+    gap: 5,
+    overflow: 'visible',
+  },
+  summaryBadge: {
+    position: 'absolute',
+    top: -11,
+    alignSelf: 'center',
+    minHeight: 22,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: withOpacity(COLORS.green, 0.14),
+    borderWidth: 1,
+    borderColor: withOpacity(COLORS.green, 0.35),
+    zIndex: 2,
+  },
+  summaryBadgeText: {
+    color: COLORS.greenBright,
+    fontFamily: FONT.bold,
+    fontSize: 10,
+  },
+  summaryIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  summaryTitle: {
+    color: COLORS.text,
+    fontFamily: FONT.bold,
+    fontSize: 16,
+    lineHeight: 21,
+  },
+  summaryValue: {
+    color: COLORS.text,
+    fontFamily: FONT.semibold,
+    fontSize: 12.5,
+    lineHeight: 17,
+  },
+  summaryChange: {
+    color: COLORS.greenBright,
+    fontFamily: FONT.bold,
+    fontSize: 11.5,
+  },
+  summaryBody: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    lineHeight: 15,
+    marginTop: 'auto',
+  },
+  activitySection: {
+    width: '100%',
+    gap: 12,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 14,
+  },
+  sectionTitle: {
+    color: COLORS.text,
+    fontFamily: FONT.bold,
+    fontSize: 22,
+    lineHeight: 27,
+  },
+  seeAllText: {
+    color: COLORS.purple,
+    fontFamily: FONT.bold,
+    fontSize: 14,
+  },
+  activityList: {
+    gap: 10,
+  },
+  emptyActivityText: {
+    color: COLORS.textSecondary,
     fontFamily: FONT.medium,
     fontSize: 12,
-    textAlignVertical: 'top',
+    lineHeight: 18,
+  },
+  activityRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingVertical: 4,
+  },
+  activityIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+  activityTitle: {
+    color: COLORS.text,
+    fontFamily: FONT.bold,
+    fontSize: 15.5,
+    lineHeight: 20,
+  },
+  activitySubtitle: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 12.5,
+    lineHeight: 17,
+  },
+  activityValue: {
+    maxWidth: '38%',
+    color: COLORS.text,
+    fontFamily: FONT.medium,
+    fontSize: 13.5,
+    lineHeight: 18,
+    textAlign: 'right',
   },
 });
