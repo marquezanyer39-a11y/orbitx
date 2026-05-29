@@ -16,7 +16,9 @@
     "build:android:development": "npx eas build --platform android --profile development",
     "build:android:preview": "npx eas build --platform android --profile preview",
     "build:android:production": "npx eas build --platform android --profile production",
-    "typecheck": "node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit"
+    "typecheck": "node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"app/**/*.{ts,tsx}\" \"components/**/*.{ts,tsx}\" \"constants/**/*.{ts,tsx}\" \"utils/**/*.{ts,tsx}\"",
+    "test": "vitest run"
   },
   "dependencies": {
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
@@ -84,6 +86,7 @@
     "three": "0.166.1",
     "tweetnacl": "^1.0.3",
     "viem": "^2.48.4",
+    "zod": "^3.25.76",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
@@ -91,8 +94,12 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "~19.2.2",
     "@types/three": "^0.183.1",
+    "@typescript-eslint/eslint-plugin": "^8.59.2",
+    "@typescript-eslint/parser": "^8.59.2",
     "babel-preset-expo": "^55.0.12",
-    "typescript": "~5.9.2"
+    "eslint": "^10.3.0",
+    "typescript": "~5.9.2",
+    "vitest": "^4.1.6"
   },
   "expo": {
     "doctor": {
