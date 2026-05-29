@@ -55,14 +55,14 @@ export function getAstraVoiceCopy(language: LanguageCode): AstraVoiceCopy {
   return {
     title: 'Astra',
     subtitle: voiceText(language, {
-      en: 'OrbitX intelligence',
-      es: 'Inteligencia OrbitX',
-      pt: 'Inteligencia OrbitX',
-      'zh-Hans': '\u667a\u80fd OrbitX',
-      hi: 'OrbitX \u092c\u0941\u0926\u094d\u0927\u093f\u092e\u0924\u094d\u0924\u093e',
-      ru: '\u0418\u043d\u0442\u0435\u043b\u043b\u0435\u043a\u0442 OrbitX',
-      ar: '\u0630\u0643\u0627\u0621 OrbitX',
-      id: 'Kecerdasan OrbitX',
+      en: 'QVEX intelligence',
+      es: 'Inteligencia QVEX',
+      pt: 'Inteligencia QVEX',
+      'zh-Hans': '\u667a\u80fd QVEX',
+      hi: 'QVEX \u092c\u0941\u0926\u094d\u0927\u093f\u092e\u0924\u094d\u0924\u093e',
+      ru: '\u0418\u043d\u0442\u0435\u043b\u043b\u0435\u043a\u0442 QVEX',
+      ar: '\u0630\u0643\u0627\u0621 QVEX',
+      id: 'Kecerdasan QVEX',
     }),
     resting: voiceText(language, {
       en: 'At rest',
@@ -458,14 +458,14 @@ export function getAstraVoiceStateLabel(language: LanguageCode, state: AstraVoic
 
 export function getAstraVoicePreviewText(language: LanguageCode, presetLabel: string) {
   return voiceText(language, {
-    en: `Hi, I am Astra. This is the ${presetLabel} voice inside OrbitX.`,
-    es: `Hola, soy Astra. Esta es la voz ${presetLabel} dentro de OrbitX.`,
-    pt: `Oi, eu sou a Astra. Esta \u00e9 a voz ${presetLabel} dentro da OrbitX.`,
-    'zh-Hans': `\u4f60\u597d\uff0c\u6211\u662f Astra\u3002\u8fd9\u662f OrbitX \u91cc\u7684 ${presetLabel} \u58f0\u97f3\u3002`,
-    hi: `\u0928\u092e\u0938\u094d\u0924\u0947, \u092e\u0948\u0902 Astra \u0939\u0942\u0901\u0964 \u092f\u0939 OrbitX \u0915\u0947 \u0905\u0902\u0926\u0930 ${presetLabel} \u0906\u0935\u093e\u091c\u093c \u0939\u0948\u0964`,
-    ru: `\u041f\u0440\u0438\u0432\u0435\u0442, \u044f Astra. \u042d\u0442\u043e \u0433\u043e\u043b\u043e\u0441 ${presetLabel} \u0432 OrbitX.`,
-    ar: `\u0645\u0631\u062d\u0628\u064b\u0627\u060c \u0623\u0646\u0627 Astra. \u0647\u0630\u0627 \u0647\u0648 \u0635\u0648\u062a ${presetLabel} \u062f\u0627\u062e\u0644 OrbitX.`,
-    id: `Halo, saya Astra. Ini adalah suara ${presetLabel} di dalam OrbitX.`,
+    en: `Hi, I am Astra. This is the ${presetLabel} voice inside QVEX.`,
+    es: `Hola, soy Astra. Esta es la voz ${presetLabel} dentro de QVEX.`,
+    pt: `Oi, eu sou a Astra. Esta \u00e9 a voz ${presetLabel} dentro da QVEX.`,
+    'zh-Hans': `\u4f60\u597d\uff0c\u6211\u662f Astra\u3002\u8fd9\u662f QVEX \u91cc\u7684 ${presetLabel} \u58f0\u97f3\u3002`,
+    hi: `\u0928\u092e\u0938\u094d\u0924\u0947, \u092e\u0948\u0902 Astra \u0939\u0942\u0901\u0964 \u092f\u0939 QVEX \u0915\u0947 \u0905\u0902\u0926\u0930 ${presetLabel} \u0906\u0935\u093e\u091c\u093c \u0939\u0948\u0964`,
+    ru: `\u041f\u0440\u0438\u0432\u0435\u0442, \u044f Astra. \u042d\u0442\u043e \u0433\u043e\u043b\u043e\u0441 ${presetLabel} \u0432 QVEX.`,
+    ar: `\u0645\u0631\u062d\u0628\u064b\u0627\u060c \u0623\u0646\u0627 Astra. \u0647\u0630\u0627 \u0647\u0648 \u0635\u0648\u062a ${presetLabel} \u062f\u0627\u062e\u0644 QVEX.`,
+    id: `Halo, saya Astra. Ini adalah suara ${presetLabel} di dalam QVEX.`,
   });
 }
 
@@ -505,14 +505,14 @@ export function getFriendlyVoiceConnectionError(language: LanguageCode, message:
 
 export function getStaleVoiceBuildMessage(language: LanguageCode) {
   return voiceText(language, {
-    en: 'Your installed app does not include the current voice module. Reinstall the OrbitX development build.',
-    es: 'Tu app instalada no incluye el m\u00f3dulo de voz actual. Reinstala la development build de OrbitX.',
-    pt: 'O app instalado n\u00e3o inclui o m\u00f3dulo de voz atual. Reinstale a development build da OrbitX.',
-    'zh-Hans': '\u4f60\u5b89\u88c5\u7684 app \u4e0d\u5305\u542b\u5f53\u524d\u7684\u8bed\u97f3\u6a21\u5757\uff0c\u8bf7\u91cd\u65b0\u5b89\u88c5 OrbitX development build\u3002',
-    hi: '\u0924\u0941\u092e\u094d\u0939\u093e\u0930\u0947 \u0907\u0902\u0938\u094d\u091f\u0949\u0932 \u0915\u093f\u090f \u0917\u090f app \u092e\u0947\u0902 \u0935\u0930\u094d\u0924\u092e\u093e\u0928 voice module \u0928\u0939\u0940\u0902 \u0939\u0948\u0964 OrbitX development build \u0915\u094b \u092b\u093f\u0930 \u0938\u0947 \u0907\u0902\u0938\u094d\u091f\u0949\u0932 \u0915\u0930\u0947\u0902\u0964',
-    ru: '\u0412 \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043d\u043e\u043c \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u043d\u0435\u0442 \u0442\u0435\u043a\u0443\u0449\u0435\u0433\u043e \u0433\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0433\u043e \u043c\u043e\u0434\u0443\u043b\u044f. \u041f\u0435\u0440\u0435\u0443\u0441\u0442\u0430\u043d\u043e\u0432\u0438 OrbitX development build.',
-    ar: '\u0627\u0644\u062a\u0637\u0628\u064a\u0642 \u0627\u0644\u0645\u062b\u0628\u062a \u0644\u062f\u064a\u0643 \u0644\u0627 \u064a\u062a\u0636\u0645\u0646 \u0648\u062d\u062f\u0629 \u0627\u0644\u0635\u0648\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629. \u0623\u0639\u062f \u062a\u062b\u0628\u064a\u062a OrbitX development build.',
-    id: 'Aplikasi yang terpasang belum menyertakan modul suara terbaru. Pasang ulang development build OrbitX.',
+    en: 'Your installed app does not include the current voice module. Reinstall the QVEX development build.',
+    es: 'Tu app instalada no incluye el m\u00f3dulo de voz actual. Reinstala la development build de QVEX.',
+    pt: 'O app instalado n\u00e3o inclui o m\u00f3dulo de voz atual. Reinstale a development build da QVEX.',
+    'zh-Hans': '\u4f60\u5b89\u88c5\u7684 app \u4e0d\u5305\u542b\u5f53\u524d\u7684\u8bed\u97f3\u6a21\u5757\uff0c\u8bf7\u91cd\u65b0\u5b89\u88c5 QVEX development build\u3002',
+    hi: '\u0924\u0941\u092e\u094d\u0939\u093e\u0930\u0947 \u0907\u0902\u0938\u094d\u091f\u0949\u0932 \u0915\u093f\u090f \u0917\u090f app \u092e\u0947\u0902 \u0935\u0930\u094d\u0924\u092e\u093e\u0928 voice module \u0928\u0939\u0940\u0902 \u0939\u0948\u0964 QVEX development build \u0915\u094b \u092b\u093f\u0930 \u0938\u0947 \u0907\u0902\u0938\u094d\u091f\u0949\u0932 \u0915\u0930\u0947\u0902\u0964',
+    ru: '\u0412 \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043d\u043e\u043c \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u043d\u0435\u0442 \u0442\u0435\u043a\u0443\u0449\u0435\u0433\u043e \u0433\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0433\u043e \u043c\u043e\u0434\u0443\u043b\u044f. \u041f\u0435\u0440\u0435\u0443\u0441\u0442\u0430\u043d\u043e\u0432\u0438 QVEX development build.',
+    ar: '\u0627\u0644\u062a\u0637\u0628\u064a\u0642 \u0627\u0644\u0645\u062b\u0628\u062a \u0644\u062f\u064a\u0643 \u0644\u0627 \u064a\u062a\u0636\u0645\u0646 \u0648\u062d\u062f\u0629 \u0627\u0644\u0635\u0648\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629. \u0623\u0639\u062f \u062a\u062b\u0628\u064a\u062a QVEX development build.',
+    id: 'Aplikasi yang terpasang belum menyertakan modul suara terbaru. Pasang ulang development build QVEX.',
   });
 }
 

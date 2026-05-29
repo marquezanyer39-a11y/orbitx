@@ -116,7 +116,7 @@ export function AuthLoginExperience({ showBack = false }: AuthLoginExperiencePro
             <View style={[styles.heroCoreGlow, { backgroundColor: withOpacity(colors.primary, 0.16) }]} />
             <OrbitLogo size={128} animated showWordmark={false} />
           </View>
-          <Text style={[styles.title, { color: colors.text }]}>Bienvenido a OrbitX</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Bienvenido a QVEX</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             Accede rapido a mercados, trading y Web3 desde una entrada segura.
           </Text>

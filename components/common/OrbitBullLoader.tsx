@@ -2,13 +2,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { OrbitLogo } from './OrbitLogo';
-import { COLORS, FONT, RADII, SPACING, withOpacity } from '../../constants/theme';
+import { COLORS, FONT, RADII, withOpacity } from '../../constants/theme';
 
 interface OrbitBullLoaderProps {
   label?: string;
 }
 
-export function OrbitBullLoader({ label = 'Cargando OrbitX...' }: OrbitBullLoaderProps) {
+export function OrbitBullLoader({ label = 'Cargando QVEX...' }: OrbitBullLoaderProps) {
   return (
     <View style={styles.root}>
       <LinearGradient
@@ -31,7 +31,7 @@ export function OrbitBullLoader({ label = 'Cargando OrbitX...' }: OrbitBullLoade
           <View style={styles.ringInner} />
           <View style={styles.logoGlow} />
           <OrbitLogo size={126} animated />
-          <Text style={styles.title}>OrbitX</Text>
+          <Text style={styles.title}>QVEX</Text>
           <Text style={styles.subtitle}>
             Acceso seguro, mercado sincronizado y experiencia lista para abrir.
           </Text>

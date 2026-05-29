@@ -14,7 +14,7 @@ export default function NotFoundScreen() {
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.text }]}>No encontramos esta pantalla</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-          Vuelve al inicio para continuar con OrbitX sin salir del flujo principal.
+          Vuelve al inicio para continuar con QVEX sin salir del flujo principal.
         </Text>
         <PrimaryButton label="Ir al inicio" onPress={() => router.replace('/')} />
       </View>

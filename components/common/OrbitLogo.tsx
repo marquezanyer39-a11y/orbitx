@@ -118,7 +118,7 @@ export function OrbitLogo({
 
       {showWordmark ? (
         <View style={styles.meta}>
-          <Text style={[styles.subline, { color: subtitleColor }]}>orbitx premium exchange</Text>
+          <Text style={[styles.subline, { color: subtitleColor }]}>qvex premium exchange</Text>
           <View style={[styles.bar, { backgroundColor: withOpacity(markColor, 0.16) }]} />
         </View>
       ) : null}

@@ -108,7 +108,7 @@ export default function RegisterScreen() {
             <OrbitLogo size={120} animated showWordmark={false} />
           </View>
           <Text style={[styles.heroEyebrow, { color: colors.textMuted }]}>Crear cuenta</Text>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Activa tu acceso OrbitX</Text>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Activa tu acceso QVEX</Text>
           <Text style={[styles.heroSubtitle, { color: colors.textMuted }]}>
             Crea tu cuenta con una entrada limpia, segura y lista para el mercado.
           </Text>
