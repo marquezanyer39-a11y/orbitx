@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PriceChart } from '../../components/common/PriceChart';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
@@ -50,7 +50,14 @@ function openExternal(url?: string) {
     return;
   }
 
-  void Linking.openURL(url);
+  router.push({
+    pathname: '/browser',
+    params: {
+      initialUrl: url,
+      title: 'Explorer',
+      source: 'explorer',
+    },
+  });
 }
 
 export default function TokenDetailScreen() {
@@ -84,7 +91,7 @@ export default function TokenDetailScreen() {
   const tradePairId = buildLegacyTokenPairId(token);
 
   const transparencyRows = [
-    { label: 'Red', value: token.transparency?.network ?? token.chain ?? 'OrbitX' },
+    { label: 'Red', value: token.transparency?.network ?? token.chain ?? 'QVEX' },
     {
       label: 'Contrato',
       value: token.transparency?.contractAddress
@@ -155,7 +162,7 @@ export default function TokenDetailScreen() {
         <View style={styles.headerCopy}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>{token.name}</Text>
           <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-            {token.symbol} | {networkConfig?.label ?? 'OrbitX'}
+            {token.symbol} | {networkConfig?.label ?? 'QVEX'}
           </Text>
         </View>
 
@@ -259,8 +266,8 @@ export default function TokenDetailScreen() {
           </Text>
           <Text style={[styles.noticeBody, { color: colors.textSoft }]}>
             {lifecycleStatus === 'lock_expired'
-              ? 'El bloqueo de liquidez termino. OrbitX mantiene visible el token, pero ya no debe verse igual de protegido que un listado activo.'
-              : 'OrbitX detecto condiciones que reducen la transparencia o la proteccion actual de este token.'}
+              ? 'El bloqueo de liquidez termino. QVEX mantiene visible el token, pero ya no debe verse igual de protegido que un listado activo.'
+              : 'QVEX detecto condiciones que reducen la transparencia o la proteccion actual de este token.'}
           </Text>
         </View>
       ) : null}
@@ -277,7 +284,7 @@ export default function TokenDetailScreen() {
         >
           <Text style={[styles.noticeTitle, { color: colors.warning }]}>Solo listado externo</Text>
           <Text style={[styles.noticeBody, { color: colors.textSoft }]}>
-            Este token se publico fuera del sistema interno de proteccion de OrbitX.
+            Este token se publico fuera del sistema interno de proteccion de QVEX.
           </Text>
         </View>
       ) : null}
