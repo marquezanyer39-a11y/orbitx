@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RouteRedirect } from '../../components/common/RouteRedirect';
-import { FONT, RADII, withOpacity } from '../../constants/theme';
+import { FONT, withOpacity } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { useI18n } from '../../hooks/useI18n';
 import { TAB_NAV_ITEMS } from '../../src/navigation/TabNavigator';
@@ -30,9 +30,7 @@ function StandardTabIcon({
         styles.standardTabIconShell,
         {
           backgroundColor: focused ? withOpacity(colors.profit, 0.12) : 'transparent',
-          borderColor: focused
-            ? withOpacity(colors.profit, 0.18)
-            : withOpacity(colors.borderStrong, 0.08),
+          borderColor: 'transparent',
         },
       ]}
     >
@@ -53,12 +51,8 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
       style={[
         styles.tradeTabOuter,
         {
-          backgroundColor: focused
-            ? withOpacity(colors.profit, 0.16)
-            : withOpacity(colors.profit, 0.06),
-          borderColor: focused
-            ? withOpacity(colors.profit, 0.22)
-            : withOpacity(colors.borderStrong, 0.45),
+          backgroundColor: focused ? withOpacity(colors.profit, 0.12) : 'transparent',
+          borderColor: 'transparent',
         },
       ]}
     >
@@ -66,17 +60,15 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
         style={[
           styles.tradeTabButton,
           {
-            backgroundColor: focused ? withOpacity(colors.profit, 0.9) : colors.card,
-            borderColor: focused
-              ? withOpacity(colors.profit, 0.58)
-              : withOpacity(colors.profit, 0.12),
+            backgroundColor: 'transparent',
+            borderColor: 'transparent',
           },
         ]}
       >
         <Ionicons
           name="swap-horizontal"
-          color={focused ? colors.background : colors.text}
-          size={19}
+          color={focused ? colors.profit : colors.text}
+          size={20}
         />
       </View>
     </View>
@@ -102,9 +94,9 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
       style={[
         styles.tabBarShell,
         {
-          backgroundColor: withOpacity(colors.card, 0.9),
-          borderTopColor: withOpacity(colors.text, 0.06),
-          paddingBottom: Math.max(insets.bottom, 6),
+          backgroundColor: withOpacity(colors.card, 0.82),
+          borderTopColor: withOpacity(colors.text, 0.045),
+          paddingBottom: Math.max(insets.bottom, 4),
         },
       ]}
     >
@@ -115,7 +107,21 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
             return <View key={routeName} style={styles.tabBarItem} />;
           }
 
-          const focused = state.routes[state.index]?.key === route.key;
+          const activeRouteName = state.routes[state.index]?.name;
+          const focused =
+            state.routes[state.index]?.key === route.key ||
+            (route.name === 'spot' &&
+              (activeRouteName === 'create-token' ||
+                activeRouteName === 'create-token-liquidity' ||
+                activeRouteName === 'create-token-airdrop' ||
+                activeRouteName === 'create-token-publication' ||
+                activeRouteName === 'create-token-review' ||
+                activeRouteName === 'create-token-created')) ||
+            (route.name === 'wallet' &&
+              (activeRouteName === 'wallet-spot' ||
+                activeRouteName === 'wallet-local' ||
+                activeRouteName === 'wallet-web3')) ||
+            (route.name === 'profile' && activeRouteName === 'profile-vip');
           const isTrade = route.name === 'spot';
 
           const onPress = () => {
@@ -205,24 +211,34 @@ export default function TabsLayout() {
       <Tabs.Screen name="market" options={{ title: t('tabs.market') }} />
       <Tabs.Screen name="spot" options={{ title: t('tabs.trade') }} />
       <Tabs.Screen name="wallet" options={{ title: t('tabs.wallet') }} />
+      <Tabs.Screen name="wallet-spot" options={{ href: null, title: 'Billetera Spot' }} />
+      <Tabs.Screen name="wallet-local" options={{ href: null, title: 'Cuenta Local' }} />
+      <Tabs.Screen name="wallet-web3" options={{ href: null, title: 'Billetera Web3' }} />
+      <Tabs.Screen name="create-token" options={{ href: null, title: 'Crear token' }} />
+      <Tabs.Screen name="create-token-liquidity" options={{ href: null, title: 'Configurar liquidez' }} />
+      <Tabs.Screen name="create-token-airdrop" options={{ href: null, title: 'Configurar airdrop' }} />
+      <Tabs.Screen name="create-token-publication" options={{ href: null, title: 'Publicación QVEX' }} />
+      <Tabs.Screen name="create-token-review" options={{ href: null, title: 'Revisión final' }} />
+      <Tabs.Screen name="create-token-created" options={{ href: null, title: 'Token creado' }} />
       <Tabs.Screen name="profile" options={{ title: t('tabs.profile') }} />
+      <Tabs.Screen name="profile-vip" options={{ href: null, title: 'Rango QVEX' }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
   standardTabIconShell: {
-    width: 29,
-    height: 29,
-    borderRadius: 11,
-    borderWidth: 1,
+    width: 26,
+    height: 24,
+    borderRadius: 8,
+    borderWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabBarShell: {
     borderTopWidth: 1,
-    paddingTop: 5,
-    paddingHorizontal: 8,
+    paddingTop: 4,
+    paddingHorizontal: 6,
   },
   tabBarRow: {
     flexDirection: 'row',
@@ -231,7 +247,7 @@ const styles = StyleSheet.create({
   },
   tabBarItem: {
     flex: 1,
-    minHeight: 51,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 1,
@@ -241,18 +257,18 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   tradeTabOuter: {
-    width: 46,
-    height: 46,
-    borderRadius: RADII.pill,
-    borderWidth: 1,
+    width: 36,
+    height: 28,
+    borderRadius: 10,
+    borderWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tradeTabButton: {
-    width: 38,
-    height: 38,
-    borderRadius: RADII.pill,
-    borderWidth: 1,
+    width: 32,
+    height: 26,
+    borderRadius: 9,
+    borderWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
