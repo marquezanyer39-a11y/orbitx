@@ -30,6 +30,7 @@ import { useRealtimePrice } from '../../src/hooks/useRealtimePrice';
 import { useAuthStore } from '../../src/store/authStore';
 import { useProfileStore } from '../../src/store/profileStore';
 import { useTradeStore } from '../../src/store/tradeStore';
+import type { OpenOrder } from '../../src/types';
 import { formatPercent } from '../../src/utils/formatPercent';
 import {
   getTradeRealtimeStatusCopy,
@@ -40,15 +41,16 @@ const COLORS = {
   background: '#08090B',
   surface: '#141518',
   surfaceSoft: '#111318',
-  border: '#2D3139',
+  border: 'rgba(255,255,255,0.06)',
   textPrimary: '#FAFAFA',
   textSecondary: '#A1A1AA',
   green: '#00C853',
   red: '#FF5252',
-  purple: '#6F3FF5',
-  ma5: '#F5A623',
-  ma10: '#3BA7FF',
-  ma30: '#8B5CF6',
+  purple: '#7B3FE4',
+  purpleSoft: '#8B5CF6',
+  ma5: '#FACC15',
+  ma10: '#38BDF8',
+  ma30: '#A855F7',
 };
 
 const CHART_COLORS: Partial<OrbitChartHtmlColors> = {
@@ -56,11 +58,11 @@ const CHART_COLORS: Partial<OrbitChartHtmlColors> = {
   backgroundAlt: COLORS.surfaceSoft,
   text: COLORS.textPrimary,
   textMuted: COLORS.textSecondary,
-  border: withOpacity(COLORS.border, 0.72),
-  borderStrong: withOpacity(COLORS.border, 0.92),
-  grid: withOpacity('#FFFFFF', 0.06),
-  gridStrong: withOpacity(COLORS.purple, 0.32),
-  primary: COLORS.purple,
+  border: withOpacity('#FFFFFF', 0.05),
+  borderStrong: withOpacity('#FFFFFF', 0.08),
+  grid: withOpacity('#FFFFFF', 0.028),
+  gridStrong: withOpacity(COLORS.purpleSoft, 0.14),
+  primary: COLORS.purpleSoft,
   profit: COLORS.green,
   loss: COLORS.red,
 };
@@ -92,6 +94,24 @@ const FOOTER_ACTIONS = [
   { key: 'leverage', label: 'Apal.', icon: 'layers-outline' as const, route: '/bot-futures/risk-manager' },
   { key: 'convert', label: 'Convertir', icon: 'swap-horizontal-outline' as const, route: '/convert' },
 ];
+
+interface UserTradeMarker {
+  side: 'buy' | 'sell';
+  averageEntryPrice: number;
+  quantity: number;
+  unrealizedPnlPercent?: number;
+  source: 'open-orders' | 'mock';
+}
+
+const MOCK_TRADE_MARKERS: Record<string, UserTradeMarker> = {
+  'BTC/USDT': {
+    side: 'buy',
+    averageEntryPrice: 76320.5,
+    quantity: 0.012,
+    unrealizedPnlPercent: 1.24,
+    source: 'mock',
+  },
+};
 
 function formatMainPrice(value: number) {
   return new Intl.NumberFormat('es-PE', {
@@ -143,6 +163,44 @@ function movingAverage(values: number[], period: number) {
   return window.reduce((sum, item) => sum + item, 0) / period;
 }
 
+function resolveUserTradeMarker({
+  pairId,
+  pairSymbol,
+  livePrice,
+  openOrders,
+}: {
+  pairId?: string;
+  pairSymbol: string;
+  livePrice: number;
+  openOrders: OpenOrder[];
+}): UserTradeMarker | null {
+  if (pairId) {
+    const pairOrders = openOrders.filter(
+      (order) => order.pairId === pairId && order.side === 'buy' && order.quantity > 0 && order.price > 0,
+    );
+
+    if (pairOrders.length) {
+      const totalQuantity = pairOrders.reduce((sum, order) => sum + order.quantity, 0);
+      const notional = pairOrders.reduce((sum, order) => sum + order.price * order.quantity, 0);
+      const averageEntryPrice = notional / Math.max(totalQuantity, 0.00000001);
+      const unrealizedPnlPercent =
+        averageEntryPrice > 0 && livePrice > 0
+          ? ((livePrice - averageEntryPrice) / averageEntryPrice) * 100
+          : undefined;
+
+      return {
+        side: 'buy',
+        averageEntryPrice,
+        quantity: totalQuantity,
+        unrealizedPnlPercent,
+        source: 'open-orders',
+      };
+    }
+  }
+
+  return MOCK_TRADE_MARKERS[pairSymbol] ?? null;
+}
+
 function ChartLoadingState() {
   return (
     <View style={styles.chartLoading}>
@@ -150,7 +208,7 @@ function ChartLoadingState() {
       <Ionicons name="stats-chart-outline" size={22} color={COLORS.purple} />
       <Text style={styles.chartLoadingTitle}>Sincronizando gráfico</Text>
       <Text style={styles.chartLoadingBody}>
-        OrbitX está cargando velas, volumen y profundidad para este par.
+        QVEX está cargando velas, volumen y profundidad para este par.
       </Text>
     </View>
   );
@@ -223,6 +281,7 @@ export default function TradeChartScreen() {
   const insets = useSafeAreaInsets();
   const sessionStatus = useAuthStore((state) => state.session.status);
   const selectedPairId = useTradeStore((state) => state.selectedPairId);
+  const openOrders = useTradeStore((state) => state.openOrders);
   const favoritePairIds = useProfileStore((state) => state.favoritePairIds);
   const toggleFavoritePair = useProfileStore((state) => state.toggleFavoritePair);
   const { openAstra } = useAstra();
@@ -236,7 +295,7 @@ export default function TradeChartScreen() {
   const [showExtraFrames, setShowExtraFrames] = useState(false);
   const [chartResetKey, setChartResetKey] = useState(0);
 
-  const chartHeight = Math.min(Math.max(height * 0.36, 300), 380);
+  const chartHeight = Math.min(Math.max(height * 0.29, 230), 260);
   const isSmallPhone = width < 380;
 
   useEffect(() => {
@@ -300,6 +359,17 @@ export default function TradeChartScreen() {
   }, [indicatorTab]);
 
   const pairSymbol = pair?.symbol ?? 'BTC/USDT';
+  const userTradeMarker = useMemo(
+    () =>
+      resolveUserTradeMarker({
+        pairId: pair?.id,
+        pairSymbol,
+        livePrice,
+        openOrders,
+      }),
+    [livePrice, openOrders, pair?.id, pairSymbol],
+  );
+  const isDemoTradeMarker = userTradeMarker?.source === 'mock';
   const insightThreshold = livePrice > 0 ? livePrice * 1.047 : high24h * 1.03;
   const insight = `Un rompimiento del ${pair?.baseSymbol ?? 'BTC'} por encima de los $${formatRightPrice(
     insightThreshold,
@@ -450,7 +520,10 @@ export default function TradeChartScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: 164 + Math.max(insets.bottom, 10) },
+          {
+            paddingHorizontal: isSmallPhone ? 8 : 10,
+            paddingBottom: 154 + Math.max(insets.bottom, 10),
+          },
         ]}
       >
         <View style={styles.headerRow}>
@@ -556,7 +629,11 @@ export default function TradeChartScreen() {
                 setLineMode(true);
                 setMainTab('chart');
               }}
-              style={({ pressed }) => [styles.timeframeChip, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.timeframeChip,
+                lineMode && styles.timeframeChipActive,
+                pressed && styles.pressed,
+              ]}
             >
               <Text style={[styles.timeframeChipText, lineMode && styles.timeframeChipTextActive]}>Línea</Text>
             </Pressable>
@@ -571,7 +648,11 @@ export default function TradeChartScreen() {
                     setTimeframe(item);
                     setShowExtraFrames(false);
                   }}
-                  style={({ pressed }) => [styles.timeframeChip, pressed && styles.pressed]}
+                  style={({ pressed }) => [
+                    styles.timeframeChip,
+                    active && styles.timeframeChipActive,
+                    pressed && styles.pressed,
+                  ]}
                 >
                   <Text style={[styles.timeframeChipText, active && styles.timeframeChipTextActive]}>
                     {item}
@@ -582,7 +663,11 @@ export default function TradeChartScreen() {
 
             <Pressable
               onPress={() => setShowExtraFrames((value) => !value)}
-              style={({ pressed }) => [styles.timeframeChip, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.timeframeChip,
+                showExtraFrames && styles.timeframeChipActive,
+                pressed && styles.pressed,
+              ]}
             >
               <Text style={[styles.timeframeChipText, showExtraFrames && styles.timeframeChipTextActive]}>
                 Más
@@ -646,11 +731,36 @@ export default function TradeChartScreen() {
               showVolume
               height={chartHeight}
               colorOverrides={CHART_COLORS}
+              tradeMarker={
+                userTradeMarker
+                  ? {
+                      side: userTradeMarker.side,
+                      price: userTradeMarker.averageEntryPrice,
+                      label:
+                        userTradeMarker.source === 'open-orders'
+                          ? 'Entrada promedio'
+                          : `Ejemplo de entrada ${formatRightPrice(userTradeMarker.averageEntryPrice)}`,
+                      pnlPercent:
+                        userTradeMarker.source === 'open-orders'
+                          ? userTradeMarker.unrealizedPnlPercent
+                          : undefined,
+                    }
+                  : null
+              }
               emptyTitle="Gráfico no disponible"
               emptyBody="Aún no recibimos suficientes velas verificadas para este par."
             />
           )}
         </View>
+
+        {isDemoTradeMarker ? (
+          <View style={styles.demoChartNotice}>
+            <Ionicons name="information-circle-outline" size={14} color={COLORS.textSecondary} />
+            <Text style={styles.demoChartNoticeText}>
+              Vista demo del gráfico. El marker es una simulación y no representa operaciones reales ni PnL real.
+            </Text>
+          </View>
+        ) : null}
 
         <ScrollView
           horizontal
@@ -668,7 +778,11 @@ export default function TradeChartScreen() {
                     setIndicatorTab(indicator);
                   }
                 }}
-                style={({ pressed }) => [styles.indicatorChip, pressed && !disabled && styles.pressed]}
+                style={({ pressed }) => [
+                  styles.indicatorChip,
+                  active && styles.indicatorChipActive,
+                  pressed && !disabled && styles.pressed,
+                ]}
               >
                 <Text
                   style={[
@@ -767,9 +881,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   scrollContent: {
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    gap: 12,
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    gap: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -785,14 +899,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   iconButton: {
-    width: 34,
-    height: 34,
-    borderRadius: RADII.pill,
+    width: 32,
+    height: 30,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withOpacity(COLORS.surfaceSoft, 0.9),
-    borderWidth: 1,
-    borderColor: withOpacity(COLORS.border, 0.72),
+    backgroundColor: withOpacity(COLORS.surfaceSoft, 0.46),
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   pressed: {
     opacity: 0.84,
@@ -943,12 +1057,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   timeframeChip: {
-    paddingVertical: 2,
+    minHeight: 24,
+    paddingVertical: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: 'transparent',
+  },
+  timeframeChipActive: {
+    borderBottomColor: withOpacity(COLORS.purpleSoft, 0.72),
   },
   timeframeChipText: {
     color: COLORS.textSecondary,
     fontFamily: FONT.semibold,
-    fontSize: 13,
+    fontSize: 12,
   },
   timeframeChipTextActive: {
     color: COLORS.textPrimary,
@@ -959,13 +1079,13 @@ const styles = StyleSheet.create({
   },
   utilityIcon: {
     width: 30,
-    height: 30,
-    borderRadius: 15,
+    height: 28,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withOpacity(COLORS.surfaceSoft, 0.92),
-    borderWidth: 1,
-    borderColor: withOpacity(COLORS.border, 0.54),
+    backgroundColor: withOpacity(COLORS.surfaceSoft, 0.46),
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   extraFramesRow: {
     flexDirection: 'row',
@@ -993,30 +1113,58 @@ const styles = StyleSheet.create({
   maLegendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     flexWrap: 'wrap',
   },
   maLegendText: {
     fontFamily: FONT.medium,
-    fontSize: 11,
+    fontSize: 10,
+    letterSpacing: 0.2,
   },
   chartSurface: {
     width: '100%',
     backgroundColor: COLORS.background,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: withOpacity('#FFFFFF', 0.035),
     overflow: 'hidden',
   },
+  demoChartNotice: {
+    minHeight: 34,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: withOpacity(COLORS.purpleSoft, 0.08),
+    borderWidth: 1,
+    borderColor: withOpacity(COLORS.purpleSoft, 0.18),
+  },
+  demoChartNoticeText: {
+    flex: 1,
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 10.5,
+    lineHeight: 14,
+  },
   indicatorToolbar: {
-    gap: 14,
-    paddingVertical: 4,
+    gap: 12,
+    paddingVertical: 3,
     paddingRight: 16,
   },
   indicatorChip: {
     paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'transparent',
+  },
+  indicatorChipActive: {
+    borderBottomColor: withOpacity(COLORS.purpleSoft, 0.7),
   },
   indicatorChipText: {
     color: COLORS.textSecondary,
     fontFamily: FONT.medium,
-    fontSize: 13,
+    fontSize: 12,
   },
   indicatorChipTextActive: {
     color: COLORS.textPrimary,
@@ -1252,12 +1400,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingTop: 10,
-    paddingHorizontal: 14,
-    backgroundColor: withOpacity(COLORS.background, 0.98),
+    paddingTop: 9,
+    paddingHorizontal: 10,
+    backgroundColor: withOpacity(COLORS.background, 0.96),
     borderTopWidth: 1,
     borderTopColor: withOpacity(COLORS.border, 0.54),
-    gap: 10,
+    gap: 9,
   },
   secondaryActionsRow: {
     flexDirection: 'row',
