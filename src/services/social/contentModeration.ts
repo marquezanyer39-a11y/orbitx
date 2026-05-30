@@ -29,6 +29,6 @@ export function moderateSocialDraft(draft: SocialComposerDraft): SocialModeratio
   return {
     allowed: false,
     reason:
-      'Este contenido no cumple las reglas de OrbitX Social. Evita referencias sexuales, adultas o NSFW.',
+      'Este contenido no cumple las reglas de QVEX Social. Evita referencias sexuales, adultas o NSFW.',
   };
 }

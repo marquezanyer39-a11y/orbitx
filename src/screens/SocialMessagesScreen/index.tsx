@@ -133,7 +133,7 @@ export default function SocialMessagesScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.title, { color: colors.text }]}>Mensajes</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Hilos directos dentro de la comunidad OrbitX.
+              Hilos directos dentro de la comunidad QVEX.
             </Text>
           </View>
           <Pressable

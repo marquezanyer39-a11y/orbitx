@@ -1,0 +1,4 @@
+export {
+  SOCIAL_COMMENTS_ASTRA_INSIGHT,
+  SOCIAL_COMMENTS_MOCK as SOCIAL_MOCK_COMMENTS,
+} from './comments.mock';

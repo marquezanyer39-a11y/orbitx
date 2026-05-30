@@ -15,19 +15,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FONT, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
-import { useSocialFeed } from '../../hooks/useSocialFeed';
+import { useSocialFeed } from '../../social/hooks';
+import { SOCIAL_CREATE_POST_CATEGORIES } from '../../social/mocks/socialPosts.mock';
 import { moderateSocialDraft } from '../../services/social/contentModeration';
 import { persistSocialMediaUri } from '../../services/social/socialMediaStorage';
 import type { SocialPostCategory } from '../../types/social';
 import { useUiStore } from '../../store/uiStore';
-
-const CATEGORIES: Array<{ key: SocialPostCategory; label: string }> = [
-  { key: 'analysis', label: 'Analisis' },
-  { key: 'meme', label: 'Meme' },
-  { key: 'news', label: 'Noticia' },
-];
 
 export default function SocialCreateScreen() {
   const { colors } = useAppTheme();
@@ -91,7 +86,7 @@ export default function SocialCreateScreen() {
       setMediaUri(persistedMediaUri);
       setPosterUri(nextMediaType === 'image' ? persistedMediaUri : null);
       setMediaType(nextMediaType);
-    } catch (error) {
+    } catch {
       setMediaUri(asset.uri);
       setPosterUri(nextMediaType === 'image' ? asset.uri : null);
       setMediaType(nextMediaType);
@@ -125,7 +120,7 @@ export default function SocialCreateScreen() {
     try {
       setPublishing(true);
       publishPost(draft);
-      showToast('Contenido publicado en Explorar y en tu perfil.', 'success');
+      showToast('Contenido demo guardado localmente en Explorar y en tu perfil.', 'success');
       router.replace('/social');
     } finally {
       setPublishing(false);
@@ -140,8 +135,8 @@ export default function SocialCreateScreen() {
             <Ionicons name="chevron-back" size={18} color={colors.text} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.title, { color: colors.text }]}>Crear contenido</Text>
-            <Text style={[styles.subtitle, { color: colors.textMuted }]}>Videos e imagenes para la comunidad OrbitX.</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Crear contenido demo</Text>
+            <Text style={[styles.subtitle, { color: colors.textMuted }]}>Videos e imagenes locales de ejemplo para la comunidad QVEX.</Text>
           </View>
         </View>
 
@@ -162,7 +157,7 @@ export default function SocialCreateScreen() {
             <View style={styles.mediaEmpty}>
               <Ionicons name="images-outline" size={24} color={colors.primary} />
               <Text style={[styles.mediaEmptyTitle, { color: colors.text }]}>Selecciona una imagen o video</Text>
-              <Text style={[styles.mediaEmptyBody, { color: colors.textMuted }]}>Tu contenido aparecera en Explorar.</Text>
+              <Text style={[styles.mediaEmptyBody, { color: colors.textMuted }]}>Tu contenido demo aparecera localmente en Explorar.</Text>
             </View>
           )}
         </Pressable>
@@ -210,7 +205,7 @@ export default function SocialCreateScreen() {
         <View style={styles.formSection}>
           <Text style={[styles.label, { color: colors.text }]}>Categoria</Text>
           <View style={styles.chipRow}>
-            {CATEGORIES.map((item) => {
+            {SOCIAL_CREATE_POST_CATEGORIES.map((item) => {
               const active = category === item.key;
               return (
                 <Pressable
@@ -251,7 +246,7 @@ export default function SocialCreateScreen() {
             },
           ]}
         >
-          <Text style={styles.publishLabel}>{publishing ? 'Publicando...' : 'Publicar'}</Text>
+          <Text style={styles.publishLabel}>{publishing ? 'Guardando demo...' : 'Guardar demo local'}</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>

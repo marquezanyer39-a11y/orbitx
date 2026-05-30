@@ -71,7 +71,7 @@ async function loadExpoAvModuleSafely() {
         return candidate;
       })
       .catch((error) => {
-        devWarn('[OrbitX][GiftAnimationOverlay] expo-av unavailable', error);
+        devWarn('[QVEX][GiftAnimationOverlay] expo-av unavailable', error);
         return null;
       });
   }
@@ -155,7 +155,7 @@ async function playGiftSoundSafely(params: {
 
     return true;
   } catch (error) {
-    devWarn('[OrbitX][GiftAnimationOverlay] sound playback failed', error);
+    devWarn('[QVEX][GiftAnimationOverlay] sound playback failed', error);
     await unloadSoundSafely(soundRef);
     return false;
   }

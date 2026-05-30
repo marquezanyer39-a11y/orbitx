@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FONT, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { useSocialFeed } from '../../hooks/useSocialFeed';
 import { useUiStore } from '../../store/uiStore';
@@ -68,7 +68,7 @@ export default function SocialCreatorScreen() {
           </Pressable>
           <Pressable
             onPress={async () => {
-              await copyToClipboard(`orbitx://social/creator/${creator.id}`);
+              await copyToClipboard(`qvex://social/creator/${creator.id}`);
               showToast('Perfil copiado.', 'success');
             }}
             style={[
@@ -113,7 +113,7 @@ export default function SocialCreatorScreen() {
             </View>
             <Text style={[styles.handle, { color: colors.textMuted }]}>{creator.handle}</Text>
             <Text style={[styles.bio, { color: colors.textSoft }]}>
-              {isOwnProfile ? 'Tu espacio dentro de OrbitX Social.' : creator.bio}
+              {isOwnProfile ? 'Tu espacio dentro de QVEX Social.' : creator.bio}
             </Text>
             <View style={styles.statsRow}>
               <Text style={[styles.meta, { color: colors.text }]}>

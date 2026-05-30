@@ -27,7 +27,7 @@ export class LiveFeatureErrorBoundary extends Component<
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    devWarn('[OrbitX][LiveFeatureErrorBoundary]', error.message, errorInfo.componentStack);
+    devWarn('[QVEX][LiveFeatureErrorBoundary]', error.message, errorInfo.componentStack);
   }
 
   private handleRetry = () => {

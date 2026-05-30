@@ -47,7 +47,7 @@ export default function SocialLiveSetupScreen() {
   const [facing, setFacing] = useState<CameraType>('front');
   const [coverUri, setCoverUri] = useState('');
   const [description, setDescription] = useState(
-    'Abro directo para revisar mercado, flujo de majors y memes calientes en OrbitX.',
+    'Abro una vista demo para revisar mercado, flujo de majors y memes calientes en QVEX.',
   );
   const [hashtags, setHashtags] = useState('#Live #BTC #Mercado');
   const [tokenSymbol, setTokenSymbol] = useState('BTC');
@@ -102,7 +102,7 @@ export default function SocialLiveSetupScreen() {
     if (!permission?.granted) {
       const result = await requestPermission();
       if (!result.granted) {
-        showToast('Activa el permiso de camara para salir en vivo.', 'error');
+        showToast('Activa el permiso de camara para probar el live demo.', 'error');
         return;
       }
     }
@@ -124,7 +124,7 @@ export default function SocialLiveSetupScreen() {
 
     startLiveBroadcast(post.id);
     setStarting(false);
-    showToast('Tu camara ya esta en vivo.', 'success');
+    showToast('Live demo iniciado. No hay streaming real.', 'success');
   };
 
   const handleEndLive = () => {
@@ -132,7 +132,7 @@ export default function SocialLiveSetupScreen() {
       endLiveBroadcast(activeLivePost.id);
     }
 
-    showToast('Tu directo se ha cerrado.', 'info');
+    showToast('Live demo cerrado.', 'info');
       router.replace({ pathname: '/social', params: { tab: 'live' } });
   };
 
@@ -180,12 +180,12 @@ export default function SocialLiveSetupScreen() {
 
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: colors.text }]}>
-            {activeLivePost ? 'Estas en vivo' : 'Preparar directo'}
+            {activeLivePost ? 'Live demo activo' : 'Preparar live demo'}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             {activeLivePost
-              ? 'Tu camara esta visible y lista para recibir regalos.'
-              : 'Activa tu camara y sal en vivo desde OrbitX.'}
+              ? 'Vista local de ejemplo. Sin streaming real ni pagos reales.'
+              : 'Activa tu camara para previsualizar un live simulado en QVEX.'}
           </Text>
         </View>
 
@@ -216,10 +216,10 @@ export default function SocialLiveSetupScreen() {
               ]}
             >
               <View style={[styles.liveDot, { backgroundColor: colors.loss }]} />
-              <Text style={[styles.livePillText, { color: colors.text }]}>En vivo</Text>
+              <Text style={[styles.livePillText, { color: colors.text }]}>Live demo</Text>
             </View>
             <Text style={[styles.liveMetaText, { color: colors.text }]}>
-              {activeLivePost.liveViewers ?? 1} viendo
+              {activeLivePost.liveViewers ?? 1} viewers demo
             </Text>
           </BlurView>
         </View>
@@ -231,7 +231,7 @@ export default function SocialLiveSetupScreen() {
             <Ionicons name="videocam-outline" size={28} color={colors.primary} />
             <Text style={[styles.permissionTitle, { color: colors.text }]}>Activa tu camara</Text>
             <Text style={[styles.permissionBody, { color: colors.textMuted }]}>
-              OrbitX necesita acceso a la camara para iniciar un directo real desde esta pantalla.
+              QVEX necesita acceso a la camara solo para previsualizar un live demo local. No hay streaming real.
             </Text>
             <Pressable
               onPress={() => void requestPermission()}
@@ -254,7 +254,7 @@ export default function SocialLiveSetupScreen() {
           {!activeLivePost ? (
             <ScrollView contentContainerStyle={styles.sheetContent} showsVerticalScrollIndicator={false}>
               <View style={styles.sheetHeader}>
-                <Text style={[styles.sheetTitle, { color: colors.text }]}>Configura tu en vivo</Text>
+              <Text style={[styles.sheetTitle, { color: colors.text }]}>Configura tu live demo</Text>
                 <Pressable
                   onPress={pickCover}
                   style={[
@@ -286,7 +286,7 @@ export default function SocialLiveSetupScreen() {
                   end={{ x: 0.5, y: 1 }}
                   style={StyleSheet.absoluteFill}
                 />
-                <Text style={[styles.coverCaption, { color: colors.text }]}>Asi se vera tu directo en Explorar</Text>
+                <Text style={[styles.coverCaption, { color: colors.text }]}>Asi se vera tu live demo en Explorar</Text>
               </View>
 
               <View style={styles.formSection}>
@@ -294,7 +294,7 @@ export default function SocialLiveSetupScreen() {
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
-                  placeholder="Que vas a revisar en vivo"
+                  placeholder="Que vas a revisar en el live demo"
                   placeholderTextColor={colors.textMuted}
                   multiline
                   style={[
@@ -388,7 +388,7 @@ export default function SocialLiveSetupScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.label, { color: colors.text }]}>Comentarios activos</Text>
                   <Text style={[styles.toggleCopy, { color: colors.textMuted }]}>
-                    Deja que la comunidad responda mientras estas en directo.
+                    Respuestas locales de ejemplo. No hay chat ni streaming real.
                   </Text>
                 </View>
                 <Switch
@@ -415,14 +415,14 @@ export default function SocialLiveSetupScreen() {
                 ]}
               >
                 <Ionicons name="radio" size={18} color="#0B0B0F" />
-                <Text style={styles.goLiveLabel}>{starting ? 'Iniciando...' : 'Iniciar en vivo'}</Text>
+                <Text style={styles.goLiveLabel}>{starting ? 'Iniciando demo...' : 'Iniciar live demo'}</Text>
               </Pressable>
             </ScrollView>
           ) : (
             <View style={styles.activeLivePanel}>
-              <Text style={[styles.activeLiveTitle, { color: colors.text }]}>Tu directo esta activo</Text>
+              <Text style={[styles.activeLiveTitle, { color: colors.text }]}>Tu live demo esta activo</Text>
               <Text style={[styles.activeLiveBody, { color: colors.textMuted }]}>
-                La camara sigue abierta aqui. Los regalos que te envien apareceran sobre la transmision sin taparte.
+                La camara sigue abierta aqui para QA visual. Los gifts son simulados y no mueven dinero real.
               </Text>
 
               <View style={styles.activeLiveMetrics}>
@@ -432,8 +432,8 @@ export default function SocialLiveSetupScreen() {
                     { backgroundColor: withOpacity(colors.surfaceElevated, 0.84), borderColor: colors.border },
                   ]}
                 >
-                  <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Directo</Text>
-                  <Text style={[styles.metricValue, { color: colors.text }]}>Activo</Text>
+                  <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Live demo</Text>
+                  <Text style={[styles.metricValue, { color: colors.text }]}>Simulado</Text>
                 </View>
                 <View
                   style={[
@@ -457,7 +457,7 @@ export default function SocialLiveSetupScreen() {
                 ]}
               >
                 <Ionicons name="stop-circle-outline" size={18} color={colors.loss} />
-                <Text style={[styles.endLiveLabel, { color: colors.text }]}>Finalizar directo</Text>
+                <Text style={[styles.endLiveLabel, { color: colors.text }]}>Finalizar demo</Text>
               </Pressable>
             </View>
           )}

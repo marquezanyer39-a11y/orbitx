@@ -1,1 +1,1 @@
-export { default } from '../../../src/screens/SocialCreatorScreen/index';
+export { default } from '../../../src/screens/social/SocialProfileScreen';

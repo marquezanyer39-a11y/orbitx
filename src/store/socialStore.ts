@@ -201,7 +201,7 @@ export const useSocialStore = create<SocialStore>()(
                   handle: author.handle,
                   avatar: author.avatar,
                   avatarUri: author.avatarUri ?? null,
-                  bio: 'Creador OrbitX',
+                  bio: 'Creador QVEX',
                   followers: 0,
                   following: 0,
                 },
