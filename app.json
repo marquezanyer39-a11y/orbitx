@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "OrbitX",
+    "name": "QVEX",
     "slug": "orbitx",
-    "scheme": "orbitx",
+    "scheme": "qvex",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,8 +15,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSSpeechRecognitionUsageDescription": "Allow OrbitX to transcribe your voice with Astra.",
-        "NSMicrophoneUsageDescription": "Allow OrbitX to use your microphone for Astra Voice conversations."
+        "NSSpeechRecognitionUsageDescription": "Allow QVEX to transcribe your voice with Astra.",
+        "NSMicrophoneUsageDescription": "Allow QVEX to use your microphone for Astra Voice conversations."
       }
     },
     "android": {
@@ -46,22 +46,22 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow OrbitX to protect your account with Face ID."
+          "faceIDPermission": "Allow QVEX to protect your account with Face ID."
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow OrbitX to use your camera for live streaming.",
-          "microphonePermission": "Allow OrbitX to use your microphone during live content.",
+          "cameraPermission": "Allow QVEX to use your camera for live streaming.",
+          "microphonePermission": "Allow QVEX to use your microphone during live content.",
           "recordAudioAndroid": false
         }
       ],
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Allow OrbitX to use your microphone for Astra Voice conversations.",
-          "speechRecognitionPermission": "Allow OrbitX to transcribe your voice with Astra.",
+          "microphonePermission": "Allow QVEX to use your microphone for Astra Voice conversations.",
+          "speechRecognitionPermission": "Allow QVEX to transcribe your voice with Astra.",
           "androidSpeechServicePackages": [
             "com.google.android.googlequicksearchbox",
             "com.google.android.tts"
