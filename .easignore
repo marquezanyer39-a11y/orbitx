@@ -29,3 +29,8 @@ yarn-error.log*
 *.aab
 .DS_Store
 Thumbs.db
+
+.env
+.env.*
+!.env.example
+expo-go-qr.png
