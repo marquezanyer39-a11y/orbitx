@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useAppKit } from '@reown/appkit-react-native';
 
 import { FONT, RADII } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
@@ -21,6 +20,7 @@ import {
   type TxStatusMessage,
   waitForExternalTransactionConfirmation,
 } from '../../services/web3/web3TransactionService';
+import { SAFE_LAUNCH_DISABLE_REOWN } from '../../services/walletConnectService';
 import { getChainConfig, getChainConfigById } from '../../services/web3/web3NetworkConfig';
 import { normalizeWeb3Error } from '../../services/web3/web3Errors';
 import { validateAddress, validateAmount } from '../../utils/validators';
@@ -73,7 +73,6 @@ export default function SendScreen() {
   const wallet = useWallet();
   const externalWallet = useExternalWallet();
   const showToast = useUiStore((state) => state.showToast);
-  const { open: openWalletConnect } = useAppKit();
   const currentExternalChain = getChainConfigById(externalWallet.chainId);
   const initialSource: SendSource = params.source === 'external' ? 'external' : 'local';
   const [sendSource, setSendSource] = useState<SendSource>(initialSource);
@@ -169,6 +168,19 @@ export default function SendScreen() {
       'El envío desde wallet local QVEX no está habilitado en esta fase. Usa una wallet externa conectada.',
     );
     showToast('Envío local bloqueado por seguridad en esta fase.', 'info');
+  };
+
+  const openWalletConnectSafely = () => {
+    const message = 'WalletConnect temporalmente no disponible en esta version de prueba.';
+
+    if (SAFE_LAUNCH_DISABLE_REOWN || !FEATURE_STATUS.web3.allowWalletConnect) {
+      setStatusMessage(message);
+      showToast(message, 'info');
+      return;
+    }
+
+    setStatusMessage(message);
+    showToast(message, 'info');
   };
 
   const prepareExternalTransfer = async () => {
@@ -422,7 +434,7 @@ export default function SendScreen() {
               : 'Conecta una wallet externa EVM para enviar fondos reales desde tu proveedor preferido.'}
           </Text>
           {!hasExternalWallet ? (
-            <Pressable onPress={() => void openWalletConnect()} hitSlop={8}>
+            <Pressable onPress={openWalletConnectSafely} hitSlop={8}>
               <Text style={[styles.statusLink, { color: colors.primary }]}>Conectar wallet</Text>
             </Pressable>
           ) : null}

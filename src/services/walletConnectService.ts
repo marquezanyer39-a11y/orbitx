@@ -222,12 +222,19 @@ let runtimeModules: WalletConnectRuntimeModules | null = null;
 let runtimeLoadFailed = false;
 let appKitInstance: unknown | null = null;
 
+export const SAFE_LAUNCH_DISABLE_REOWN = true;
 export const walletConnectProjectId = PROJECT_ID;
 export const walletConnectConfigured = Boolean(walletConnectProjectId);
 export const walletConnectRuntimeSupported =
-  Platform.OS !== 'web' && Constants.executionEnvironment !== 'storeClient';
+  !SAFE_LAUNCH_DISABLE_REOWN &&
+  Platform.OS !== 'web' &&
+  Constants.executionEnvironment !== 'storeClient';
 
 export function getWalletConnectRuntimeModules() {
+  if (SAFE_LAUNCH_DISABLE_REOWN) {
+    return null;
+  }
+
   if (!walletConnectRuntimeSupported || runtimeLoadFailed) {
     return null;
   }
@@ -266,6 +273,10 @@ export function getWalletConnectRuntimeModules() {
 }
 
 export function getWalletConnectAppKit() {
+  if (SAFE_LAUNCH_DISABLE_REOWN) {
+    return null;
+  }
+
   if (!PROJECT_ID || !walletConnectRuntimeSupported) {
     return null;
   }
