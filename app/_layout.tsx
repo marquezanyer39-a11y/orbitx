@@ -6,7 +6,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/inter';
 import * as Linking from 'expo-linking';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -24,7 +24,7 @@ import { useOrbitBootstrap } from '../hooks/useOrbitBootstrap';
 import { useOrbitStore } from '../store/useOrbitStore';
 import { AstraRuntimeBridge } from '../src/components/astra/AstraRuntimeBridge';
 import { AstraVoiceSheet } from '../src/components/astra/AstraVoiceSheet';
-import { ExternalWalletProvider } from '../src/providers/ExternalWalletProvider';
+import { ExternalWalletProvider } from '../src/core/providers/ExternalWalletProvider';
 import { useAuthStore } from '../src/store/authStore';
 import { useUiStore } from '../src/store/uiStore';
 import { devWarn } from '../src/utils/devLog';
@@ -47,6 +47,7 @@ export default function RootLayout() {
   const sessionStatus = useAuthStore((state) => state.session.status);
   const biometricsEnabled = useOrbitStore((state) => state.walletFuture.biometricsEnabled);
   const showToast = useUiStore((state) => state.showToast);
+  const segments = useSegments();
   const language = useOrbitStore((state) => state.settings.language);
   const restoreAuthSession = useAuthStore((state) => state.restoreAuthSession);
   const handleAuthCallbackUrl = useAuthStore((state) => state.handleAuthCallbackUrl);
@@ -61,6 +62,9 @@ export default function RootLayout() {
     startupFallbackReady;
   const fontsReady = fontsLoaded || startupFallbackReady;
   const appReady = hydrationReady && fontsReady;
+  const walletConnectRuntimeEnabled = segments.some((segment) =>
+    ['wallet-web3', 'send', 'create-token-review', 'create-token-created'].includes(segment),
+  );
   const direction = getLocaleDirection(language);
   const startupLabel = pickLanguageText(language, {
     en: 'Starting secure access...',
@@ -302,7 +306,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, direction }}>
       <SafeAreaProvider>
-        <ExternalWalletProvider>
+        <ExternalWalletProvider enableRuntime={walletConnectRuntimeEnabled}>
           <StatusBar style={colors.statusBarStyle} />
           <AstraRuntimeBridge />
           <Stack

@@ -265,7 +265,7 @@ export function getWalletConnectRuntimeModules() {
   }
 }
 
-function createWalletConnectAppKit() {
+export function getWalletConnectAppKit() {
   if (!PROJECT_ID || !walletConnectRuntimeSupported) {
     return null;
   }
@@ -279,31 +279,37 @@ function createWalletConnectAppKit() {
     return null;
   }
 
-  appKitInstance = runtime.createAppKit({
-    projectId: PROJECT_ID,
-    adapters: [new runtime.EthersAdapter()],
-    networks: NETWORKS,
-    defaultNetwork: BASE_NETWORK,
-    metadata,
-    storage: asyncStorageAdapter,
-    enableAnalytics: false,
-    debug: false,
-    themeMode: 'dark',
-    themeVariables: {
-      accent: '#7B3FE4',
-    },
-    features: {
-      onramp: false,
-      swaps: false,
-      socials: false,
-      showWallets: true,
-    },
-  });
+  try {
+    appKitInstance = runtime.createAppKit({
+      projectId: PROJECT_ID,
+      adapters: [new runtime.EthersAdapter()],
+      networks: NETWORKS,
+      defaultNetwork: BASE_NETWORK,
+      metadata,
+      storage: asyncStorageAdapter,
+      enableAnalytics: false,
+      debug: false,
+      themeMode: 'dark',
+      themeVariables: {
+        accent: '#7B3FE4',
+      },
+      features: {
+        onramp: false,
+        swaps: false,
+        socials: false,
+        showWallets: true,
+      },
+    });
+  } catch {
+    appKitInstance = null;
+    if (__DEV__) {
+      console.warn('[QVEX] WalletConnect AppKit could not be initialized.');
+    }
+  }
 
   return appKitInstance;
 }
 
-export const walletConnectAppKit = createWalletConnectAppKit();
 export const walletConnectNetworks = {
   base: BASE_NETWORK,
   ethereum: ETHEREUM_NETWORK,
