@@ -47,6 +47,7 @@ const INTENT_PATTERNS: Array<{ intent: SimulationIntent; patterns: RegExp[] }> =
       /qvex.*(tension|tensión|riesgo|cuello de botella|capacidad|operativa)/i,
       /(operacion|operación|incertidumbre|continuidad).*(qvex)/i,
       /qvex.*(demora|saturacion|saturación|presion operativa|presión operativa)/i,
+      /(crecimiento acelerado).*(problemas operativos|tension operativa|presion operativa)/i,
     ],
   },
   {
