@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useAuthStore } from '../../src/store/authStore';
 import { useUiStore } from '../../src/store/uiStore';
-import { QVEX_RUNTIME_MODE } from '../../src/config/runtimeMode';
+import { ASTRA_DEMO_GLOBAL_ENABLED, QVEX_RUNTIME_MODE } from '../../src/config/runtimeMode';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { FONT, RADII, withOpacity } from '../../constants/theme';
 import { AuthScreenShell } from './AuthScreenShell';
@@ -133,6 +133,7 @@ export function AuthLoginExperience({ showBack = false }: AuthLoginExperiencePro
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLanding = !showBack;
   const simulationAccessEnabled = isLanding && QVEX_RUNTIME_MODE.enableAstraSimulationAccess;
+  const astraDemoAccessEnabled = isLanding && ASTRA_DEMO_GLOBAL_ENABLED;
 
   const completeAuthSuccess = useCallback(() => {
     setSuccessTarget((currentTarget) => {
@@ -265,6 +266,12 @@ export function AuthLoginExperience({ showBack = false }: AuthLoginExperiencePro
             Al continuar aceptas los <Text style={styles.legalAccent}>Términos</Text> y la{' '}
             <Text style={styles.legalAccent}>Política de Privacidad</Text>.
           </Text>
+          {astraDemoAccessEnabled ? (
+            <Pressable onPress={() => router.push('/demo/astra')} style={styles.demoEntryButton}>
+              <Text style={styles.demoEntryLabel}>Ver ASTRA AI</Text>
+              <Text style={styles.demoEntryMeta}>Vista global demo, local y offline</Text>
+            </Pressable>
+          ) : null}
           {simulationAccessEnabled ? (
             <Pressable
               onPress={() => router.push('/dev/astra-simulation')}
@@ -456,6 +463,29 @@ const styles = StyleSheet.create({
     gap: 14,
     marginTop: 'auto',
     width: '100%',
+  },
+  demoEntryButton: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,229,255,0.08)',
+    borderColor: withOpacity(QVEX_PRIMARY, 0.24),
+    borderRadius: 18,
+    borderWidth: 1,
+    marginTop: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+  },
+  demoEntryLabel: {
+    color: QVEX_TEXT,
+    fontFamily: FONT.semibold,
+    fontSize: 14,
+    letterSpacing: 0.4,
+  },
+  demoEntryMeta: {
+    color: withOpacity(QVEX_MUTED, 0.96),
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    marginTop: 4,
   },
   devEntryButton: {
     alignItems: 'center',
