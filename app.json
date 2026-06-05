@@ -74,6 +74,9 @@
     ],
     "extra": {
       "router": {},
+      "astraBackendUrl": "",
+      "orbitxBackendUrl": "https://orbitx-b3i2.onrender.com",
+      "walletConnectProjectId": "b74f8e1bd253920b0ac78a6324644c02",
       "eas": {
         "projectId": "4b7cd937-15da-411b-a318-52ba7d53d9a8"
       }

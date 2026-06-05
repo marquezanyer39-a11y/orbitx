@@ -159,13 +159,21 @@ function readWalletConnectProjectId() {
   const envProjectId = process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID;
   const extraProjectId =
     typeof Constants.expoConfig?.extra?.walletConnectProjectId === 'string'
-      ? Constants.expoConfig.extra.walletConnectProjectId
+      ? Constants.expoConfig?.extra?.walletConnectProjectId
       : '';
 
   return (envProjectId ?? extraProjectId ?? '').trim();
 }
 
-const PROJECT_ID = readWalletConnectProjectId();
+let cachedProjectId: string | null = null;
+
+export function getWalletConnectProjectId() {
+  if (cachedProjectId === null) {
+    cachedProjectId = readWalletConnectProjectId();
+  }
+
+  return cachedProjectId;
+}
 
 const asyncStorageAdapter = {
   async getKeys() {
@@ -223,12 +231,14 @@ let runtimeLoadFailed = false;
 let appKitInstance: unknown | null = null;
 
 export const SAFE_LAUNCH_DISABLE_REOWN = true;
-export const walletConnectProjectId = PROJECT_ID;
-export const walletConnectConfigured = Boolean(walletConnectProjectId);
 export const walletConnectRuntimeSupported =
   !SAFE_LAUNCH_DISABLE_REOWN &&
   Platform.OS !== 'web' &&
   Constants.executionEnvironment !== 'storeClient';
+
+export function isWalletConnectConfigured() {
+  return Boolean(getWalletConnectProjectId());
+}
 
 export function getWalletConnectRuntimeModules() {
   if (SAFE_LAUNCH_DISABLE_REOWN) {
@@ -277,7 +287,9 @@ export function getWalletConnectAppKit() {
     return null;
   }
 
-  if (!PROJECT_ID || !walletConnectRuntimeSupported) {
+  const projectId = getWalletConnectProjectId();
+
+  if (!projectId || !walletConnectRuntimeSupported) {
     return null;
   }
 
@@ -292,7 +304,7 @@ export function getWalletConnectAppKit() {
 
   try {
     appKitInstance = runtime.createAppKit({
-      projectId: PROJECT_ID,
+      projectId,
       adapters: [new runtime.EthersAdapter()],
       networks: NETWORKS,
       defaultNetwork: BASE_NETWORK,

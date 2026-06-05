@@ -18,7 +18,7 @@ import {
   mapWalletConnectChainToOrbitNetwork,
   resolveExternalWalletProvider,
   resolveWalletConnectChainId,
-  walletConnectConfigured,
+  isWalletConnectConfigured,
   walletConnectRuntimeSupported,
 } from '../../services/walletConnectService';
 import { FEATURE_STATUS } from '../../constants/featureStatus';
@@ -52,13 +52,9 @@ const runtimeUnavailableMessage =
   'WalletConnect estara disponible en la APK o development build.';
 
 const defaultContextValue: ExternalWalletContextValue = {
-  configured: walletConnectConfigured,
-  runtimeSupported: walletConnectRuntimeSupported,
-  disabledReason: !walletConnectConfigured
-    ? disabledConfigMessage
-    : !walletConnectRuntimeSupported
-      ? runtimeUnavailableMessage
-      : undefined,
+  configured: false,
+  runtimeSupported: false,
+  disabledReason: disabledConfigMessage,
   status: 'disconnected',
   isConnected: false,
   isBusy: false,
@@ -130,6 +126,7 @@ function getEventProperties(event: unknown) {
 }
 
 function ExternalWalletRuntimeProvider({ children }: { children: ReactNode }) {
+  const walletConnectConfigured = isWalletConnectConfigured();
   const runtime = getWalletConnectRuntimeModules();
   if (!runtime) {
     return (
@@ -484,6 +481,8 @@ export function ExternalWalletProvider({
   children: ReactNode;
   enableRuntime?: boolean;
 }) {
+  const walletConnectConfigured = isWalletConnectConfigured();
+
   if (!walletConnectConfigured) {
     return (
       <ExternalWalletContext.Provider

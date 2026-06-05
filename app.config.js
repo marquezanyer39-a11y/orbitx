@@ -22,8 +22,12 @@ module.exports = ({ config } = {}) => {
     ...appJson.expo,
     ...(config ?? {}),
   };
+  const baseExtra = baseConfig.extra ?? {};
   const orbitxBackendUrl = readOptionalUrl(process.env.EXPO_PUBLIC_ORBITX_BACKEND_URL);
   const astraBackendUrl = readOptionalUrl(process.env.EXPO_PUBLIC_ASTRA_VOICE_API_URL);
+  const walletConnectProjectId =
+    process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID ??
+    (typeof baseExtra.walletConnectProjectId === 'string' ? baseExtra.walletConnectProjectId : '');
   const plugins = [
     ...(baseConfig.plugins ?? []).filter((plugin) => plugin !== 'expo-dev-client'),
     'expo-font',
@@ -34,10 +38,10 @@ module.exports = ({ config } = {}) => {
     ...baseConfig,
     plugins: Array.from(new Set(plugins)),
     extra: {
-      ...(baseConfig.extra ?? {}),
+      ...baseExtra,
       ...(orbitxBackendUrl ? { orbitxBackendUrl } : {}),
       ...(astraBackendUrl ? { astraBackendUrl } : {}),
-      walletConnectProjectId: process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '',
+      walletConnectProjectId,
     },
   };
 };
