@@ -20,7 +20,7 @@
       }
     },
     "android": {
-      "package": "com.anyer4050.orbitx",
+      "package": "com.anyer4050.qvex",
       "adaptiveIcon": {
         "backgroundColor": "#0B0B0F",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -39,7 +39,6 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-dev-client",
       "expo-router",
       "expo-screen-orientation",
       "expo-secure-store",

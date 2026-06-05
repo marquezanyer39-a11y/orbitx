@@ -28,6 +28,7 @@ import { ExternalWalletProvider } from '../src/core/providers/ExternalWalletProv
 import { useAuthStore } from '../src/store/authStore';
 import { useUiStore } from '../src/store/uiStore';
 import { devWarn } from '../src/utils/devLog';
+import { QVEX_STABLE_APK_MODE } from '../src/config/runtimeMode';
 import {
   getOrbitXBiometricAvailability,
   unlockOrbitXWithBiometrics,
@@ -41,6 +42,19 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+
+  if (QVEX_STABLE_APK_MODE) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <StatusBar style="light" />
+          <Stack screenOptions={{ headerShown: false }} />
+          <ToastHost />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    );
+  }
+
   const authHasHydrated = useAuthStore((state) => state.hasHydrated);
   const authHasBootstrapped = useAuthStore((state) => state.hasBootstrapped);
   const authIsRestoring = useAuthStore((state) => state.isRestoring);
@@ -77,14 +91,14 @@ export default function RootLayout() {
     id: 'Memulai akses aman...',
   });
   const biometricTitle = pickLanguageText(language, {
-    en: 'OrbitX locked',
-    es: 'OrbitX bloqueado',
-    pt: 'OrbitX bloqueado',
-    'zh-Hans': 'OrbitX \u5df2\u9501\u5b9a',
-    hi: 'OrbitX \u0932\u0949\u0915 \u0939\u0948',
-    ru: 'OrbitX \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d',
-    ar: 'OrbitX \u0645\u0642\u0641\u0644',
-    id: 'OrbitX terkunci',
+    en: 'QVEX locked',
+    es: 'QVEX bloqueado',
+    pt: 'QVEX bloqueado',
+    'zh-Hans': 'QVEX \u5df2\u9501\u5b9a',
+    hi: 'QVEX \u0932\u0949\u0915 \u0939\u0948',
+    ru: 'QVEX \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d',
+    ar: 'QVEX \u0645\u0642\u0641\u0644',
+    id: 'QVEX terkunci',
   });
   const biometricBody = pickLanguageText(language, {
     en: 'Verify your biometrics to enter your account.',
@@ -192,7 +206,7 @@ export default function RootLayout() {
           }),
         ]);
       } catch (error) {
-        devWarn('[OrbitX] restoreAuthSession failed', error);
+        devWarn('[QVEX] restoreAuthSession failed', error);
       }
     };
 
@@ -222,7 +236,7 @@ export default function RootLayout() {
 
         router.replace('/home');
       } catch (error) {
-        devWarn('[OrbitX] auth callback handling failed', error);
+        devWarn('[QVEX] auth callback handling failed', error);
       }
     };
 
@@ -377,6 +391,10 @@ export default function RootLayout() {
             <Stack.Screen
               name="browser"
               options={{ presentation: 'modal', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="dapps"
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
             <Stack.Screen
               name="astra"

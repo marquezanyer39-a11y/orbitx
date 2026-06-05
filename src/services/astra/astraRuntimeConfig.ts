@@ -37,6 +37,10 @@ function normalizeBaseUrl(value?: string | null) {
     return '';
   }
 
+  if (!/^https?:\/\//i.test(normalized)) {
+    return '';
+  }
+
   return normalized;
 }
 
@@ -61,13 +65,21 @@ function readExpoExtraValue(key: string) {
 }
 
 export function getAstraBackendBaseUrl() {
-  return normalizeBaseUrl(
-    process.env.EXPO_PUBLIC_ORBITX_BACKEND_URL ??
-      process.env.EXPO_PUBLIC_ASTRA_VOICE_API_URL ??
-      readExpoExtraValue('orbitxBackendUrl') ??
-      readExpoExtraValue('astraBackendUrl') ??
-      '',
-  );
+  const candidates = [
+    process.env.EXPO_PUBLIC_ORBITX_BACKEND_URL,
+    process.env.EXPO_PUBLIC_ASTRA_VOICE_API_URL,
+    readExpoExtraValue('orbitxBackendUrl'),
+    readExpoExtraValue('astraBackendUrl'),
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = normalizeBaseUrl(candidate);
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return '';
 }
 
 export interface AstraVoiceRuntimeConfig {
