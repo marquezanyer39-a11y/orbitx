@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useAuthStore } from '../../src/store/authStore';
 import { useUiStore } from '../../src/store/uiStore';
+import { QVEX_RUNTIME_MODE } from '../../src/config/runtimeMode';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { FONT, RADII, withOpacity } from '../../constants/theme';
 import { AuthScreenShell } from './AuthScreenShell';
@@ -131,6 +132,7 @@ export function AuthLoginExperience({ showBack = false }: AuthLoginExperiencePro
   const [successTarget, setSuccessTarget] = useState<string | null>(null);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLanding = !showBack;
+  const simulationAccessEnabled = isLanding && QVEX_RUNTIME_MODE.enableAstraSimulationAccess;
 
   const completeAuthSuccess = useCallback(() => {
     setSuccessTarget((currentTarget) => {
@@ -263,6 +265,15 @@ export function AuthLoginExperience({ showBack = false }: AuthLoginExperiencePro
             Al continuar aceptas los <Text style={styles.legalAccent}>Términos</Text> y la{' '}
             <Text style={styles.legalAccent}>Política de Privacidad</Text>.
           </Text>
+          {simulationAccessEnabled ? (
+            <Pressable
+              onPress={() => router.push('/dev/astra-simulation')}
+              style={styles.devEntryButton}
+            >
+              <Text style={styles.devEntryLabel}>ASTRA Simulation</Text>
+              <Text style={styles.devEntryMeta}>Sandbox local y educativo</Text>
+            </Pressable>
+          ) : null}
         </View>
       ) : (
         <View style={styles.loginContent}>
@@ -445,6 +456,28 @@ const styles = StyleSheet.create({
     gap: 14,
     marginTop: 'auto',
     width: '100%',
+  },
+  devEntryButton: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderColor: withOpacity(QVEX_PRIMARY, 0.22),
+    borderRadius: 18,
+    borderWidth: 1,
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  devEntryLabel: {
+    color: withOpacity(QVEX_PRIMARY, 0.96),
+    fontFamily: FONT.semibold,
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  devEntryMeta: {
+    color: withOpacity(QVEX_MUTED, 0.9),
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    marginTop: 4,
   },
   errorCard: {
     backgroundColor: 'rgba(255, 82, 82, 0.08)',

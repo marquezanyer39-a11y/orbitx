@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { SimulationEngine } from '../../src/astra/simulation';
+import { QVEX_RUNTIME_MODE } from '../../src/config/runtimeMode';
 import type { SimulationResult } from '../../src/astra/simulation';
 
 const EXAMPLE_SCENARIOS = [
@@ -97,8 +98,9 @@ export default function AstraSimulationDevRoute() {
   );
   const [query, setQuery] = useState(EXAMPLE_SCENARIOS[0]);
   const [result, setResult] = useState<SimulationResult | null>(null);
+  const simulationAccessEnabled = __DEV__ || QVEX_RUNTIME_MODE.enableAstraSimulationAccess;
 
-  if (!__DEV__) {
+  if (!simulationAccessEnabled) {
     return (
       <View style={styles.unavailableContainer}>
         <Text style={styles.unavailableText}>Simulation sandbox no disponible</Text>
@@ -114,10 +116,11 @@ export default function AstraSimulationDevRoute() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.badge}>Dev-only sandbox</Text>
+        <Text style={styles.badge}>{__DEV__ ? 'Dev-only sandbox' : 'Sandbox controlado'}</Text>
         <Text style={styles.title}>Astra Simulation Engine</Text>
         <Text style={styles.subtitle}>
-          Sandbox interno para QA tecnico. No esta montado en Home ni produccion.
+          Sandbox interno para QA tecnico. No esta montado en Home, no activa ASTRA global y no
+          usa backend real.
         </Text>
       </View>
 
