@@ -616,9 +616,11 @@ const styles = StyleSheet.create({
   },
   providerLabel: {
     color: 'transparent',
-    fontSize: 0,
-    height: 0,
-    width: 0,
+    fontSize: 1,
+    height: 1,
+    opacity: 0,
+    position: 'absolute',
+    width: 1,
   },
   providerPill: {
     alignItems: 'center',
