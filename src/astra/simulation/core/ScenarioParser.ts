@@ -34,11 +34,62 @@ const INTENT_PATTERNS: Array<{ intent: SimulationIntent; patterns: RegExp[] }> =
     ],
   },
   {
+    intent: 'qvex_growth',
+    patterns: [
+      /qvex.*(crece|crecimiento|expansion|expansión|adopcion|adopción|usuarios|millon)/i,
+      /(crece|escala|expande|acelera).*(qvex)/i,
+      /qvex.*(llega|alcanza).*(usuarios|millon)/i,
+    ],
+  },
+  {
+    intent: 'qvex_operational_stress',
+    patterns: [
+      /qvex.*(tension|tensión|riesgo|cuello de botella|capacidad|operativa)/i,
+      /(operacion|operación|incertidumbre|continuidad).*(qvex)/i,
+      /qvex.*(demora|saturacion|saturación|presion operativa|presión operativa)/i,
+    ],
+  },
+  {
     intent: 'exchange_growth',
     patterns: [
       /(qvex|exchange|plataforma).*(millon|usuarios|crece)/i,
       /(llega|llegamos|alcanzamos).*(usuarios|millon)/i,
       /(\d+\s*(mil|millon)\s*usuarios)/i,
+      /(exchange|plataforma).*(expansion|expansión|adopcion|adopción|crecimiento)/i,
+    ],
+  },
+  {
+    intent: 'macro_pressure',
+    patterns: [
+      /(inflacion|inflación).*(alta|persistente)/i,
+      /(tasas|tipos).*(altas|elevadas|suben|subida)/i,
+      /(dolar|dólar).*(fuerte|presiona|presion|aprecia)/i,
+      /(aversion|aversión).*(al riesgo)/i,
+      /(mercado global|contexto global).*(riesgo|presion|presión)/i,
+    ],
+  },
+  {
+    intent: 'social_sentiment_shift',
+    patterns: [
+      /(fomo|sentimiento social|narrativa viral|menciones).*(cripto|qvex|mercado)?/i,
+      /(viral|social).*(volatilidad|impulsa|presiona|afecta)/i,
+      /(sentimiento).*(negativo|positivo|social)/i,
+    ],
+  },
+  {
+    intent: 'liquidity_stress',
+    patterns: [
+      /(caida|caída).*(liquidez)/i,
+      /(liquidez).*(cae|baja|escasea|estres|estrés)/i,
+      /(mercado).*(sin liquidez|liquidez baja)/i,
+    ],
+  },
+  {
+    intent: 'operational_risk',
+    patterns: [
+      /(riesgo operativo|incertidumbre operativa|deterioro de confianza)/i,
+      /(operativo|operacion|operación).*(riesgo|incertidumbre|deterioro)/i,
+      /(continuidad|confianza).*(operativa|operacional|operacion|operación)/i,
     ],
   },
 ];

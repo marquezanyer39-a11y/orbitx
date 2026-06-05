@@ -51,7 +51,7 @@ const SIMULATION_CATEGORIES: SimulationCategory[] = [
     examples: [
       'Proyecto QVEX crece rapido',
       'QVEX llega a 1 millon de usuarios',
-      'Exchange con expansion acelerada',
+      'QVEX enfrenta tension operativa',
     ],
   },
   {
@@ -71,7 +71,7 @@ const SIMULATION_CATEGORIES: SimulationCategory[] = [
     examples: [
       'Sentimiento social negativo en cripto',
       'FOMO social impulsa QVEX',
-      'Narrativa viral aumenta la volatilidad',
+      'Narrativa viral aumenta las menciones',
     ],
   },
   {
@@ -80,7 +80,7 @@ const SIMULATION_CATEGORIES: SimulationCategory[] = [
     subtitle: 'Liquidez, operacion y deterioro de confianza.',
     examples: [
       'Riesgo operativo en exchange',
-      'Caida de liquidez y volatilidad alta',
+      'Caida de liquidez en mercado',
       'Aumento de incertidumbre operativa',
     ],
   },
@@ -134,7 +134,7 @@ function translateScenarioLabel(label: ScenarioLabel) {
     case 'base':
       return 'Base';
     case 'stress':
-      return 'Estres';
+      return 'Estr\u00e9s';
     default:
       return 'Base';
   }
@@ -162,7 +162,7 @@ function getCategoryTone(category: SimulationCategoryId) {
     case 'qvex':
       return 'crecimiento acelerado de negocio QVEX';
     case 'macro':
-      return 'shock macroeconomico de contexto';
+      return 'presion macroeconomica sobre el contexto';
     case 'social':
       return 'ola de sentimiento y narrativa social';
     case 'riesgo':
@@ -288,7 +288,9 @@ function buildImpactMetrics(result: SimulationResult): ImpactMetric[] {
 function SafetyBanner() {
   return (
     <View style={styles.safetyBanner}>
-      <Text style={styles.safetyTitle}>Simulacion local con datos ficticios. No es asesoria financiera.</Text>
+      <Text style={styles.safetyTitle}>
+        Simulacion local con datos ficticios. No es asesoria financiera.
+      </Text>
     </View>
   );
 }
@@ -425,16 +427,12 @@ function ResultSection({
 
   return (
     <View style={styles.resultWrap}>
-      <ScenarioChart result={result} />
-      <ImpactCard metrics={impactMetrics} />
-      <AgentsGrid agents={result.agents} />
-
       <View style={styles.resultCard}>
         <Text style={styles.cardTitle}>Resultado resumido</Text>
         <Text style={styles.summaryText} numberOfLines={2}>
           {summary}
         </Text>
-        <Text style={styles.contextLabel}>{result.contextLabel}</Text>
+        <Text style={styles.contextLabel}>Contexto local con datos ficticios. Sin precios reales.</Text>
 
         <Text style={styles.miniSectionTitle}>3 puntos clave</Text>
         {keyPoints.map((point) => (
@@ -453,6 +451,10 @@ function ResultSection({
         <Text style={styles.miniSectionTitle}>Recomendacion educativa</Text>
         <Text style={styles.recommendation}>{getEducationalRecommendation(category)}</Text>
       </View>
+
+      <ScenarioChart result={result} />
+      <ImpactCard metrics={impactMetrics} />
+      <AgentsGrid agents={result.agents} />
     </View>
   );
 }
@@ -470,7 +472,7 @@ export default function AstraSimulationDevRoute() {
   if (!simulationAccessEnabled) {
     return (
       <View style={styles.unavailableContainer}>
-        <Text style={styles.unavailableText}>Simulation sandbox no disponible</Text>
+        <Text style={styles.unavailableText}>Sandbox de simulacion no disponible</Text>
       </View>
     );
   }
@@ -492,8 +494,8 @@ export default function AstraSimulationDevRoute() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.badge}>{__DEV__ ? 'Dev-only sandbox' : 'Sandbox controlado'}</Text>
-        <Text style={styles.title}>ASTRA Simulation Dashboard</Text>
+        <Text style={styles.badge}>{__DEV__ ? 'Sandbox interno' : 'Sandbox controlado'}</Text>
+        <Text style={styles.title}>Panel de Simulacion ASTRA</Text>
         <Text style={styles.subtitle}>
           Simulaciones multi-escenario con datos ficticios para cripto, portafolio, QVEX, macro,
           social y riesgo operativo.
@@ -533,7 +535,7 @@ export default function AstraSimulationDevRoute() {
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>Sin simulacion activa</Text>
           <Text style={styles.emptyText}>
-            Elige un tipo de simulacion y usa ejemplos locales para poblar el dashboard.
+            Elige un tipo de simulacion y usa ejemplos locales para poblar el panel.
           </Text>
         </View>
       )}

@@ -41,6 +41,42 @@ const AGENT_SETS: Record<SimulationIntent, () => BaseAgent[]> = {
     new RiskAgent(),
     new MarketAgent(),
   ],
+  qvex_growth: () => [
+    new BullAgent(),
+    new MarketAgent(),
+    new NeutralAgent(),
+    new RiskAgent(),
+  ],
+  qvex_operational_stress: () => [
+    new RiskAgent(),
+    new NeutralAgent(),
+    new BearAgent(),
+    new MarketAgent(),
+  ],
+  macro_pressure: () => [
+    new MarketAgent(),
+    new RiskAgent(),
+    new NeutralAgent(),
+    new BearAgent(),
+  ],
+  social_sentiment_shift: () => [
+    new MarketAgent(),
+    new BullAgent(),
+    new BearAgent(),
+    new NeutralAgent(),
+  ],
+  operational_risk: () => [
+    new RiskAgent(),
+    new NeutralAgent(),
+    new BearAgent(),
+    new MarketAgent(),
+  ],
+  liquidity_stress: () => [
+    new RiskAgent(),
+    new BearAgent(),
+    new MarketAgent(),
+    new NeutralAgent(),
+  ],
   generic: () => [
     new NeutralAgent(),
     new BullAgent(),

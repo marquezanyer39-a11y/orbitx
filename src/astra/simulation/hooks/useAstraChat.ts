@@ -19,6 +19,12 @@ const SIMULATION_INTENTS: Set<SimulationIntent> = new Set([
   'memecoin_launch',
   'portfolio_stress',
   'exchange_growth',
+  'qvex_growth',
+  'qvex_operational_stress',
+  'macro_pressure',
+  'social_sentiment_shift',
+  'operational_risk',
+  'liquidity_stress',
 ]);
 
 function createLocalMessageId(prefix = 'msg'): string {

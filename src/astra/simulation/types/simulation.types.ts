@@ -4,6 +4,12 @@ export type SimulationIntent =
   | 'memecoin_launch'
   | 'portfolio_stress'
   | 'exchange_growth'
+  | 'qvex_growth'
+  | 'qvex_operational_stress'
+  | 'macro_pressure'
+  | 'social_sentiment_shift'
+  | 'operational_risk'
+  | 'liquidity_stress'
   | 'generic';
 
 export type ScenarioLabel = 'optimist' | 'base' | 'stress';
