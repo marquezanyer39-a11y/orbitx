@@ -27,14 +27,13 @@ import { useLiveMarkets } from '../../hooks/useLiveMarkets';
 import { useNewsFeed } from '../../hooks/useNewsFeed';
 import { usePortfolioData } from '../../hooks/usePortfolioData';
 import { useRewardsPool } from '../../hooks/useRewardsPool';
+import { buildPairSelectorHref, navigateToTrade } from '../../navigation/AppNavigator';
 import {
-  buildPairSelectorHref,
-  buildReceiveHref,
-  buildSendHref,
-  navigateToTrade,
-} from '../../navigation/AppNavigator';
+  isSensitiveRoutesBlockedInStableMode,
+  SENSITIVE_ROUTE_BLOCK_MESSAGE,
+} from '../../config/runtimeMode';
 import { useAuthStore } from '../../store/authStore';
-import { useWalletStore } from '../../store/walletStore';
+import { useUiStore } from '../../store/uiStore';
 
 function buildRadarInsight(symbol: string, change24h: number) {
   if (change24h >= 2.5) {
@@ -55,7 +54,7 @@ export default function HomeScreen() {
   const contentWidth = Math.max(screenWidth - horizontalPadding * 2, 0);
   const insets = useSafeAreaInsets();
   const profile = useAuthStore((state) => state.profile);
-  const selectedNetwork = useWalletStore((state) => state.selectedNetwork);
+  const showToast = useUiStore((state) => state.showToast);
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [activeNewsCategory, setActiveNewsCategory] = useState<HomeNewsCategory>('crypto');
   const bottomTabHeight = 84 + insets.bottom;
@@ -66,10 +65,12 @@ export default function HomeScreen() {
     items: liveMarkets,
     error: marketError,
     loading: marketsLoading,
+    usingFallback: marketsUsingFallback,
     refresh: refreshMarkets,
   } = useLiveMarkets();
   const rewardsPool = useRewardsPool();
   const news = useNewsFeed(activeNewsCategory);
+  const sensitiveRoutesBlocked = isSensitiveRoutesBlockedInStableMode();
 
   const currentPoolAmount = rewardsPool.amountLabel.split(' / ')[0] ?? '$0';
   const targetPoolAmount = rewardsPool.amountLabel.split(' / ')[1]
@@ -109,7 +110,10 @@ export default function HomeScreen() {
     positive: market.change24h >= 0,
     sparkline: market.sparkline,
     image: market.image,
-    onPress: () => navigateToTrade(router, { pairId: market.id }),
+    onPress: () =>
+      sensitiveRoutesBlocked
+        ? showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info')
+        : navigateToTrade(router, { pairId: market.id }),
   }));
 
   const homeContext = useMemo(
@@ -132,25 +136,25 @@ export default function HomeScreen() {
       key: 'depositar',
       label: 'Depositar',
       icon: 'arrow-down-outline' as const,
-      onPress: () => router.push('/ramp/flow'),
+      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
     },
     {
       key: 'comprar',
       label: 'Comprar',
       icon: 'cart-outline' as const,
-      onPress: () => router.push('/convert'),
+      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
     },
     {
       key: 'enviar',
       label: 'Enviar',
       icon: 'send-outline' as const,
-      onPress: () => router.push(buildSendHref(selectedNetwork)),
+      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
     },
     {
       key: 'recibir',
       label: 'Recibir',
       icon: 'download-outline' as const,
-      onPress: () => router.push(buildReceiveHref(selectedNetwork)),
+      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
     },
   ];
 
@@ -159,7 +163,7 @@ export default function HomeScreen() {
       key: 'operar',
       label: 'Operar',
       icon: 'flash-outline' as const,
-      onPress: () => navigateToTrade(router),
+      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
     },
     {
       key: 'mercados',
@@ -171,15 +175,19 @@ export default function HomeScreen() {
       key: 'billetera',
       label: 'Billetera',
       icon: 'wallet-outline' as const,
-      onPress: () => router.push('/wallet'),
+      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
     },
     {
       key: 'crear-token',
       label: 'Crear token',
       icon: 'cube-outline' as const,
-      onPress: () => router.push('/create-token'),
+      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
     },
   ];
+  const visibleMainShortcuts = sensitiveRoutesBlocked
+    ? mainShortcuts.filter((item) => item.key === 'mercados')
+    : mainShortcuts;
+  const visibleQuickActions = sensitiveRoutesBlocked ? [] : quickActions;
 
   return (
     <ScreenContainer
@@ -212,16 +220,20 @@ export default function HomeScreen() {
           isSmallPhone={isSmallPhone}
           onToggleVisibility={() => setBalanceHidden((value) => !value)}
           onViewAnalysis={() =>
-            void openAstraWithQuestion(
-              homeContext,
-              'Analiza mi balance y el mercado de hoy en una lectura breve.',
-            )
+            sensitiveRoutesBlocked
+              ? router.push('/demo/astra')
+              : void openAstraWithQuestion(
+                  homeContext,
+                  'Analiza mi balance y el mercado de hoy en una lectura breve.',
+                )
           }
         />
 
-        <QuickActions items={quickActions} isSmallPhone={isSmallPhone} />
+        {visibleQuickActions.length ? (
+          <QuickActions items={visibleQuickActions} isSmallPhone={isSmallPhone} />
+        ) : null}
 
-        <MainShortcuts items={mainShortcuts} isSmallPhone={isSmallPhone} />
+        <MainShortcuts items={visibleMainShortcuts} isSmallPhone={isSmallPhone} />
 
         <PromoBanner isSmallPhone={isSmallPhone} onPress={() => router.push('/pool')} />
 
@@ -242,6 +254,7 @@ export default function HomeScreen() {
           error={marketError}
           contentWidth={contentWidth}
           isSmallPhone={isSmallPhone}
+          usingFallback={marketsUsingFallback}
           onRetry={refreshMarkets}
           onViewAll={() => router.push('/market')}
         />
@@ -250,10 +263,12 @@ export default function HomeScreen() {
           insight={astraInsight}
           isSmallPhone={isSmallPhone}
           onPress={() =>
-            void openAstra({
-              ...homeContext,
-              currentTask: 'market_radar',
-            })
+            sensitiveRoutesBlocked
+              ? router.push('/demo/astra')
+              : void openAstra({
+                  ...homeContext,
+                  currentTask: 'market_radar',
+                })
           }
         />
 
@@ -277,16 +292,28 @@ export default function HomeScreen() {
             if (!news.featuredItem) {
               return;
             }
+            if (sensitiveRoutesBlocked) {
+              showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info');
+              return;
+            }
 
             router.push({
               pathname: '/browser',
               params: {
-                url: news.featuredItem.url,
-                title: 'Noticias',
+                initialUrl: news.featuredItem.url,
+                title: news.featuredItem.title,
+                source: 'news',
               },
             });
           }}
-          onViewAll={() => router.push('/browser')}
+          onViewAll={() =>
+            sensitiveRoutesBlocked
+              ? showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info')
+              : router.push({
+                  pathname: '/browser',
+                  params: { source: 'news', title: 'Noticias' },
+                })
+          }
           onRefresh={() => void news.refresh()}
         />
       </View>
@@ -297,11 +324,12 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   content: {
     backgroundColor: ORBITX_THEME.colors.background,
+    paddingHorizontal: 0,
     paddingTop: 0,
     gap: 0,
   },
   stack: {
-    paddingTop: 6,
+    paddingTop: 5,
     gap: SECTION_GAP,
   },
 });

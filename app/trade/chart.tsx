@@ -21,6 +21,7 @@ import type { OrbitChartHtmlColors } from '../../components/charts/lightweightCh
 import { RouteRedirect } from '../../components/common/RouteRedirect';
 import { FONT, RADII, withOpacity } from '../../constants/theme';
 import { TradeOrderBookPanel } from '../../src/components/trade/TradeOrderBookPanel';
+import { isSensitiveRoutesBlockedInStableMode } from '../../src/config/runtimeMode';
 import { useAstra } from '../../src/hooks/useAstra';
 import { useMarketData } from '../../src/hooks/useMarketData';
 import { usePairChartData } from '../../src/hooks/usePairChartData';
@@ -294,6 +295,7 @@ export default function TradeChartScreen() {
   const [lineMode, setLineMode] = useState(false);
   const [showExtraFrames, setShowExtraFrames] = useState(false);
   const [chartResetKey, setChartResetKey] = useState(0);
+  const sensitiveRoutesBlocked = isSensitiveRoutesBlockedInStableMode();
 
   const chartHeight = Math.min(Math.max(height * 0.29, 230), 260);
   const isSmallPhone = width < 380;
@@ -374,6 +376,10 @@ export default function TradeChartScreen() {
   const insight = `Un rompimiento del ${pair?.baseSymbol ?? 'BTC'} por encima de los $${formatRightPrice(
     insightThreshold,
   )} podría activar nueva oportunidad.`;
+
+  if (sensitiveRoutesBlocked) {
+    return <RouteRedirect href="/" />;
+  }
 
   if (sessionStatus === 'signed_out') {
     return <RouteRedirect href="/" />;

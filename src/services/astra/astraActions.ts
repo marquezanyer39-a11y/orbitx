@@ -1,8 +1,13 @@
 import type { Router } from 'expo-router';
 
 import { useOrbitStore } from '../../../store/useOrbitStore';
+import {
+  isSensitiveRoutesBlockedInStableMode,
+  SENSITIVE_ROUTE_BLOCK_MESSAGE,
+} from '../../config/runtimeMode';
 import { buildTradeHref } from '../../navigation/AppNavigator';
 import { useAstraStore } from '../../store/astraStore';
+import { useUiStore } from '../../store/uiStore';
 import type { AstraAction, AstraSupportContext } from '../../types/astra';
 
 function normalizePairIdFromSymbol(symbol?: string) {
@@ -24,6 +29,23 @@ interface ExecuteAstraActionOptions {
   onResolveWithAstra?: () => void;
 }
 
+const BLOCKED_ASTRA_TARGETS = new Set([
+  'create_token',
+  'wallet_create',
+  'wallet',
+  'wallet_import',
+  'trade',
+  'chart',
+  'browser',
+  'bot_futures',
+  'bot_futures_connect_exchange',
+  'send',
+]);
+
+function showBlockedDemoAction() {
+  useUiStore.getState().showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info');
+}
+
 export function executeAstraAction({
   action,
   context,
@@ -32,6 +54,15 @@ export function executeAstraAction({
 }: ExecuteAstraActionOptions) {
   switch (action.kind) {
     case 'open_screen': {
+      if (
+        isSensitiveRoutesBlockedInStableMode() &&
+        action.targetScreen &&
+        BLOCKED_ASTRA_TARGETS.has(action.targetScreen)
+      ) {
+        showBlockedDemoAction();
+        return;
+      }
+
       if (action.targetScreen === 'home') {
         router.push('/home');
         return;
@@ -99,7 +130,10 @@ export function executeAstraAction({
       }
 
       if (action.targetScreen === 'browser') {
-        router.push('/browser');
+        router.push({
+          pathname: '/browser',
+          params: { source: 'manual', title: 'Navegador QVEX' },
+        });
         return;
       }
 
@@ -189,6 +223,11 @@ export function executeAstraAction({
     }
 
     case 'open_chart': {
+      if (isSensitiveRoutesBlockedInStableMode()) {
+        showBlockedDemoAction();
+        return;
+      }
+
       router.push({
         pathname: '/trade/chart',
         params: {
@@ -199,6 +238,11 @@ export function executeAstraAction({
     }
 
     case 'connect_external_wallet': {
+      if (isSensitiveRoutesBlockedInStableMode()) {
+        showBlockedDemoAction();
+        return;
+      }
+
       router.push({
         pathname: '/(tabs)/wallet',
         params: {

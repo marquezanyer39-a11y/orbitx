@@ -6,6 +6,10 @@ import { FONT, RADII } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { MarketListRow } from '../../../components/lists/MarketListRow';
 import { useOrbitStore } from '../../../store/useOrbitStore';
+import {
+  isSensitiveRoutesBlockedInStableMode,
+  SENSITIVE_ROUTE_BLOCK_MESSAGE,
+} from '../../config/runtimeMode';
 import { useAuthStore } from '../../store/authStore';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -15,6 +19,7 @@ import { SectionHeader } from '../../components/common/SectionHeader';
 import { MarketList } from '../../components/market/MarketList';
 import { useMarketData } from '../../hooks/useMarketData';
 import { navigateToTrade } from '../../navigation/AppNavigator';
+import { useUiStore } from '../../store/uiStore';
 import { buildLegacyTokenPairId, mapLegacyTokenToMarketPair } from '../../utils/tradePairs';
 
 type MarketTab = 'top' | 'memes' | 'mine';
@@ -30,8 +35,10 @@ export default function MarketsScreen() {
   const { markets, loading, error, loadMarkets } = useMarketData('markets');
   const legacyTokens = useOrbitStore((state) => state.tokens);
   const profile = useAuthStore((state) => state.profile);
+  const showToast = useUiStore((state) => state.showToast);
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<MarketTab>('top');
+  const sensitiveRoutesBlocked = isSensitiveRoutesBlockedInStableMode();
 
   const marketByLegacyKey = useMemo(() => {
     const map = new Map<string, (typeof markets)[number]>();
@@ -173,7 +180,7 @@ export default function MarketsScreen() {
     activeTab === 'top'
       ? 'Mercado en vivo por capitalizacion, liquidez y pares destacados.'
       : activeTab === 'memes'
-        ? 'Memecoins activas y operables dentro del ecosistema OrbitX.'
+        ? 'Memecoins activas y operables dentro del ecosistema QVEX.'
         : 'Tus memecoins creadas, listas para seguimiento o trade.';
 
   return (
@@ -182,7 +189,7 @@ export default function MarketsScreen() {
         title="Mercados"
         subtitle={marketSubtitle}
         rightSlot={
-          activeTab === 'top' ? undefined : (
+          activeTab === 'top' || sensitiveRoutesBlocked ? undefined : (
             <PrimaryButton label="Crear token" onPress={() => router.push('/create-token')} />
           )
         }
@@ -234,7 +241,11 @@ export default function MarketsScreen() {
         ) : (
           <MarketList
             pairs={topMarkets}
-            onSelectPair={(pair) => navigateToTrade(router, { pairId: pair.id })}
+            onSelectPair={(pair) =>
+              sensitiveRoutesBlocked
+                ? showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info')
+                : navigateToTrade(router, { pairId: pair.id })
+            }
           />
         )
       ) : activeTab === 'memes' ? (
@@ -248,7 +259,9 @@ export default function MarketsScreen() {
                 statusTone={token.isUserCreated ? 'success' : 'muted'}
                 onPress={() =>
                   token.isTradeable
-                    ? navigateToTrade(router, { pairId: buildLegacyTokenPairId(token) })
+                    ? sensitiveRoutesBlocked
+                      ? showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info')
+                      : navigateToTrade(router, { pairId: buildLegacyTokenPairId(token) })
                     : router.push(`/token/${token.id}`)
                 }
               />
@@ -265,7 +278,7 @@ export default function MarketsScreen() {
               No hay memecoins visibles por ahora
             </Text>
             <Text style={[styles.emptyLaunchpadBody, { color: colors.textMuted }]}>
-              Vuelve cuando entren nuevos listados o crea tu primer meme dentro de OrbitX.
+              Vuelve cuando entren nuevos listados o crea tu primer meme dentro de QVEX.
             </Text>
           </View>
         )
@@ -279,7 +292,9 @@ export default function MarketsScreen() {
               statusTone="success"
               onPress={() =>
                 token.isTradeable
-                  ? navigateToTrade(router, { pairId: buildLegacyTokenPairId(token) })
+                  ? sensitiveRoutesBlocked
+                    ? showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info')
+                    : navigateToTrade(router, { pairId: buildLegacyTokenPairId(token) })
                   : router.push(`/token/${token.id}`)
               }
             />
@@ -296,7 +311,7 @@ export default function MarketsScreen() {
             Aun no tienes memes creadas
           </Text>
           <Text style={[styles.emptyLaunchpadBody, { color: colors.textMuted }]}>
-            Cuando lances un token desde OrbitX, aparecera aqui con su estado y acceso a trade.
+            Cuando lances un token desde QVEX, aparecera aqui con su estado y acceso a trade.
           </Text>
         </View>
       )}

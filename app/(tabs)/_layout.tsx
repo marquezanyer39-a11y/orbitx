@@ -9,6 +9,7 @@ import { FONT, withOpacity } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { useI18n } from '../../hooks/useI18n';
 import { TAB_NAV_ITEMS } from '../../src/navigation/TabNavigator';
+import { isSensitiveRoutesBlockedInStableMode } from '../../src/config/runtimeMode';
 import { useAuthStore } from '../../src/store/authStore';
 
 const TAB_ORDER = TAB_NAV_ITEMS.map((item) => item.key) as Array<
@@ -88,6 +89,9 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
   const { colors } = useAppTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+  const visibleTabOrder = isSensitiveRoutesBlockedInStableMode()
+    ? TAB_ORDER.filter((routeName) => routeName !== 'spot' && routeName !== 'wallet')
+    : TAB_ORDER;
 
   return (
     <View
@@ -101,7 +105,7 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
       ]}
     >
       <View style={styles.tabBarRow}>
-        {TAB_ORDER.map((routeName) => {
+        {visibleTabOrder.map((routeName) => {
           const route = state.routes.find((item) => item.name === routeName);
           if (!route) {
             return <View key={routeName} style={styles.tabBarItem} />;
@@ -190,6 +194,7 @@ export default function TabsLayout() {
   const sessionStatus = useAuthStore((state) => state.session.status);
   const { colors } = useAppTheme();
   const { t } = useI18n();
+  const sensitiveRoutesBlocked = isSensitiveRoutesBlockedInStableMode();
 
   if (sessionStatus === 'signed_out') {
     return <RouteRedirect href="/" />;
@@ -209,8 +214,14 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="home" options={{ title: t('tabs.home') }} />
       <Tabs.Screen name="market" options={{ title: t('tabs.market') }} />
-      <Tabs.Screen name="spot" options={{ title: t('tabs.trade') }} />
-      <Tabs.Screen name="wallet" options={{ title: t('tabs.wallet') }} />
+      <Tabs.Screen
+        name="spot"
+        options={{ title: t('tabs.trade'), href: sensitiveRoutesBlocked ? null : undefined }}
+      />
+      <Tabs.Screen
+        name="wallet"
+        options={{ title: t('tabs.wallet'), href: sensitiveRoutesBlocked ? null : undefined }}
+      />
       <Tabs.Screen name="wallet-spot" options={{ href: null, title: 'Billetera Spot' }} />
       <Tabs.Screen name="wallet-local" options={{ href: null, title: 'Cuenta Local' }} />
       <Tabs.Screen name="wallet-web3" options={{ href: null, title: 'Billetera Web3' }} />
