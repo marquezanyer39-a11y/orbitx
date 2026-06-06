@@ -42,12 +42,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   gradient: {
-    minHeight: 78,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
+    minHeight: 72,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     borderRadius: PROFILE_THEME.radius.card,
     borderWidth: 1,
-    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.42),
+    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.07),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -64,12 +64,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 32,
+    height: 28,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceLowest, 0.88),
+    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.primary, 0.08),
   },
   copy: {
     minWidth: 0,
@@ -79,11 +79,11 @@ const styles = StyleSheet.create({
   title: {
     color: PROFILE_THEME.colors.textPrimary,
     fontFamily: PROFILE_THEME.typography.bodyStrong,
-    fontSize: 18,
+    fontSize: 17,
   },
   body: {
     color: PROFILE_THEME.colors.textSecondary,
     fontFamily: PROFILE_THEME.typography.body,
-    fontSize: 14,
+    fontSize: 13,
   },
 });

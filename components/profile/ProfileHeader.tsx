@@ -32,7 +32,7 @@ export function ProfileHeader({ onBack, onGrid, onSettings }: ProfileHeaderProps
 
       <View style={styles.copy}>
         <Text style={styles.title}>Perfil</Text>
-        <Text style={styles.subtitle}>Personaliza tu experiencia en OrbitX</Text>
+        <Text style={styles.subtitle}>Personaliza tu experiencia en QVEX</Text>
       </View>
     </View>
   );
@@ -53,14 +53,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceHigh, 0.9),
-    borderWidth: 1,
-    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.8),
+    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceHigh, 0.46),
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   pressed: {
     opacity: 0.84,

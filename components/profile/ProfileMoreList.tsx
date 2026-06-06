@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceLow, 0.92),
     borderWidth: 1,
-    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.36),
+    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.07),
   },
   row: {
     minHeight: 64,
@@ -75,12 +75,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   iconWrap: {
-    width: 31,
-    height: 31,
-    borderRadius: 16,
+    width: 30,
+    height: 28,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceHigh, 0.9),
+    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceHigh, 0.42),
   },
   label: {
     color: PROFILE_THEME.colors.textPrimary,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   right: {
     flexShrink: 0,
-    maxWidth: '48%',
+    flexBasis: '42%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
@@ -111,6 +111,6 @@ const styles = StyleSheet.create({
     right: 14,
     bottom: 0,
     height: 1,
-    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.28),
+    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.07),
   },
 });

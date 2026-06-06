@@ -33,7 +33,7 @@ export function ProfileCustomizationCard({
               Colores, temas y movimiento
             </Text>
             <Text style={styles.body} numberOfLines={2}>
-              Gestiona toda la personalización de OrbitX.
+              Gestiona toda la personalización de QVEX.
             </Text>
           </View>
         </View>
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     minHeight: 88,
     borderRadius: PROFILE_THEME.radius.card,
     borderWidth: 1,
-    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.4),
+    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.07),
     paddingHorizontal: 14,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -78,12 +78,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   iconWrap: {
-    width: 33,
-    height: 33,
-    borderRadius: 17,
+    width: 30,
+    height: 28,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceLowest, 0.88),
+    backgroundColor: withProfileAlpha(PROFILE_THEME.colors.primary, 0.08),
   },
   copy: {
     flex: 1,
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: 7,
-    maxWidth: 96,
+    flexBasis: 104,
     flexShrink: 0,
   },
   summary: {

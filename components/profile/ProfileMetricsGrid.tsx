@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: withProfileAlpha(PROFILE_THEME.colors.surfaceLow, 0.95),
     borderWidth: 1,
-    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.5),
+    borderColor: withProfileAlpha(PROFILE_THEME.colors.outline, 0.07),
     gap: 10,
   },
   label: {
