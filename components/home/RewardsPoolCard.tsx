@@ -43,14 +43,15 @@ function normalizeRemainingLabel(value: string) {
 function RewardsArt({ isSmallPhone = false }: { isSmallPhone?: boolean }) {
   return (
     <View style={[styles.artWrap, isSmallPhone ? styles.artWrapSmall : null]}>
-      <LinearGradient
-        colors={['rgba(0,200,83,0.24)', 'rgba(0,200,83,0.03)']}
-        style={[styles.artGlow, isSmallPhone ? styles.artGlowSmall : null]}
-      />
+      <View style={[styles.artTrail, styles.artTrailA]} />
+      <View style={[styles.artTrail, styles.artTrailB]} />
       <View style={[styles.artCore, isSmallPhone ? styles.artCoreSmall : null]}>
-        <Ionicons name="planet-outline" size={isSmallPhone ? 15 : 17} color="#D8FDE6" />
+        <Ionicons
+          name="planet-outline"
+          size={isSmallPhone ? 15 : 17}
+          color={withOpacity(ORBITX_THEME.colors.textPrimary, 0.88)}
+        />
       </View>
-      <View style={styles.artOrbitRing} />
     </View>
   );
 }
@@ -72,13 +73,13 @@ export function RewardsPoolCard({
 
   return (
     <LinearGradient
-      colors={['#0D1012', '#0E1711']}
+      colors={[ORBITX_THEME.colors.surfaceSoft, ORBITX_THEME.colors.surface]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.card, isSmallPhone ? styles.cardSmall : null]}
     >
       <LinearGradient
-        colors={['rgba(0,200,83,0.12)', 'rgba(0,200,83,0)']}
+        colors={[ORBITX_THEME.colors.accentGlow, withOpacity(ORBITX_THEME.colors.primaryGreen, 0)]}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.topGlow}
@@ -94,7 +95,11 @@ export function RewardsPoolCard({
           >
             Pozo de recompensas
           </Text>
-          <Ionicons name="information-circle-outline" size={15} color={withOpacity('#FAFAFA', 0.5)} />
+          <Ionicons
+            name="information-circle-outline"
+            size={15}
+            color={withOpacity(ORBITX_THEME.colors.textPrimary, 0.5)}
+          />
         </View>
 
         <View style={styles.amountRow}>
@@ -128,7 +133,11 @@ export function RewardsPoolCard({
         </View>
 
         <View style={styles.timeRow}>
-          <Ionicons name="time-outline" size={13} color={withOpacity('#FAFAFA', 0.42)} />
+          <Ionicons
+            name="time-outline"
+            size={13}
+            color={withOpacity(ORBITX_THEME.colors.textPrimary, 0.42)}
+          />
           <Text
             style={[styles.remainingLabel, isSmallPhone ? styles.remainingLabelSmall : null]}
             numberOfLines={1}
@@ -160,27 +169,28 @@ export function RewardsPoolCard({
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    minHeight: 160,
+    minHeight: 150,
     borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.12),
-    padding: 14,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.08),
+    padding: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     overflow: 'hidden',
     gap: 8,
   },
   cardSmall: {
-    minHeight: 154,
-    padding: 12,
+    minHeight: 146,
+    padding: 11,
   },
   topGlow: {
     position: 'absolute',
-    top: -10,
-    right: -10,
-    width: 140,
-    height: 104,
-    borderRadius: 80,
+    top: 28,
+    right: -18,
+    width: 152,
+    height: 2,
+    borderRadius: 2,
+    transform: [{ rotate: '-18deg' }],
   },
   leftColumn: {
     flex: 1,
@@ -198,7 +208,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.semibold,
-    fontSize: 16.5,
+    fontSize: 16,
   },
   titleSmall: {
     fontSize: 15,
@@ -207,13 +217,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 5,
-    marginTop: 10,
+    marginTop: 8,
     minWidth: 0,
   },
   amount: {
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.bold,
-    fontSize: 23,
+    fontSize: 22,
     letterSpacing: 0,
     flexShrink: 1,
   },
@@ -227,7 +237,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   progressRow: {
-    marginTop: 12,
+    marginTop: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
@@ -237,7 +247,7 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: RADII.pill,
     overflow: 'hidden',
-    backgroundColor: withOpacity('#FFFFFF', 0.1),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.textPrimary, 0.1),
   },
   progressFill: {
     height: '100%',
@@ -250,14 +260,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   timeRow: {
-    marginTop: 11,
+    marginTop: 9,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     minWidth: 0,
   },
   remainingLabel: {
-    color: withOpacity('#FAFAFA', 0.48),
+    color: withOpacity(ORBITX_THEME.colors.textPrimary, 0.48),
     fontFamily: FONT.medium,
     fontSize: 10.4,
     flex: 1,
@@ -272,7 +282,7 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     minWidth: 82,
-    minHeight: 34,
+    minHeight: 32,
     borderRadius: 9,
     backgroundColor: ORBITX_THEME.colors.primaryGreen,
     alignItems: 'center',
@@ -289,49 +299,48 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   artWrap: {
-    width: 42,
-    height: 42,
+    width: 38,
+    height: 34,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   artWrapSmall: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 30,
   },
-  artGlow: {
+  artTrail: {
     position: 'absolute',
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: withOpacity(ORBITX_THEME.colors.textPrimary, 0.12),
+    transform: [{ rotate: '-18deg' }],
   },
-  artGlowSmall: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  artTrailA: {
+    width: 42,
+    top: 8,
+    right: -2,
+  },
+  artTrailB: {
+    width: 30,
+    top: 17,
+    right: 5,
+    backgroundColor: ORBITX_THEME.colors.accentGlow,
   },
   artCore: {
     width: 28,
     height: 28,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withOpacity('#06150D', 0.8),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.surface, 0.82),
     borderWidth: 1,
-    borderColor: withOpacity('#FFFFFF', 0.1),
+    borderColor: ORBITX_THEME.colors.border,
   },
   artCoreSmall: {
     width: 25,
     height: 25,
-    borderRadius: 9,
-  },
-  artOrbitRing: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.16),
+    borderRadius: 8,
   },
   pressed: {
     opacity: 0.8,

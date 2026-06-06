@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT } from '../../../constants/theme';
-import { AstraEntry } from './AstraEntry';
+import { POOL_THEME } from './poolVisualTheme';
 
 interface Props {
   title: string;
@@ -20,12 +20,18 @@ export function PoolHeader({ title, backLabel, astraLabel, onBack, onAstra }: Pr
         accessibilityLabel={backLabel}
         style={styles.backButton}
       >
-        <Ionicons name="chevron-back" size={18} color="#EAF2FF" />
+        <Ionicons name="arrow-back" size={24} color={POOL_THEME.colors.primary} />
       </Pressable>
 
       <Text style={styles.title}>{title}</Text>
 
-      <AstraEntry label={astraLabel} onPress={onAstra} />
+      <Pressable
+        onPress={onAstra}
+        accessibilityLabel={astraLabel}
+        style={styles.actionButton}
+      >
+        <Ionicons name="ellipsis-vertical" size={22} color={POOL_THEME.colors.primary} />
+      </Pressable>
     </View>
   );
 }
@@ -34,23 +40,32 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    minHeight: 30,
+    justifyContent: 'space-between',
+    minHeight: 64,
+    paddingHorizontal: POOL_THEME.spacing.screenH,
+    backgroundColor: POOL_THEME.colors.header,
+    borderBottomWidth: 1,
+    borderBottomColor: POOL_THEME.colors.border,
   },
   backButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 0,
-    backgroundColor: 'transparent',
   },
   title: {
-    flex: 1,
-    color: '#F3F7FF',
+    color: POOL_THEME.colors.primary,
     fontFamily: FONT.semibold,
-    fontSize: 17,
+    fontSize: 24,
     letterSpacing: 0.1,
+    textAlign: 'center',
+  },
+  actionButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

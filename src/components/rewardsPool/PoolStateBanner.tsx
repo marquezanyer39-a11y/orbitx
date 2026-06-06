@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FONT, withOpacity } from '../../../constants/theme';
 import type { RewardsPoolCopy, RewardsPoolStatus } from '../../types/rewardsPool';
 
 interface Props {

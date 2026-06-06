@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FONT } from '../../../constants/theme';
+import { POOL_THEME } from './poolVisualTheme';
 
 interface Props {
   amountLabel: string;
@@ -15,15 +16,15 @@ export function PoolProgressBar({ amountLabel, percentLabel, progressPercent }: 
   return (
     <View style={styles.wrap}>
       <Text style={styles.amount}>{amountLabel}</Text>
-      <View style={styles.progressRow}>
-        <View style={styles.barTrack}>
-          <LinearGradient
-            colors={['#1EF1FF', '#37D6FF', '#67D8FF']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.barFill, { width: widthPercent }]}
-          />
-        </View>
+      <View style={styles.barTrack}>
+        <LinearGradient
+          colors={[POOL_THEME.colors.accentCyan, POOL_THEME.colors.accentTurquoise]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.barFill, { width: widthPercent }]}
+        />
+      </View>
+      <View style={styles.percentRow}>
         <Text style={styles.percent}>{percentLabel}</Text>
       </View>
     </View>
@@ -34,39 +35,33 @@ const styles = StyleSheet.create({
   wrap: {
     gap: 8,
   },
-  progressRow: {
+  percentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
+    justifyContent: 'flex-end',
   },
   amount: {
-    color: '#FFFFFF',
-    fontFamily: FONT.bold,
-    fontSize: 24,
-    lineHeight: 28,
+    color: POOL_THEME.colors.textPrimary,
+    fontFamily: FONT.medium,
+    fontSize: 15,
+    lineHeight: 20,
   },
   percent: {
-    color: '#33E4FF',
+    color: POOL_THEME.colors.accentTurquoise,
     fontFamily: FONT.bold,
-    fontSize: 16,
+    fontSize: 14,
     lineHeight: 18,
   },
   barTrack: {
-    flex: 1,
-    height: 12,
-    borderRadius: RADII.pill,
+    height: 7,
+    borderRadius: 999,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: POOL_THEME.colors.progressBg,
     borderWidth: 1,
-    borderColor: withOpacity('#22E8FF', 0.14),
+    borderColor: POOL_THEME.colors.border,
   },
   barFill: {
     height: '100%',
-    borderRadius: RADII.pill,
-    shadowColor: '#22E8FF',
-    shadowOpacity: 0.26,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
+    borderRadius: 999,
   },
 });

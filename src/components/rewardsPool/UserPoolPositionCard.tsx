@@ -1,15 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
-import { useAppTheme } from '../../../hooks/useAppTheme';
+import { FONT } from '../../../constants/theme';
 import { formatUsdCents } from '../../services/rewardsPool/poolCopy';
 import type {
   RewardsPoolCopy,
   RewardsPoolLeaderboardRow,
   RewardsPoolResult,
 } from '../../types/rewardsPool';
+import { POOL_THEME } from './poolVisualTheme';
 
 interface Props {
   copy: RewardsPoolCopy;
@@ -34,22 +33,11 @@ function DataPoint({
 }
 
 export function UserPoolPositionCard({ copy, language, row, result }: Props) {
-  const { colors } = useAppTheme();
-
   return (
-    <LinearGradient
-      colors={['rgba(28, 40, 56, 0.98)', 'rgba(17, 23, 34, 0.98)']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[
-        styles.card,
-        {
-          borderColor: withOpacity('#D5B26B', 0.72),
-          shadowColor: '#D5B26B',
-        },
-      ]}
-    >
-      <Text style={styles.heading}>{copy.positionTitle}</Text>
+    <View style={styles.card}>
+      <Text style={styles.heading}>
+        {copy.positionTitle}
+      </Text>
 
       <View style={styles.grid}>
         <DataPoint
@@ -67,73 +55,74 @@ export function UserPoolPositionCard({ copy, language, row, result }: Props) {
         />
       </View>
 
-      <View style={[styles.noteWrap, { borderTopColor: withOpacity(colors.borderStrong, 0.82) }]}>
-        <View style={styles.noteIcon}>
-          <Ionicons name="information-circle" size={16} color="#D5B26B" />
-        </View>
-        <Text style={styles.noteText}>{copy.rankingNote}</Text>
+      <View style={styles.noteWrap}>
+        <Ionicons name="information-circle-outline" size={15} color={POOL_THEME.colors.textMuted} />
+        <Text style={styles.noteText}>
+          {copy.rankingNote}
+        </Text>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
-    borderWidth: 1.2,
+    borderWidth: 1,
+    borderColor: POOL_THEME.colors.border,
+    backgroundColor: POOL_THEME.colors.cardPrimary,
     padding: 12,
-    gap: 10,
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
+    gap: 12,
   },
   heading: {
-    color: '#F0CD87',
+    color: POOL_THEME.colors.textPrimary,
     fontFamily: FONT.bold,
-    fontSize: 15,
-    letterSpacing: 0.25,
+    fontSize: 13,
+    lineHeight: 17,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    rowGap: 6,
-    columnGap: 12,
+    rowGap: 10,
+    columnGap: 10,
   },
   dataPoint: {
-    width: '47%',
-    gap: 2,
+    width: '48%',
+    minHeight: 64,
+    borderRadius: POOL_THEME.radius.cardInner,
+    borderWidth: 1,
+    borderColor: POOL_THEME.colors.border,
+    backgroundColor: POOL_THEME.colors.cardSecondary,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    gap: 4,
   },
   dataLabel: {
-    color: '#B9C0CD',
-    fontFamily: FONT.medium,
-    fontSize: 11,
+    color: POOL_THEME.colors.textSecondary,
+    fontFamily: FONT.semibold,
+    fontSize: 10,
+    lineHeight: 12,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   dataValue: {
-    color: '#FFFFFF',
+    color: POOL_THEME.colors.textPrimary,
     fontFamily: FONT.bold,
-    fontSize: 17,
+    fontSize: 15,
+    lineHeight: 19,
   },
   noteWrap: {
-    borderTopWidth: 1,
-    paddingTop: 8,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
-  },
-  noteIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   noteText: {
     flex: 1,
-    color: '#CBD2DE',
+    color: POOL_THEME.colors.textMuted,
     fontFamily: FONT.regular,
     fontSize: 11,
-    lineHeight: 14,
+    lineHeight: 16,
   },
 });

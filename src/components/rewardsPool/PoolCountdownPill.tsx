@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FONT } from '../../../constants/theme';
+import { POOL_THEME } from './poolVisualTheme';
 
 interface Props {
   label: string;
@@ -10,34 +10,31 @@ interface Props {
 
 export function PoolCountdownPill({ label }: Props) {
   return (
-    <LinearGradient
-      colors={['rgba(23, 235, 255, 0.14)', 'rgba(13, 26, 42, 0.94)']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.pill}
-    >
-      <Ionicons name="trophy" size={11} color="#F0D29A" />
+    <View style={styles.pill}>
+      <Ionicons name="timer-outline" size={13} color={POOL_THEME.colors.accentCyan} />
       <Text style={styles.label}>{label}</Text>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   pill: {
     alignSelf: 'flex-start',
-    minHeight: 30,
-    borderRadius: RADII.pill,
+    minHeight: 34,
+    borderRadius: POOL_THEME.radius.chip,
     borderWidth: 1,
-    borderColor: withOpacity('#22E8FF', 0.22),
+    borderColor: 'rgba(59,167,255,0.42)',
+    backgroundColor: POOL_THEME.colors.cardSecondary,
     paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
   label: {
-    color: '#E9FBFF',
+    maxWidth: 210,
+    color: POOL_THEME.colors.accentCyan,
     fontFamily: FONT.semibold,
     fontSize: 12,
-    lineHeight: 14,
+    lineHeight: 16,
   },
 });

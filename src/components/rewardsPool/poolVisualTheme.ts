@@ -1,0 +1,33 @@
+export const POOL_THEME = {
+  colors: {
+    background: '#08090B',
+    header: '#14121C',
+    cardPrimary: '#12131A',
+    cardSecondary: '#151724',
+    cardTertiary: '#211E28',
+    textPrimary: '#E6E0EF',
+    textSecondary: '#CAC3D8',
+    textMuted: '#A1A1AA',
+    primary: '#CCBDFF',
+    primaryContainer: '#6F3FF5',
+    accentCyan: '#3BA7FF',
+    accentTurquoise: '#47F3D1',
+    accentGold: '#D4AF37',
+    accentSilver: '#C0C0C0',
+    accentBronze: '#CD7F32',
+    border: 'rgba(255,255,255,0.08)',
+    separator: 'rgba(255,255,255,0.05)',
+    progressBg: 'rgba(255,255,255,0.06)',
+  },
+  radius: {
+    card: 22,
+    cardInner: 14,
+    chip: 16,
+    button: 14,
+  },
+  spacing: {
+    screenH: 16,
+    gap: 16,
+    gapLarge: 20,
+  },
+} as const;
