@@ -1,4 +1,5 @@
 import { getMarketsList } from '../api/market';
+import { QVEX_STABLE_APK_MODE } from '../../config/runtimeMode';
 import { discoverTokensByAddress, isTokenDiscoveryConfigured } from './tokenDiscovery';
 import {
   EXTERNAL_EVM_NETWORKS,
@@ -86,6 +87,59 @@ let marketCache:
   | null = null;
 
 const MARKET_CACHE_TTL_MS = 60_000;
+
+function createSafeModeNetworkState(chain: ExternalEvmNetworkSpec): ExternalWalletNetworkBalanceState {
+  return {
+    chainId: chain.chainId,
+    chainLabel: chain.chainLabel,
+    status: 'unsupported',
+    assetCount: 0,
+    visibleAssetCount: 0,
+    failedTokenCount: 0,
+    updatedAt: new Date().toISOString(),
+    message: 'Lectura Web3 desactivada en modo seguro.',
+  };
+}
+
+function createSafeModeMultiChainBalanceSnapshot(
+  address: string,
+): ExternalWalletMultiChainBalanceSnapshot {
+  const normalizedAddress = address.trim();
+  const fetchedAt = new Date().toISOString();
+
+  return {
+    address: normalizedAddress,
+    fetchedAt,
+    assets: [],
+    visibleAssets: [],
+    totalUsdEstimate: 0,
+    networkStates: EXTERNAL_EVM_SUPPORTED_NETWORKS.map(createSafeModeNetworkState),
+    failedNetworkCount: 0,
+    status: 'unsupported',
+    message: 'Lectura Web3 desactivada en modo seguro.',
+    discoveryEnabled: false,
+    hasUnpricedAssets: false,
+  };
+}
+
+function createSafeModeSingleChainSnapshot(
+  address: string,
+  chainId?: number | null,
+): ExternalWalletBalanceSnapshot {
+  return {
+    address: address.trim(),
+    chainId: chainId ?? 0,
+    chainLabel: getExternalWalletBalanceNetworkLabel(chainId),
+    fetchedAt: new Date().toISOString(),
+    tokenAssets: [],
+    assets: [],
+    failedTokenCount: 0,
+    status: 'unsupported',
+    message: 'Lectura Web3 desactivada en modo seguro.',
+    discoveryEnabled: false,
+    hasUnpricedAssets: false,
+  };
+}
 
 async function getEthersRuntime() {
   if (!ethersRuntimePromise) {
@@ -206,6 +260,25 @@ function buildAsset(params: {
   };
 }
 
+function createSafeModeNativeAsset(chainId?: number | null): ExternalWalletBalanceAsset {
+  const chain = getSupportedNetwork(chainId);
+  const resolvedChainId = chain?.chainId ?? chainId ?? 0;
+  const symbol = chain?.nativeSymbol ?? 'NATIVE';
+
+  return {
+    id: `${resolvedChainId}-native-${symbol}`,
+    symbol,
+    name: chain?.nativeName ?? 'Activo nativo',
+    amount: 0,
+    decimals: chain?.nativeDecimals ?? 18,
+    usdValue: 0,
+    priceAvailable: false,
+    chainId: resolvedChainId,
+    chainLabel: getExternalWalletBalanceNetworkLabel(chainId),
+    type: 'native',
+  };
+}
+
 function normalizeAddress(address: string) {
   const normalized = address.trim();
 
@@ -228,6 +301,10 @@ export async function getNativeBalance(
   address: string,
   chainId?: number | null,
 ): Promise<ExternalWalletBalanceAsset> {
+  if (QVEX_STABLE_APK_MODE) {
+    return createSafeModeNativeAsset(chainId);
+  }
+
   const chain = getSupportedNetwork(chainId);
   if (!chain) {
     throw new Error('Red no soportada para balances externos.');
@@ -265,6 +342,13 @@ export async function getTokenBalances(
   assets: ExternalWalletBalanceAsset[];
   failedTokenCount: number;
 }> {
+  if (QVEX_STABLE_APK_MODE) {
+    return {
+      assets: [],
+      failedTokenCount: 0,
+    };
+  }
+
   const chain = getSupportedNetwork(chainId);
   if (!chain) {
     throw new Error('Red no soportada para balances externos.');
@@ -370,6 +454,10 @@ async function fetchNetworkBalanceSnapshot(
 export async function getExternalWalletMultiChainBalanceSnapshot(
   address: string,
 ): Promise<ExternalWalletMultiChainBalanceSnapshot> {
+  if (QVEX_STABLE_APK_MODE) {
+    return createSafeModeMultiChainBalanceSnapshot(address);
+  }
+
   const normalizedAddress = normalizeAddress(address);
   const fetchedAt = new Date().toISOString();
   const settled = await Promise.allSettled(
@@ -447,6 +535,10 @@ export async function getExternalWalletBalanceSnapshot(
   address: string,
   chainId?: number | null,
 ): Promise<ExternalWalletBalanceSnapshot> {
+  if (QVEX_STABLE_APK_MODE) {
+    return createSafeModeSingleChainSnapshot(address, chainId);
+  }
+
   const chain = getSupportedNetwork(chainId);
   if (!chain) {
     return {
@@ -458,7 +550,7 @@ export async function getExternalWalletBalanceSnapshot(
       assets: [],
       failedTokenCount: 0,
       status: 'unsupported',
-      message: 'Esta red aun no esta soportada para lectura de balances en OrbitX.',
+      message: 'Esta red aun no esta soportada para lectura de balances en QVEX.',
       discoveryEnabled: isTokenDiscoveryConfigured(),
       hasUnpricedAssets: false,
     };

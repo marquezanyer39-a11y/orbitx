@@ -4,7 +4,9 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, SPACING, withOpacity } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
+import { QVEX_STABLE_APK_MODE } from '../../src/config/runtimeMode';
 import { useExternalWallet } from '../../src/hooks/useExternalWallet';
+import { useUiStore } from '../../src/store/uiStore';
 import { useWalletStore } from '../../src/store/walletStore';
 import { PrimaryButton } from '../common/PrimaryButton';
 
@@ -45,7 +47,9 @@ export function ExternalWalletConnectSheet({
   onClose,
 }: ExternalWalletConnectSheetProps) {
   const { colors } = useAppTheme();
+  const showToast = useUiStore((state) => state.showToast);
   const selectedNetwork = useWalletStore((state) => state.selectedNetwork);
+  const safeModeActive = QVEX_STABLE_APK_MODE;
   const {
     address,
     chainLabel,
@@ -80,12 +84,20 @@ export function ExternalWalletConnectSheet({
       : isBusy
         ? 'Abriendo wallets...'
         : 'Conectar wallet';
+  const resolvedConnectButtonLabel = safeModeActive
+    ? 'Desactivado en modo seguro'
+    : connectButtonLabel;
+  const safeModeUnavailableBody = 'Conexion de wallet externa desactivada en modo seguro de QVEX.';
+
+  function handleBlockedConnection() {
+    showToast(safeModeUnavailableBody, 'info');
+  }
 
   useEffect(() => {
-    if (visible && isConnected) {
+    if (visible && isConnected && !safeModeActive) {
       onClose();
     }
-  }, [isConnected, onClose, visible]);
+  }, [isConnected, onClose, safeModeActive, visible]);
 
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
@@ -131,7 +143,7 @@ export function ExternalWalletConnectSheet({
             ]}
           >
             <Text style={[styles.helperTitle, { color: colors.text }]}>
-              OrbitX no guarda tu frase semilla
+              QVEX no guarda tu frase semilla
             </Text>
             <Text style={[styles.helperBody, { color: colors.textMuted }]}>
               Las aprobaciones y firmas se hacen desde tu wallet externa.
@@ -163,7 +175,7 @@ export function ExternalWalletConnectSheet({
             ))}
           </View>
 
-          {!configured || !runtimeSupported ? (
+          {safeModeActive || !configured || !runtimeSupported ? (
             <View
               style={[
                 styles.stateCard,
@@ -175,7 +187,7 @@ export function ExternalWalletConnectSheet({
             >
               <Text style={[styles.stateTitle, { color: colors.text }]}>{unavailableTitle}</Text>
               <Text style={[styles.stateBody, { color: colors.textMuted }]}>
-                {unavailableBody}
+                {safeModeActive ? safeModeUnavailableBody : unavailableBody}
               </Text>
             </View>
           ) : null}
@@ -241,17 +253,21 @@ export function ExternalWalletConnectSheet({
 
           {!isConnected ? (
             <PrimaryButton
-              label={connectButtonLabel}
-              onPress={() => void connect()}
-              disabled={isBusy || !configured || !runtimeSupported}
-              style={isBusy || !configured || !runtimeSupported ? styles.disabledAction : undefined}
+              label={resolvedConnectButtonLabel}
+              onPress={safeModeActive ? handleBlockedConnection : () => void connect()}
+              disabled={isBusy || (!safeModeActive && (!configured || !runtimeSupported))}
+              style={
+                isBusy || (!safeModeActive && (!configured || !runtimeSupported))
+                  ? styles.disabledAction
+                  : undefined
+              }
             />
           ) : (
             <View style={styles.actionStack}>
               <PrimaryButton
                 label={isBusy ? 'Solicitando firma...' : 'Firmar mensaje de prueba'}
                 variant="secondary"
-                onPress={() => void signMessage()}
+                onPress={safeModeActive ? handleBlockedConnection : () => void signMessage()}
                 disabled={isBusy}
                 style={isBusy ? styles.disabledAction : undefined}
               />
@@ -260,7 +276,11 @@ export function ExternalWalletConnectSheet({
                 <PrimaryButton
                   label={`Cambiar a ${selectedNetworkLabel(selectedNetwork)}`}
                   variant="secondary"
-                  onPress={() => void switchToNetwork(selectedNetwork)}
+                  onPress={
+                    safeModeActive
+                      ? handleBlockedConnection
+                      : () => void switchToNetwork(selectedNetwork)
+                  }
                   disabled={isBusy}
                   style={isBusy ? styles.disabledAction : undefined}
                 />
@@ -269,7 +289,7 @@ export function ExternalWalletConnectSheet({
               <PrimaryButton
                 label="Desconectar wallet"
                 variant="ghost"
-                onPress={() => void disconnect()}
+                onPress={safeModeActive ? handleBlockedConnection : () => void disconnect()}
                 disabled={isBusy}
                 style={isBusy ? styles.disabledAction : undefined}
               />

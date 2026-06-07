@@ -18,11 +18,10 @@ import {
   SAFE_MODE_BLOCK_MESSAGE,
   SAFE_MODE_READONLY_MESSAGE,
 } from '../../config/runtimeMode';
-import { useExternalWallet } from '../../hooks/useExternalWallet';
 import { useExternalWalletBalances } from '../../hooks/useExternalWalletBalances';
-import { useMarketData } from '../../hooks/useMarketData';
-import { useWallet } from '../../hooks/useWallet';
+import { useMarketStore } from '../../store/marketStore';
 import { useUiStore } from '../../store/uiStore';
+import { useWalletStore } from '../../store/walletStore';
 import { getPortfolioDistribution, getTotalPortfolioBalanceUsd } from '../../utils/portfolioTotals';
 
 const COLORS = {
@@ -286,27 +285,48 @@ function ActivityRow({ item }: { item: WalletActivityItem }) {
 
 export default function WalletScreen() {
   const { width } = useWindowDimensions();
-  const wallet = useWallet();
+  const safeModeActive = QVEX_STABLE_APK_MODE;
+  const wallet = useWalletStore();
   const showToast = useUiStore((state) => state.showToast);
-  const externalWalletRuntime = useExternalWallet();
-  const { markets } = useMarketData('markets');
+  const markets = useMarketStore((state) => state.markets);
+  const loadMarkets = useMarketStore((state) => state.loadMarkets);
   const [connectSheetVisible, setConnectSheetVisible] = useState(false);
 
-  const externalWalletAddress =
-    externalWalletRuntime.address?.trim() || wallet.externalWallet.address?.trim() || '';
-  const externalWalletChainId = externalWalletRuntime.chainId ?? wallet.externalWallet.chainId;
+  const externalWalletAddress = safeModeActive ? '' : wallet.externalWallet.address?.trim() || '';
+  const externalWalletChainId = safeModeActive ? undefined : wallet.externalWallet.chainId;
   const externalWalletBalances = useExternalWalletBalances({
     address: externalWalletAddress,
     chainId: externalWalletChainId,
-    enabled: Boolean(externalWalletAddress),
+    enabled: !safeModeActive && Boolean(externalWalletAddress),
   });
 
   useEffect(() => {
+    if (safeModeActive) {
+      return;
+    }
+
     wallet.syncCreatedTokens();
     void wallet.refreshSecurityStatus();
-  }, [wallet.refreshSecurityStatus, wallet.syncCreatedTokens]);
+  }, [safeModeActive, wallet.refreshSecurityStatus, wallet.syncCreatedTokens]);
+
+  useEffect(() => {
+    if (safeModeActive || markets.length) {
+      return;
+    }
+
+    void loadMarkets();
+  }, [loadMarkets, markets.length, safeModeActive]);
 
   const spotAssets = useMemo(() => {
+    if (safeModeActive) {
+      return wallet.spotBalances.map((balance) => ({
+        symbol: balance.symbol,
+        amount: balance.amount,
+        usdValue:
+          balance.symbol === 'USDT' || balance.symbol === 'USDC' ? balance.amount : 0,
+      }));
+    }
+
     const marketMap = new Map(markets.map((item) => [item.baseSymbol.toUpperCase(), item]));
 
     return wallet.spotBalances.map((balance) => {
@@ -344,8 +364,6 @@ export default function WalletScreen() {
   const web3Percent = clampPercent(distribution.web3Percent);
   const penEstimate = totalBalance * 3.755;
   const isSmallPhone = width < 380;
-  const safeModeActive = QVEX_STABLE_APK_MODE;
-
   function showBlockedAction() {
     showToast(SAFE_MODE_BLOCK_MESSAGE, 'info');
   }
@@ -442,7 +460,13 @@ export default function WalletScreen() {
               : formatUsd(totalWeb3)
           }
           change={undefined}
-          body={externalWalletAddress ? 'Activos on-chain y dApps' : 'Conectar billetera externa'}
+          body={
+            safeModeActive
+              ? 'Wallet externa desactivada en modo seguro'
+              : externalWalletAddress
+                ? 'Activos on-chain y dApps'
+                : 'Conectar billetera externa'
+          }
           icon="cube-outline"
           color={COLORS.blue}
           onPress={showBlockedAction}
@@ -470,10 +494,12 @@ export default function WalletScreen() {
         </View>
       </View>
 
-      <ExternalWalletConnectSheet
-        visible={connectSheetVisible}
-        onClose={() => setConnectSheetVisible(false)}
-      />
+      {!safeModeActive ? (
+        <ExternalWalletConnectSheet
+          visible={connectSheetVisible}
+          onClose={() => setConnectSheetVisible(false)}
+        />
+      ) : null}
     </ScreenContainer>
   );
 }

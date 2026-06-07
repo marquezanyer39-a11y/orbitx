@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { QVEX_STABLE_APK_MODE } from '../config/runtimeMode';
 import {
   getExternalWalletBalanceNetworkLabel,
   getExternalWalletMultiChainBalanceSnapshot,
@@ -7,6 +8,7 @@ import {
   type ExternalWalletBalanceStatus,
   type ExternalWalletNetworkBalanceState,
 } from '../services/wallet/externalWalletBalances';
+import { normalizeWeb3Error } from '../services/web3/web3Errors';
 
 interface UseExternalWalletBalancesOptions {
   address?: string;
@@ -48,6 +50,7 @@ const EMPTY_STATE: ExternalWalletBalancesState = {
 function buildCleanErrorState(
   chainId: number | undefined,
   currentAssets: ExternalWalletBalanceAsset[],
+  message?: string,
 ): ExternalWalletBalancesState {
   return {
     status: 'error',
@@ -65,7 +68,7 @@ function buildCleanErrorState(
     failedTokenCount: 0,
     discoveryEnabled: false,
     hasUnpricedAssets: currentAssets.some((asset) => asset.amount > 0 && !asset.priceAvailable),
-    message: 'No se pudo actualizar esta red',
+    message: message ?? 'No se pudo actualizar el saldo.',
   };
 }
 
@@ -76,9 +79,10 @@ export function useExternalWalletBalances({
 }: UseExternalWalletBalancesOptions) {
   const [state, setState] = useState<ExternalWalletBalancesState>(EMPTY_STATE);
   const normalizedAddress = useMemo(() => address?.trim() ?? '', [address]);
+  const safeModeActive = QVEX_STABLE_APK_MODE;
 
   const refresh = useCallback(async () => {
-    if (!enabled || !normalizedAddress) {
+    if (safeModeActive || !enabled || !normalizedAddress) {
       setState(EMPTY_STATE);
       return;
     }
@@ -113,15 +117,16 @@ export function useExternalWalletBalances({
         updatedAt: snapshot.fetchedAt,
         message: snapshot.message,
       });
-    } catch {
-      setState((current) => buildCleanErrorState(chainId, current.assets));
+    } catch (error) {
+      const normalizedError = normalizeWeb3Error(error, 'No se pudo actualizar el saldo.');
+      setState((current) => buildCleanErrorState(chainId, current.assets, normalizedError.message));
     }
-  }, [chainId, enabled, normalizedAddress]);
+  }, [chainId, enabled, normalizedAddress, safeModeActive]);
 
   useEffect(() => {
     let mounted = true;
 
-    if (!enabled || !normalizedAddress) {
+    if (safeModeActive || !enabled || !normalizedAddress) {
       setState(EMPTY_STATE);
       return undefined;
     }
@@ -160,23 +165,24 @@ export function useExternalWalletBalances({
           message: snapshot.message,
         });
       })
-      .catch(() => {
+      .catch((error) => {
         if (!mounted) {
           return;
         }
 
-        setState((current) => buildCleanErrorState(chainId, current.assets));
+        const normalizedError = normalizeWeb3Error(error, 'No se pudo actualizar el saldo.');
+        setState((current) => buildCleanErrorState(chainId, current.assets, normalizedError.message));
       });
 
     return () => {
       mounted = false;
     };
-  }, [chainId, enabled, normalizedAddress]);
+  }, [chainId, enabled, normalizedAddress, safeModeActive]);
 
   return {
     ...state,
     isLoading: state.status === 'loading',
-    isAvailable: Boolean(enabled && normalizedAddress),
+    isAvailable: Boolean(!safeModeActive && enabled && normalizedAddress),
     refresh,
   };
 }
