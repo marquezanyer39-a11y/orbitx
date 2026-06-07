@@ -306,6 +306,23 @@ export default function TradeScreen() {
           </View>
         </View>
       ) : null}
+      <View
+        style={[
+          styles.marketDataBadge,
+          {
+            backgroundColor: withOpacity(colors.fieldBackground, 0.64),
+            borderColor: withOpacity(colors.border, 0.72),
+          },
+        ]}
+      >
+        <Text style={[styles.marketDataBadgeTitle, { color: colors.text }]}>
+          Mercado en vivo solo lectura
+        </Text>
+        <Text style={[styles.marketDataBadgeBody, { color: colors.textMuted }]}>
+          Precio: {realtimePrice.sourceLabel} · Grafico: {realtimeCandles.sourceLabel} · Libro:{' '}
+          {realtimeFeed.sourceLabel}
+        </Text>
+      </View>
       <TradeHeader
         pair={pair}
         ticker={realtimePrice.ticker}
@@ -379,6 +396,7 @@ export default function TradeScreen() {
               onChangeTimeframe={setTimeframe}
               onOpenFullscreen={openFullscreenChart}
               compact
+              sourceLabel={realtimeCandles.sourceLabel}
             />
           </View>
         </View>
@@ -435,6 +453,22 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: 11,
     lineHeight: 15,
+  },
+  marketDataBadge: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+  },
+  marketDataBadgeTitle: {
+    fontFamily: FONT.semibold,
+    fontSize: 12,
+  },
+  marketDataBadgeBody: {
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    lineHeight: 16,
   },
   executionCard: {
     borderTopWidth: 1,

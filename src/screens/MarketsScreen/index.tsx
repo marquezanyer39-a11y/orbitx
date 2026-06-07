@@ -194,6 +194,24 @@ export default function MarketsScreen() {
 
       <View
         style={[
+          styles.infoBanner,
+          {
+            backgroundColor: colors.fieldBackground,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <Text style={[styles.infoBannerTitle, { color: colors.text }]}>
+          Solo lectura de mercado
+        </Text>
+        <Text style={[styles.infoBannerBody, { color: colors.textMuted }]}>
+          QVEX muestra precios y actividad con datos externos de mercado en solo lectura. Abrir un
+          par te lleva a Trade visual con simulacion local, sin operaciones reales.
+        </Text>
+      </View>
+
+      <View
+        style={[
           styles.searchShell,
           { backgroundColor: colors.fieldBackground, borderColor: colors.border },
         ]}
@@ -311,6 +329,22 @@ export default function MarketsScreen() {
 const styles = StyleSheet.create({
   content: {
     gap: 14,
+  },
+  infoBanner: {
+    borderWidth: 1,
+    borderRadius: RADII.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 6,
+  },
+  infoBannerTitle: {
+    fontFamily: FONT.semibold,
+    fontSize: 13,
+  },
+  infoBannerBody: {
+    fontFamily: FONT.regular,
+    fontSize: 11,
+    lineHeight: 16,
   },
   tabsRow: {
     flexDirection: 'row',

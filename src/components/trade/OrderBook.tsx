@@ -50,6 +50,9 @@ export function OrderBook({ rows, baseSymbol, status, statusLabel, error, onPick
           <Text style={[styles.toplineLabel, { color: liveColor }]}>{statusLabel}</Text>
         </View>
       </View>
+      <Text style={[styles.helperLabel, { color: colors.textMuted }]}>
+        Libro visual de solo lectura. Tocar un nivel solo completa el ticket de simulacion.
+      </Text>
 
       {rows.length ? (
         <>
@@ -153,6 +156,12 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: 9,
     textTransform: 'uppercase',
+  },
+  helperLabel: {
+    fontFamily: FONT.medium,
+    fontSize: 10,
+    lineHeight: 14,
+    marginBottom: 4,
   },
   headerRow: {
     flexDirection: 'row',

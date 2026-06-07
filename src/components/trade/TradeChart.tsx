@@ -13,6 +13,7 @@ interface Props {
   onChangeTimeframe: (timeframe: (typeof TIMEFRAMES)[number]) => void;
   onOpenFullscreen: () => void;
   compact?: boolean;
+  sourceLabel?: string;
 }
 
 export function TradeChart({
@@ -21,6 +22,7 @@ export function TradeChart({
   onChangeTimeframe,
   onOpenFullscreen,
   compact = false,
+  sourceLabel,
 }: Props) {
   const { colors } = useAppTheme();
   const previewPoints = history?.line?.slice(-18) ?? [];
@@ -103,32 +105,40 @@ export function TradeChart({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timeframeRow}>
-          {TIMEFRAMES.map((item) => {
-            const active = item === timeframe;
-            return (
-              <Pressable
-                key={item}
-                onPress={() => onChangeTimeframe(item)}
-                style={[
-                  styles.timeframeChip,
-                  {
-                    backgroundColor: active ? colors.primarySoft : colors.fieldBackground,
-                    borderColor: active ? colors.borderStrong : colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.timeframeLabel, { color: active ? colors.text : colors.textMuted }]}>
-                  {item}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <View style={styles.headerMain}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timeframeRow}>
+            {TIMEFRAMES.map((item) => {
+              const active = item === timeframe;
+              return (
+                <Pressable
+                  key={item}
+                  onPress={() => onChangeTimeframe(item)}
+                  style={[
+                    styles.timeframeChip,
+                    {
+                      backgroundColor: active ? colors.primarySoft : colors.fieldBackground,
+                      borderColor: active ? colors.borderStrong : colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.timeframeLabel, { color: active ? colors.text : colors.textMuted }]}>
+                    {item}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
 
-        <Pressable onPress={onOpenFullscreen}>
-          <Text style={[styles.fullscreen, { color: colors.text }]}>Ver grafico</Text>
-        </Pressable>
+          <Pressable onPress={onOpenFullscreen}>
+            <Text style={[styles.fullscreen, { color: colors.text }]}>Ver grafico</Text>
+          </Pressable>
+        </View>
+
+        {sourceLabel ? (
+          <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>
+            Datos de mercado: {sourceLabel} · Solo lectura
+          </Text>
+        ) : null}
       </View>
 
       <View
@@ -149,7 +159,7 @@ export function TradeChart({
           interactive
           showVolume
           emptyTitle="Grafico en actualizacion"
-          emptyBody="OrbitX esta sincronizando la serie de este par."
+          emptyBody="QVEX esta sincronizando la serie de este par."
         />
       </View>
     </View>
@@ -161,6 +171,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   header: {
+    gap: 6,
+  },
+  headerMain: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -184,6 +197,11 @@ const styles = StyleSheet.create({
   fullscreen: {
     fontFamily: FONT.semibold,
     fontSize: 11,
+  },
+  sourceLabel: {
+    fontFamily: FONT.medium,
+    fontSize: 10,
+    lineHeight: 14,
   },
   expandedShell: {
     borderWidth: 1,

@@ -546,6 +546,13 @@ export default function TradeChartScreen() {
             </Text>
           </View>
         ) : null}
+        <View style={styles.readOnlyBadge}>
+          <Text style={styles.readOnlyBadgeTitle}>Datos externos de mercado · solo lectura</Text>
+          <Text style={styles.readOnlyBadgeBody}>
+            Precio: {realtimePrice.sourceLabel} · Grafico: {realtimeCandles.sourceLabel} · Libro:{' '}
+            {realtimeFeed.sourceLabel}
+          </Text>
+        </View>
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
@@ -868,7 +875,7 @@ export default function TradeChartScreen() {
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            <Text style={styles.buyButtonText}>Comprar</Text>
+            <Text style={styles.buyButtonText}>Abrir compra demo</Text>
           </Pressable>
 
           <Pressable
@@ -887,7 +894,7 @@ export default function TradeChartScreen() {
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            <Text style={styles.sellButtonText}>Vender</Text>
+            <Text style={styles.sellButtonText}>Abrir venta demo</Text>
           </Pressable>
         </View>
       </View>
@@ -921,6 +928,27 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   safeModeBannerBody: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  readOnlyBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+    backgroundColor: withOpacity('#FFFFFF', 0.04),
+    borderWidth: 1,
+    borderColor: withOpacity('#FFFFFF', 0.08),
+  },
+  readOnlyBadgeTitle: {
+    color: COLORS.textPrimary,
+    fontFamily: FONT.semibold,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  readOnlyBadgeBody: {
     color: COLORS.textSecondary,
     fontFamily: FONT.medium,
     fontSize: 11,
