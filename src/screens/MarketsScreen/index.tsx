@@ -8,7 +8,6 @@ import { MarketListRow } from '../../../components/lists/MarketListRow';
 import { useOrbitStore } from '../../../store/useOrbitStore';
 import {
   isSensitiveRoutesBlockedInStableMode,
-  SENSITIVE_ROUTE_BLOCK_MESSAGE,
 } from '../../config/runtimeMode';
 import { useAuthStore } from '../../store/authStore';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
@@ -19,7 +18,6 @@ import { SectionHeader } from '../../components/common/SectionHeader';
 import { MarketList } from '../../components/market/MarketList';
 import { useMarketData } from '../../hooks/useMarketData';
 import { navigateToTrade } from '../../navigation/AppNavigator';
-import { useUiStore } from '../../store/uiStore';
 import { buildLegacyTokenPairId, mapLegacyTokenToMarketPair } from '../../utils/tradePairs';
 
 type MarketTab = 'top' | 'memes' | 'mine';
@@ -35,7 +33,6 @@ export default function MarketsScreen() {
   const { markets, loading, error, loadMarkets } = useMarketData('markets');
   const legacyTokens = useOrbitStore((state) => state.tokens);
   const profile = useAuthStore((state) => state.profile);
-  const showToast = useUiStore((state) => state.showToast);
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<MarketTab>('top');
   const sensitiveRoutesBlocked = isSensitiveRoutesBlockedInStableMode();
@@ -241,11 +238,7 @@ export default function MarketsScreen() {
         ) : (
           <MarketList
             pairs={topMarkets}
-            onSelectPair={(pair) =>
-              sensitiveRoutesBlocked
-                ? showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info')
-                : navigateToTrade(router, { pairId: pair.id })
-            }
+            onSelectPair={(pair) => navigateToTrade(router, { pairId: pair.id })}
           />
         )
       ) : activeTab === 'memes' ? (
@@ -259,9 +252,7 @@ export default function MarketsScreen() {
                 statusTone={token.isUserCreated ? 'success' : 'muted'}
                 onPress={() =>
                   token.isTradeable
-                    ? sensitiveRoutesBlocked
-                      ? showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info')
-                      : navigateToTrade(router, { pairId: buildLegacyTokenPairId(token) })
+                    ? navigateToTrade(router, { pairId: buildLegacyTokenPairId(token) })
                     : router.push(`/token/${token.id}`)
                 }
               />
@@ -292,9 +283,7 @@ export default function MarketsScreen() {
               statusTone="success"
               onPress={() =>
                 token.isTradeable
-                  ? sensitiveRoutesBlocked
-                    ? showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info')
-                    : navigateToTrade(router, { pairId: buildLegacyTokenPairId(token) })
+                  ? navigateToTrade(router, { pairId: buildLegacyTokenPairId(token) })
                   : router.push(`/token/${token.id}`)
               }
             />

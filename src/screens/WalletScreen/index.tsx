@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -14,10 +13,16 @@ import { ExternalWalletConnectSheet } from '../../../components/wallet/ExternalW
 import { FONT, ORBITX_COLORS, RADII, withOpacity } from '../../../constants/theme';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { FEATURE_STATUS } from '../../constants/featureStatus';
+import {
+  QVEX_STABLE_APK_MODE,
+  SAFE_MODE_BLOCK_MESSAGE,
+  SAFE_MODE_READONLY_MESSAGE,
+} from '../../config/runtimeMode';
 import { useExternalWallet } from '../../hooks/useExternalWallet';
 import { useExternalWalletBalances } from '../../hooks/useExternalWalletBalances';
 import { useMarketData } from '../../hooks/useMarketData';
 import { useWallet } from '../../hooks/useWallet';
+import { useUiStore } from '../../store/uiStore';
 import { getPortfolioDistribution, getTotalPortfolioBalanceUsd } from '../../utils/portfolioTotals';
 
 const COLORS = {
@@ -199,15 +204,13 @@ function LegendItem({ color, label }: { color: string; label: string }) {
   );
 }
 
-function QuickActions() {
+function QuickActions({ onBlockedAction }: { onBlockedAction: () => void }) {
   return (
     <View style={styles.quickActions}>
       {QUICK_ACTIONS.map((action) => (
         <Pressable
           key={action.key}
-          onPress={() => {
-            router.push(action.route as never);
-          }}
+          onPress={onBlockedAction}
           style={({ pressed }) => [styles.quickAction, pressed && styles.pressed]}
         >
           <View style={styles.quickIconWrap}>
@@ -284,6 +287,7 @@ function ActivityRow({ item }: { item: WalletActivityItem }) {
 export default function WalletScreen() {
   const { width } = useWindowDimensions();
   const wallet = useWallet();
+  const showToast = useUiStore((state) => state.showToast);
   const externalWalletRuntime = useExternalWallet();
   const { markets } = useMarketData('markets');
   const [connectSheetVisible, setConnectSheetVisible] = useState(false);
@@ -340,6 +344,11 @@ export default function WalletScreen() {
   const web3Percent = clampPercent(distribution.web3Percent);
   const penEstimate = totalBalance * 3.755;
   const isSmallPhone = width < 380;
+  const safeModeActive = QVEX_STABLE_APK_MODE;
+
+  function showBlockedAction() {
+    showToast(SAFE_MODE_BLOCK_MESSAGE, 'info');
+  }
 
   const activityRows = useMemo(() => {
     if (!wallet.history.length) {
@@ -362,6 +371,12 @@ export default function WalletScreen() {
       contentContainerStyle={[styles.content, isSmallPhone && styles.contentSmall]}
     >
       <Header />
+
+      {safeModeActive ? (
+        <View style={styles.safeModeBanner}>
+          <Text style={styles.safeModeBannerText}>{SAFE_MODE_READONLY_MESSAGE}</Text>
+        </View>
+      ) : null}
 
       <LinearGradient
         colors={[COLORS.surfaceSoft, COLORS.surface, COLORS.background]}
@@ -397,7 +412,7 @@ export default function WalletScreen() {
         />
       </LinearGradient>
 
-      <QuickActions />
+      <QuickActions onBlockedAction={showBlockedAction} />
 
       <View style={styles.summaryGrid}>
         <SummaryCard
@@ -407,7 +422,7 @@ export default function WalletScreen() {
           body={FEATURE_STATUS.trade.isDemoMode ? 'Órdenes simuladas, no fondos reales' : 'Trading y compra/venta'}
           icon="repeat-outline"
           color={COLORS.purple}
-          onPress={() => router.push('/wallet-spot')}
+          onPress={showBlockedAction}
         />
         <SummaryCard
           title="Cuenta Local"
@@ -417,7 +432,7 @@ export default function WalletScreen() {
           icon="business-outline"
           color={COLORS.green}
           badge="Más usado"
-          onPress={() => router.push('/wallet-local')}
+          onPress={showBlockedAction}
         />
         <SummaryCard
           title="Web3"
@@ -430,14 +445,14 @@ export default function WalletScreen() {
           body={externalWalletAddress ? 'Activos on-chain y dApps' : 'Conectar billetera externa'}
           icon="cube-outline"
           color={COLORS.blue}
-          onPress={() => router.push('/wallet-web3')}
+          onPress={showBlockedAction}
         />
       </View>
 
       <View style={styles.activitySection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Actividad reciente</Text>
-          <Pressable onPress={() => router.push('/history')} hitSlop={8}>
+          <Pressable onPress={showBlockedAction} hitSlop={8}>
             <Text style={styles.seeAllText}>Ver todo</Text>
           </Pressable>
         </View>
@@ -482,6 +497,21 @@ const styles = StyleSheet.create({
   header: {
     minHeight: 42,
     justifyContent: 'center',
+  },
+  safeModeBanner: {
+    minHeight: 38,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: withOpacity(COLORS.amber, 0.1),
+    borderWidth: 1,
+    borderColor: withOpacity(COLORS.amber, 0.3),
+  },
+  safeModeBannerText: {
+    color: COLORS.text,
+    fontFamily: FONT.semibold,
+    fontSize: 12,
+    lineHeight: 16,
   },
   headerTitle: {
     color: COLORS.text,

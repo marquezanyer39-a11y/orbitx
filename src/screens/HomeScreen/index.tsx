@@ -29,6 +29,7 @@ import { usePortfolioData } from '../../hooks/usePortfolioData';
 import { useRewardsPool } from '../../hooks/useRewardsPool';
 import { buildPairSelectorHref, navigateToTrade } from '../../navigation/AppNavigator';
 import {
+  SAFE_MODE_BLOCK_MESSAGE,
   isSensitiveRoutesBlockedInStableMode,
   SENSITIVE_ROUTE_BLOCK_MESSAGE,
 } from '../../config/runtimeMode';
@@ -136,25 +137,25 @@ export default function HomeScreen() {
       key: 'depositar',
       label: 'Depositar',
       icon: 'arrow-down-outline' as const,
-      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
+      onPress: () => showToast(SAFE_MODE_BLOCK_MESSAGE, 'info'),
     },
     {
       key: 'comprar',
       label: 'Comprar',
       icon: 'cart-outline' as const,
-      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
+      onPress: () => router.push('/spot'),
     },
     {
       key: 'enviar',
       label: 'Enviar',
       icon: 'send-outline' as const,
-      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
+      onPress: () => showToast(SAFE_MODE_BLOCK_MESSAGE, 'info'),
     },
     {
       key: 'recibir',
       label: 'Recibir',
       icon: 'download-outline' as const,
-      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
+      onPress: () => showToast(SAFE_MODE_BLOCK_MESSAGE, 'info'),
     },
   ];
 
@@ -163,7 +164,7 @@ export default function HomeScreen() {
       key: 'operar',
       label: 'Operar',
       icon: 'flash-outline' as const,
-      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
+      onPress: () => router.push('/spot'),
     },
     {
       key: 'mercados',
@@ -175,7 +176,7 @@ export default function HomeScreen() {
       key: 'billetera',
       label: 'Billetera',
       icon: 'wallet-outline' as const,
-      onPress: () => showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info'),
+      onPress: () => router.push('/wallet'),
     },
     {
       key: 'crear-token',
@@ -185,9 +186,9 @@ export default function HomeScreen() {
     },
   ];
   const visibleMainShortcuts = sensitiveRoutesBlocked
-    ? mainShortcuts.filter((item) => item.key === 'mercados')
+    ? mainShortcuts.filter((item) => item.key !== 'crear-token')
     : mainShortcuts;
-  const visibleQuickActions = sensitiveRoutesBlocked ? [] : quickActions;
+  const visibleQuickActions = quickActions;
 
   return (
     <ScreenContainer

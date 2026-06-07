@@ -21,7 +21,11 @@ import type { OrbitChartHtmlColors } from '../../components/charts/lightweightCh
 import { RouteRedirect } from '../../components/common/RouteRedirect';
 import { FONT, RADII, withOpacity } from '../../constants/theme';
 import { TradeOrderBookPanel } from '../../src/components/trade/TradeOrderBookPanel';
-import { isSensitiveRoutesBlockedInStableMode } from '../../src/config/runtimeMode';
+import {
+  QVEX_STABLE_APK_MODE,
+  SAFE_MODE_BLOCK_MESSAGE,
+  SAFE_MODE_READONLY_MESSAGE,
+} from '../../src/config/runtimeMode';
 import { useAstra } from '../../src/hooks/useAstra';
 import { useMarketData } from '../../src/hooks/useMarketData';
 import { usePairChartData } from '../../src/hooks/usePairChartData';
@@ -31,6 +35,7 @@ import { useRealtimePrice } from '../../src/hooks/useRealtimePrice';
 import { useAuthStore } from '../../src/store/authStore';
 import { useProfileStore } from '../../src/store/profileStore';
 import { useTradeStore } from '../../src/store/tradeStore';
+import { useUiStore } from '../../src/store/uiStore';
 import type { OpenOrder } from '../../src/types';
 import { formatPercent } from '../../src/utils/formatPercent';
 import {
@@ -281,6 +286,7 @@ export default function TradeChartScreen() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const sessionStatus = useAuthStore((state) => state.session.status);
+  const showToast = useUiStore((state) => state.showToast);
   const selectedPairId = useTradeStore((state) => state.selectedPairId);
   const openOrders = useTradeStore((state) => state.openOrders);
   const favoritePairIds = useProfileStore((state) => state.favoritePairIds);
@@ -295,7 +301,7 @@ export default function TradeChartScreen() {
   const [lineMode, setLineMode] = useState(false);
   const [showExtraFrames, setShowExtraFrames] = useState(false);
   const [chartResetKey, setChartResetKey] = useState(0);
-  const sensitiveRoutesBlocked = isSensitiveRoutesBlockedInStableMode();
+  const safeModeActive = QVEX_STABLE_APK_MODE;
 
   const chartHeight = Math.min(Math.max(height * 0.29, 230), 260);
   const isSmallPhone = width < 380;
@@ -377,16 +383,16 @@ export default function TradeChartScreen() {
     insightThreshold,
   )} podría activar nueva oportunidad.`;
 
-  if (sensitiveRoutesBlocked) {
-    return <RouteRedirect href="/" />;
-  }
-
   if (sessionStatus === 'signed_out') {
     return <RouteRedirect href="/" />;
   }
 
   if (!loading && !pair) {
     return <RouteRedirect href="/spot" />;
+  }
+
+  function showBlockedAction() {
+    showToast(SAFE_MODE_BLOCK_MESSAGE, 'info');
   }
 
   function openAstraForChart() {
@@ -532,6 +538,14 @@ export default function TradeChartScreen() {
           },
         ]}
       >
+        {safeModeActive ? (
+          <View style={styles.safeModeBanner}>
+            <Text style={styles.safeModeBannerTitle}>{SAFE_MODE_READONLY_MESSAGE}</Text>
+            <Text style={styles.safeModeBannerBody}>
+              Trading real desactivado en modo seguro.
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
@@ -828,7 +842,7 @@ export default function TradeChartScreen() {
           {FOOTER_ACTIONS.map((action) => (
             <Pressable
               key={action.key}
-              onPress={() => router.push(action.route as any)}
+              onPress={showBlockedAction}
               style={({ pressed }) => [styles.secondaryAction, pressed && styles.pressed]}
             >
               <Ionicons name={action.icon} size={16} color={COLORS.textSecondary} />
@@ -890,6 +904,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingTop: 6,
     gap: 10,
+  },
+  safeModeBanner: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+    backgroundColor: withOpacity('#F59E0B', 0.1),
+    borderWidth: 1,
+    borderColor: withOpacity('#F59E0B', 0.24),
+  },
+  safeModeBannerTitle: {
+    color: COLORS.textPrimary,
+    fontFamily: FONT.semibold,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  safeModeBannerBody: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    lineHeight: 15,
   },
   headerRow: {
     flexDirection: 'row',

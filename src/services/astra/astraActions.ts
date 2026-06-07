@@ -32,10 +32,7 @@ interface ExecuteAstraActionOptions {
 const BLOCKED_ASTRA_TARGETS = new Set([
   'create_token',
   'wallet_create',
-  'wallet',
   'wallet_import',
-  'trade',
-  'chart',
   'browser',
   'bot_futures',
   'bot_futures_connect_exchange',
@@ -223,11 +220,6 @@ export function executeAstraAction({
     }
 
     case 'open_chart': {
-      if (isSensitiveRoutesBlockedInStableMode()) {
-        showBlockedDemoAction();
-        return;
-      }
-
       router.push({
         pathname: '/trade/chart',
         params: {

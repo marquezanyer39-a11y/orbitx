@@ -1,14 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import type { OrbitChartTimeframe } from '../../../components/charts/chartData';
 import { pickLanguageText } from '../../../constants/i18n';
-import { RADII, withOpacity } from '../../../constants/theme';
+import { FONT, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { ErrorState } from '../../components/common/ErrorState';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
+import {
+  QVEX_STABLE_APK_MODE,
+  SAFE_MODE_READONLY_MESSAGE,
+} from '../../config/runtimeMode';
 import { OrderBook } from '../../components/trade/OrderBook';
 import { TradeActivityPanel } from '../../components/trade/TradeActivityPanel';
 import { TradeChart } from '../../components/trade/TradeChart';
@@ -42,6 +46,7 @@ export default function TradeScreen() {
   const { openAstra, language } = useAstra();
   const rememberAstraContext = useAstraStore((state) => state.rememberContext);
   const recordAstraError = useAstraStore((state) => state.recordError);
+  const safeModeActive = QVEX_STABLE_APK_MODE;
 
   const {
     selectedPairId,
@@ -290,6 +295,17 @@ export default function TradeScreen() {
 
   return (
     <ScreenContainer backgroundMode="plain" contentContainerStyle={styles.content}>
+      {safeModeActive ? (
+        <View style={styles.safeModeBanner}>
+          <View style={styles.safeModeBannerDot} />
+          <View style={styles.safeModeBannerCopy}>
+            <Text style={styles.safeModeBannerTitle}>{SAFE_MODE_READONLY_MESSAGE}</Text>
+            <Text style={styles.safeModeBannerBody}>
+              Trading real desactivado en modo seguro.
+            </Text>
+          </View>
+        </View>
+      ) : null}
       <TradeHeader
         pair={pair}
         ticker={realtimePrice.ticker}
@@ -383,13 +399,47 @@ export default function TradeScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 8,
-    paddingBottom: 18,
+    gap: 7,
+    paddingBottom: 98,
+  },
+  safeModeBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: withOpacity('#F59E0B', 0.1),
+    borderWidth: 1,
+    borderColor: withOpacity('#F59E0B', 0.28),
+  },
+  safeModeBannerDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    marginTop: 3,
+    backgroundColor: '#F59E0B',
+  },
+  safeModeBannerCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  safeModeBannerTitle: {
+    color: '#F8FAFC',
+    fontFamily: FONT.semibold,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  safeModeBannerBody: {
+    color: '#CBD5E1',
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    lineHeight: 15,
   },
   executionCard: {
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    paddingVertical: 10,
+    paddingVertical: 9,
   },
   executionGrid: {
     flexDirection: 'row',
@@ -397,12 +447,12 @@ const styles = StyleSheet.create({
   },
   formColumn: {
     flex: 1,
-    paddingRight: 12,
+    paddingRight: 10,
   },
   bookColumn: {
-    width: 136,
-    paddingLeft: 12,
-    gap: 8,
+    width: 132,
+    paddingLeft: 10,
+    gap: 7,
     borderLeftWidth: 1,
   },
 });
