@@ -37,6 +37,10 @@ const BLOCKED_ASTRA_TARGETS = new Set([
   'bot_futures',
   'bot_futures_connect_exchange',
   'send',
+  'ramp_buy',
+  'ramp_sell',
+  'ramp_convert',
+  'ramp_pay',
 ]);
 
 function showBlockedDemoAction() {

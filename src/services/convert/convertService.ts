@@ -1,4 +1,5 @@
 import { dexConstants } from '../dex/dexConstants';
+import { QVEX_STABLE_APK_MODE, SAFE_MODE_BLOCK_MESSAGE } from '../../config/runtimeMode';
 import { detectDeviceCountryCode, getRampConfig, isRampModeEnabled } from '../ramp/rampConfig';
 import { getRampAvailability, getRampPrimaryProvider } from '../ramp/rampService';
 import { getRampProviderLabel } from '../ramp/rampCopy';
@@ -7,7 +8,7 @@ import type { MarketPair } from '../../types';
 import type { ConvertAssetOption, ConvertQuote } from '../../types/convert';
 import type { LanguageCode } from '../../../types';
 
-const INTERNAL_PROVIDER_LABEL = 'OrbitX Convert';
+const INTERNAL_PROVIDER_LABEL = 'QVEX Convert';
 const INTERNAL_SPREAD_PCT = Number((dexConstants.simulatedSlippage * 100).toFixed(2));
 const INTERNAL_FEE_PCT = Number((dexConstants.feeRate * 100).toFixed(2));
 const INTERNAL_MIN_USD = 5;
@@ -39,7 +40,7 @@ const CONVERT_SERVICE_MESSAGES: Record<LanguageCode, ConvertServiceMessageSet> =
     providerQuotePending: 'The exact quote will be confirmed by the external provider.',
     providerAvailability: 'Availability depends on provider KYC, region and payment method.',
     providerFlowDisclaimer:
-      'OrbitX does not process fiat and will not mark this operation as completed until the provider confirms it.',
+      'QVEX does not process fiat and will not mark this operation as completed until the provider confirms it.',
   },
   es: {
     recommendedMinimum: (usdAmount) => `Minimo recomendado: USD ${usdAmount.toFixed(2)}`,
@@ -47,7 +48,7 @@ const CONVERT_SERVICE_MESSAGES: Record<LanguageCode, ConvertServiceMessageSet> =
     providerQuotePending: 'La cotizacion exacta se confirmara con el proveedor externo.',
     providerAvailability: 'Disponible segun KYC, region y metodo del proveedor.',
     providerFlowDisclaimer:
-      'OrbitX no procesa fiat ni marca esta operacion como completada hasta que el proveedor lo confirme.',
+      'QVEX no procesa fiat ni marca esta operacion como completada hasta que el proveedor lo confirme.',
   },
   pt: {
     recommendedMinimum: (usdAmount) => `Minimo recomendado: USD ${usdAmount.toFixed(2)}`,
@@ -55,14 +56,14 @@ const CONVERT_SERVICE_MESSAGES: Record<LanguageCode, ConvertServiceMessageSet> =
     providerQuotePending: 'A cotacao exata sera confirmada pelo provedor externo.',
     providerAvailability: 'A disponibilidade depende de KYC, regiao e metodo do provedor.',
     providerFlowDisclaimer:
-      'A OrbitX nao processa fiat nem marca esta operacao como concluida ate o provedor confirma-la.',
+      'A QVEX nao processa fiat nem marca esta operacao como concluida ate o provedor confirma-la.',
   },
   'zh-Hans': {
     recommendedMinimum: (usdAmount) => `建议最低金额：USD ${usdAmount.toFixed(2)}`,
     marketMayMove: '在你确认期间，市场价格可能会变化。',
     providerQuotePending: '最终报价将由外部提供商确认。',
     providerAvailability: '是否可用取决于提供商的 KYC、地区和支付方式。',
-    providerFlowDisclaimer: 'OrbitX 不处理法币，只有在提供商确认后才会将此操作标记为完成。',
+    providerFlowDisclaimer: 'QVEX 不处理法币，只有在提供商确认后才会将此操作标记为完成。',
   },
   hi: {
     recommendedMinimum: (usdAmount) => `सुझाया गया न्यूनतम: USD ${usdAmount.toFixed(2)}`,
@@ -70,7 +71,7 @@ const CONVERT_SERVICE_MESSAGES: Record<LanguageCode, ConvertServiceMessageSet> =
     providerQuotePending: 'सटीक कोट बाहरी प्रदाता द्वारा पुष्टि किया जाएगा।',
     providerAvailability: 'उपलब्धता प्रदाता के KYC, क्षेत्र और भुगतान विधि पर निर्भर करती है।',
     providerFlowDisclaimer:
-      'OrbitX fiat प्रोसेस नहीं करता और प्रदाता की पुष्टि से पहले इस ऑपरेशन को पूरा नहीं मानता।',
+      'QVEX fiat प्रोसेस नहीं करता और प्रदाता की पुष्टि से पहले इस ऑपरेशन को पूरा नहीं मानता।',
   },
   ru: {
     recommendedMinimum: (usdAmount) => `Рекомендуемый минимум: USD ${usdAmount.toFixed(2)}`,
@@ -78,7 +79,7 @@ const CONVERT_SERVICE_MESSAGES: Record<LanguageCode, ConvertServiceMessageSet> =
     providerQuotePending: 'Точная котировка будет подтверждена внешним провайдером.',
     providerAvailability: 'Доступность зависит от KYC, региона и способа оплаты у провайдера.',
     providerFlowDisclaimer:
-      'OrbitX не обрабатывает fiat и не помечает операцию завершенной, пока провайдер не подтвердит ее.',
+      'QVEX не обрабатывает fiat и не помечает операцию завершенной, пока провайдер не подтвердит ее.',
   },
   ar: {
     recommendedMinimum: (usdAmount) => `الحد الأدنى الموصى به: USD ${usdAmount.toFixed(2)}`,
@@ -86,7 +87,7 @@ const CONVERT_SERVICE_MESSAGES: Record<LanguageCode, ConvertServiceMessageSet> =
     providerQuotePending: 'سيتم تأكيد السعر النهائي من قبل المزود الخارجي.',
     providerAvailability: 'يعتمد التوفر على KYC والمنطقة وطريقة الدفع لدى المزود.',
     providerFlowDisclaimer:
-      'لا تعالج OrbitX العملات الورقية ولا تعتبر العملية مكتملة حتى يؤكدها المزود.',
+      'لا تعالج QVEX العملات الورقية ولا تعتبر العملية مكتملة حتى يؤكدها المزود.',
   },
   id: {
     recommendedMinimum: (usdAmount) => `Minimum yang disarankan: USD ${usdAmount.toFixed(2)}`,
@@ -94,7 +95,7 @@ const CONVERT_SERVICE_MESSAGES: Record<LanguageCode, ConvertServiceMessageSet> =
     providerQuotePending: 'Kutipan final akan dikonfirmasi oleh penyedia eksternal.',
     providerAvailability: 'Ketersediaan bergantung pada KYC, wilayah, dan metode pembayaran penyedia.',
     providerFlowDisclaimer:
-      'OrbitX tidak memproses fiat dan tidak akan menandai operasi ini selesai sampai penyedia mengonfirmasinya.',
+      'QVEX tidak memproses fiat dan tidak akan menandai operasi ini selesai sampai penyedia mengonfirmasinya.',
   },
 };
 
@@ -202,6 +203,44 @@ export async function getConvertQuote(
 ): Promise<ConvertQuote> {
   const copy = getConvertCopy(language);
   const messages = getConvertServiceMessages(language);
+
+  if (QVEX_STABLE_APK_MODE) {
+    return {
+      status: 'unavailable',
+      executionKind: toAsset?.kind === 'fiat' ? 'provider' : 'internal',
+      fromAsset: fromAsset ?? ({
+        id: 'empty',
+        symbol: '--',
+        name: '--',
+        kind: 'crypto',
+        balance: 0,
+        availableAsSource: false,
+        availableAsDestination: false,
+      } satisfies ConvertAssetOption),
+      toAsset: toAsset ?? ({
+        id: 'empty',
+        symbol: '--',
+        name: '--',
+        kind: 'crypto',
+        balance: 0,
+        availableAsSource: false,
+        availableAsDestination: false,
+      } satisfies ConvertAssetOption),
+      fromAmount: amount,
+      feePct: INTERNAL_FEE_PCT,
+      spreadPct: INTERNAL_SPREAD_PCT,
+      feeAmountUsd: 0,
+      spreadAmountUsd: 0,
+      providerLabel:
+        toAsset?.kind === 'fiat'
+          ? getRampProviderLabel(getRampPrimaryProvider())
+          : INTERNAL_PROVIDER_LABEL,
+      estimatedSeconds: 0,
+      regionAllowed: false,
+      message: SAFE_MODE_BLOCK_MESSAGE,
+      canProceed: false,
+    };
+  }
 
   if (!fromAsset || !toAsset) {
     return {
