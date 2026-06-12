@@ -13,6 +13,7 @@ import { PromoBanner } from '../../../components/home/PromoBanner';
 import { QuickActions } from '../../../components/home/QuickActions';
 import { RewardsPoolCard } from '../../../components/home/RewardsPoolCard';
 import { SocialEntryStrip } from '../../../components/home/SocialEntryStrip';
+import { AstraLocalInsightCard } from '../../components/astra/AstraLocalInsightCard';
 import {
   ORBITX_THEME,
   SCREEN_PADDING,
@@ -33,6 +34,7 @@ import {
   isSensitiveRoutesBlockedInStableMode,
   SENSITIVE_ROUTE_BLOCK_MESSAGE,
 } from '../../config/runtimeMode';
+import { buildHomeLocalInsight } from '../../services/astra/astraLocalInsights';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 
@@ -116,6 +118,16 @@ export default function HomeScreen() {
         ? showToast(SENSITIVE_ROUTE_BLOCK_MESSAGE, 'info')
         : navigateToTrade(router, { pairId: market.id }),
   }));
+  const homeAstraInsight = useMemo(
+    () =>
+      buildHomeLocalInsight({
+        balanceLabel: portfolio.totalBalanceLabel,
+        leadPairLabel: marketRows[0]?.pairLabel,
+        leadPairChangeLabel: marketRows[0]?.changeLabel,
+        rewardsLabel: rewardsPool.amountLabel,
+      }),
+    [marketRows, portfolio.totalBalanceLabel, rewardsPool.amountLabel],
+  );
 
   const homeContext = useMemo(
     () => ({
@@ -189,6 +201,15 @@ export default function HomeScreen() {
     ? mainShortcuts.filter((item) => item.key !== 'crear-token')
     : mainShortcuts;
   const visibleQuickActions = quickActions;
+
+  function openHomeAstraLocal() {
+    if (sensitiveRoutesBlocked) {
+      router.push('/demo/astra');
+      return;
+    }
+
+    void openAstraWithQuestion(homeContext, homeAstraInsight.question);
+  }
 
   return (
     <ScreenContainer
@@ -271,6 +292,12 @@ export default function HomeScreen() {
                   currentTask: 'market_radar',
                 })
           }
+        />
+
+        <AstraLocalInsightCard
+          insight={homeAstraInsight}
+          onPrimaryPress={openHomeAstraLocal}
+          onSecondaryPress={() => router.push('/dev/astra-simulation')}
         />
 
         <SocialEntryStrip isSmallPhone={isSmallPhone} onPress={() => router.push('/social')} />

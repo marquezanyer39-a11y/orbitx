@@ -20,6 +20,8 @@ import type { OrbitChartIndicator, OrbitChartTimeframe } from '../../components/
 import type { OrbitChartHtmlColors } from '../../components/charts/lightweightChartHtml';
 import { RouteRedirect } from '../../components/common/RouteRedirect';
 import { FONT, RADII, withOpacity } from '../../constants/theme';
+import { AstraLocalInsightCard } from '../../src/components/astra/AstraLocalInsightCard';
+import { buildChartLocalInsight } from '../../src/services/astra/astraLocalInsights';
 import { TradeOrderBookPanel } from '../../src/components/trade/TradeOrderBookPanel';
 import {
   QVEX_STABLE_APK_MODE,
@@ -378,6 +380,17 @@ export default function TradeChartScreen() {
     [livePrice, openOrders, pair?.id, pairSymbol],
   );
   const isDemoTradeMarker = userTradeMarker?.source === 'mock';
+  const chartAstraInsight = useMemo(
+    () =>
+      buildChartLocalInsight({
+        pairSymbol: pair?.symbol ?? 'BTC/USDT',
+        timeframe,
+        priceStatusLabel: getTradeRealtimeStatusLabel(realtimePrice.status),
+        orderBookStatusLabel: getTradeRealtimeStatusLabel(realtimeFeed.status),
+        chartSourceLabel: realtimeCandles.sourceLabel,
+      }),
+    [pair?.symbol, realtimeCandles.sourceLabel, realtimeFeed.status, realtimePrice.status, timeframe],
+  );
   const insightThreshold = livePrice > 0 ? livePrice * 1.047 : high24h * 1.03;
   const insight = `Un rompimiento del ${pair?.baseSymbol ?? 'BTC'} por encima de los $${formatRightPrice(
     insightThreshold,
@@ -397,6 +410,11 @@ export default function TradeChartScreen() {
 
   function openAstraForChart() {
     if (!pair) {
+      return;
+    }
+
+    if (safeModeActive) {
+      router.push('/demo/astra');
       return;
     }
 
@@ -553,6 +571,11 @@ export default function TradeChartScreen() {
             {realtimeFeed.sourceLabel}
           </Text>
         </View>
+        <AstraLocalInsightCard
+          insight={chartAstraInsight}
+          onPrimaryPress={openAstraForChart}
+          onSecondaryPress={() => router.push('/dev/astra-simulation')}
+        />
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>

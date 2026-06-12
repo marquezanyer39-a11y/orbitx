@@ -9,6 +9,7 @@ import { useAppTheme } from '../../../hooks/useAppTheme';
 import { ErrorState } from '../../components/common/ErrorState';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
+import { AstraLocalInsightCard } from '../../components/astra/AstraLocalInsightCard';
 import {
   QVEX_STABLE_APK_MODE,
   SAFE_MODE_READONLY_MESSAGE,
@@ -27,6 +28,7 @@ import { useRealtimePrice } from '../../hooks/useRealtimePrice';
 import { useTradeForm } from '../../hooks/useTradeForm';
 import { useProfileStore } from '../../store/profileStore';
 import { useAstraStore } from '../../store/astraStore';
+import { buildTradeLocalInsight } from '../../services/astra/astraLocalInsights';
 import { getTradeRealtimeStatusLabel } from '../../utils/tradeRealtimeUi';
 
 export default function TradeScreen() {
@@ -119,6 +121,25 @@ export default function TradeScreen() {
     [recentOrders, realtimeFeed.recentTrades],
   );
   const favorite = pair ? favoritePairIds.includes(pair.id) : false;
+  const tradeAstraInsight = useMemo(
+    () =>
+      buildTradeLocalInsight({
+        pairSymbol: pair?.symbol ?? 'BTC/USDT',
+        orderType,
+        side: buySellSide,
+        priceSourceLabel: realtimePrice.sourceLabel,
+        chartSourceLabel: realtimeCandles.sourceLabel,
+        orderBookSourceLabel: realtimeFeed.sourceLabel,
+      }),
+    [
+      buySellSide,
+      orderType,
+      pair?.symbol,
+      realtimeCandles.sourceLabel,
+      realtimeFeed.sourceLabel,
+      realtimePrice.sourceLabel,
+    ],
+  );
 
   const astraTradeContext = useMemo(() => {
     if (!pair) {
@@ -270,6 +291,11 @@ export default function TradeScreen() {
   const activePairId = pair.id;
 
   function openAstraForTrade() {
+    if (safeModeActive) {
+      router.push('/demo/astra');
+      return;
+    }
+
     openAstra({
       ...(astraTradeContext ?? {}),
       surfaceTitle: pickLanguageText(
@@ -323,6 +349,11 @@ export default function TradeScreen() {
           {realtimeFeed.sourceLabel}
         </Text>
       </View>
+      <AstraLocalInsightCard
+        insight={tradeAstraInsight}
+        onPrimaryPress={openAstraForTrade}
+        onSecondaryPress={() => router.push('/dev/astra-simulation')}
+      />
       <TradeHeader
         pair={pair}
         ticker={realtimePrice.ticker}

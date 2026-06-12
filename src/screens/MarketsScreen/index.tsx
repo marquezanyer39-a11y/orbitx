@@ -3,12 +3,14 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { FONT, RADII } from '../../../constants/theme';
+import { AstraLocalInsightCard } from '../../components/astra/AstraLocalInsightCard';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { MarketListRow } from '../../../components/lists/MarketListRow';
 import { useOrbitStore } from '../../../store/useOrbitStore';
 import {
   isSensitiveRoutesBlockedInStableMode,
 } from '../../config/runtimeMode';
+import { useAstra } from '../../hooks/useAstra';
 import { useAuthStore } from '../../store/authStore';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -18,6 +20,7 @@ import { SectionHeader } from '../../components/common/SectionHeader';
 import { MarketList } from '../../components/market/MarketList';
 import { useMarketData } from '../../hooks/useMarketData';
 import { navigateToTrade } from '../../navigation/AppNavigator';
+import { buildMarketsLocalInsight } from '../../services/astra/astraLocalInsights';
 import { buildLegacyTokenPairId, mapLegacyTokenToMarketPair } from '../../utils/tradePairs';
 
 type MarketTab = 'top' | 'memes' | 'mine';
@@ -30,6 +33,7 @@ const MARKET_TABS: Array<{ key: MarketTab; label: string }> = [
 
 export default function MarketsScreen() {
   const { colors } = useAppTheme();
+  const { openAstraWithQuestion } = useAstra();
   const { markets, loading, error, loadMarkets } = useMarketData('markets');
   const legacyTokens = useOrbitStore((state) => state.tokens);
   const profile = useAuthStore((state) => state.profile);
@@ -179,6 +183,56 @@ export default function MarketsScreen() {
       : activeTab === 'memes'
         ? 'Memecoins activas y operables dentro del ecosistema QVEX.'
         : 'Tus memecoins creadas, listas para seguimiento o trade.';
+  const marketsAstraInsight = useMemo(
+    () =>
+      buildMarketsLocalInsight({
+        activeTabLabel:
+          activeTab === 'top' ? 'Top' : activeTab === 'memes' ? 'Memes' : 'Mis memes',
+        marketCount:
+          activeTab === 'top'
+            ? topMarkets.length
+            : activeTab === 'memes'
+              ? memeTokens.length
+              : myMemeTokens.length,
+        highlightedPair:
+          activeTab === 'top'
+            ? topMarkets[0]?.symbol
+            : activeTab === 'memes'
+              ? memeTokens[0]?.symbol
+              : myMemeTokens[0]?.symbol,
+        highlightedChange:
+          activeTab === 'top'
+            ? topMarkets[0]?.change24h
+            : activeTab === 'memes'
+              ? memeTokens[0]?.change24h
+              : myMemeTokens[0]?.change24h,
+      }),
+    [activeTab, memeTokens, myMemeTokens, topMarkets],
+  );
+
+  function openMarketsAstraLocal() {
+    if (sensitiveRoutesBlocked) {
+      router.push('/demo/astra');
+      return;
+    }
+
+    void openAstraWithQuestion(
+      {
+        surface: 'market',
+        screenName: 'Mercados',
+        path: '/(tabs)/market',
+        summary: `${marketSubtitle} ${marketsAstraInsight.body}`,
+        currentTask: 'market_overview',
+        currentPairSymbol:
+          activeTab === 'top'
+            ? topMarkets[0]?.symbol
+            : activeTab === 'memes'
+              ? memeTokens[0]?.symbol
+              : myMemeTokens[0]?.symbol,
+      },
+      marketsAstraInsight.question,
+    );
+  }
 
   return (
     <ScreenContainer contentContainerStyle={styles.content}>
@@ -209,6 +263,12 @@ export default function MarketsScreen() {
           par te lleva a Trade visual con simulacion local, sin operaciones reales.
         </Text>
       </View>
+
+      <AstraLocalInsightCard
+        insight={marketsAstraInsight}
+        onPrimaryPress={openMarketsAstraLocal}
+        onSecondaryPress={() => router.push('/dev/astra-simulation')}
+      />
 
       <View
         style={[

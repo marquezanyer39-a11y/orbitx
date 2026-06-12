@@ -9,8 +9,10 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
+import { router } from 'expo-router';
 import { ExternalWalletConnectSheet } from '../../../components/wallet/ExternalWalletConnectSheet';
 import { FONT, ORBITX_COLORS, RADII, withOpacity } from '../../../constants/theme';
+import { AstraLocalInsightCard } from '../../components/astra/AstraLocalInsightCard';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { FEATURE_STATUS } from '../../constants/featureStatus';
 import {
@@ -18,7 +20,9 @@ import {
   SAFE_MODE_BLOCK_MESSAGE,
   SAFE_MODE_READONLY_MESSAGE,
 } from '../../config/runtimeMode';
+import { useAstra } from '../../hooks/useAstra';
 import { useExternalWalletBalances } from '../../hooks/useExternalWalletBalances';
+import { buildWalletLocalInsight } from '../../services/astra/astraLocalInsights';
 import { useMarketStore } from '../../store/marketStore';
 import { useUiStore } from '../../store/uiStore';
 import { useWalletStore } from '../../store/walletStore';
@@ -286,6 +290,7 @@ function ActivityRow({ item }: { item: WalletActivityItem }) {
 export default function WalletScreen() {
   const { width } = useWindowDimensions();
   const safeModeActive = QVEX_STABLE_APK_MODE;
+  const { openAstraWithQuestion } = useAstra();
   const wallet = useWalletStore();
   const showToast = useUiStore((state) => state.showToast);
   const markets = useMarketStore((state) => state.markets);
@@ -382,6 +387,39 @@ export default function WalletScreen() {
       icon: 'receipt-outline' as const,
     }));
   }, [wallet.history]);
+  const walletAstraInsight = useMemo(
+    () =>
+      buildWalletLocalInsight({
+        totalBalanceLabel: formatUsd(totalBalance),
+        penEstimateLabel: formatPEN(penEstimate),
+        web3StatusLabel: safeModeActive
+          ? 'desactivada en modo seguro'
+          : externalWalletAddress
+            ? 'lectura on-chain disponible'
+            : 'sin conexion externa',
+        activityCount: activityRows.length,
+      }),
+    [activityRows.length, externalWalletAddress, penEstimate, safeModeActive, totalBalance],
+  );
+
+  function openWalletAstraLocal() {
+    if (safeModeActive) {
+      router.push('/demo/astra');
+      return;
+    }
+
+    void openAstraWithQuestion(
+      {
+        surface: 'wallet',
+        screenName: 'Billetera',
+        path: '/(tabs)/wallet',
+        summary: walletAstraInsight.body,
+        currentTask: 'wallet_review',
+        walletReady: true,
+      },
+      walletAstraInsight.question,
+    );
+  }
 
   return (
     <ScreenContainer
@@ -395,6 +433,12 @@ export default function WalletScreen() {
           <Text style={styles.safeModeBannerText}>{SAFE_MODE_READONLY_MESSAGE}</Text>
         </View>
       ) : null}
+
+      <AstraLocalInsightCard
+        insight={walletAstraInsight}
+        onPrimaryPress={openWalletAstraLocal}
+        onSecondaryPress={() => router.push('/dev/astra-simulation')}
+      />
 
       <LinearGradient
         colors={[COLORS.surfaceSoft, COLORS.surface, COLORS.background]}
