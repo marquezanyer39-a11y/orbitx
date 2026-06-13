@@ -157,7 +157,7 @@ export function WalletSeedSecurityScreen({
     }
 
     await Share.share({
-      title: 'Respaldo de billetera OrbitX',
+      title: 'Respaldo de billetera QVEX',
       message: seedPhrase,
     });
     onClose();
@@ -252,7 +252,7 @@ export function WalletSeedSecurityScreen({
 
               <View style={styles.points}>
                 {[
-                  'OrbitX nunca la deja visible por defecto.',
+                  'QVEX nunca la deja visible por defecto.',
                   'Necesitas reautenticacion antes de verla o exportarla.',
                   'La vista se cierra automaticamente al salir de esta pantalla.',
                 ].map((item) => (

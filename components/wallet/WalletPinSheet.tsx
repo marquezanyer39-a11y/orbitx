@@ -165,7 +165,7 @@ export function WalletPinSheet({ visible, onClose, onSaved }: WalletPinSheetProp
             ]}
           >
             <Text style={[styles.helperText, { color: colors.textMuted }]}>
-              OrbitX te pedira este PIN antes de mostrar la frase semilla o exportar un respaldo
+              QVEX te pedira este PIN antes de mostrar la frase semilla o exportar un respaldo
               cuando no uses biometria.
             </Text>
           </View>

@@ -79,7 +79,6 @@ export function WalletSetupFlow({
 
   const viewSeedOnly = mode === 'seed';
   const importMode = mode === 'import';
-  const progressSteps = importMode ? ['import', 'ready'] : ['intro', 'seed', 'confirm', 'ready'];
   const progressItems = useMemo(
     () =>
       importMode
@@ -111,7 +110,7 @@ export function WalletSetupFlow({
     ? 'Billetera Web3'
     : importMode
       ? 'Importar billetera'
-      : 'Billetera OrbitX';
+      : 'Billetera QVEX';
   const stepTitle =
     step === 'seed'
       ? 'Respalda tu frase semilla'
@@ -130,12 +129,12 @@ export function WalletSetupFlow({
       : step === 'confirm'
         ? 'Verifica tu respaldo antes de activar la billetera.'
         : step === 'ready'
-          ? 'Direcciones y redes listas para usar dentro de OrbitX.'
+          ? 'Direcciones y redes listas para usar dentro de QVEX.'
           : step === 'protected'
             ? 'La frase ya se mostro y ahora queda protegida dentro de Seguridad.'
             : importMode
               ? 'Recupera tu acceso con una frase semilla valida de 12 palabras.'
-              : 'Crea tu billetera OrbitX para recibir, enviar y firmar desde la app.';
+              : 'Crea tu billetera QVEX para recibir, enviar y firmar desde la app.';
 
   useEffect(() => {
     if (!visible) {
@@ -175,7 +174,7 @@ export function WalletSetupFlow({
           }
 
           if (!bundle) {
-            setErrorText('Primero crea o importa tu billetera OrbitX.');
+            setErrorText('Primero crea o importa tu billetera QVEX.');
             setStep('protected');
             return;
           }
@@ -447,13 +446,13 @@ export function WalletSetupFlow({
                     Empieza con tu propia billetera
                   </Text>
                   <Text style={[styles.blockBody, { color: colors.textMuted }]}>
-                    OrbitX crea tu billetera, protege la frase semilla desde el inicio y la deja lista para usar.
+                    QVEX crea tu billetera, protege la frase semilla desde el inicio y la deja lista para usar.
                   </Text>
                 </View>
 
                 <View style={styles.points}>
                   {[
-                    'Se crea dentro de OrbitX, sin salir de la app.',
+                    'Se crea dentro de QVEX, sin salir de la app.',
                     'La frase semilla queda protegida y solo podras verla desde Seguridad con reautenticacion.',
                     'Queda lista para recibir en Ethereum, Base, BNB Chain y Solana.',
                   ].map((item) => (
@@ -486,7 +485,7 @@ export function WalletSetupFlow({
                     Importa tu billetera
                   </Text>
                   <Text style={[styles.blockBody, { color: colors.textMuted }]}>
-                    Pega tu frase de 12 palabras para recuperar tu billetera dentro de OrbitX.
+                    Pega tu frase de 12 palabras para recuperar tu billetera dentro de QVEX.
                   </Text>
                 </View>
 
@@ -512,7 +511,7 @@ export function WalletSetupFlow({
                   ]}
                 >
                   <Text style={[styles.noteText, { color: colors.textSoft }]}>
-                    Usa una frase valida de 12 palabras. OrbitX derivara tus direcciones reales y dejara la billetera lista para usar.
+                    Usa una frase valida de 12 palabras. QVEX derivara tus direcciones reales y dejara la billetera lista para usar.
                   </Text>
                 </View>
 
@@ -638,7 +637,7 @@ export function WalletSetupFlow({
                   ]}
                 >
                   <Text style={[styles.noteText, { color: colors.textSoft }]}>
-                    OrbitX mantiene la billetera activa, pero no vuelve a exponer las 12 palabras desde este flujo.
+                    QVEX mantiene la billetera activa, pero no vuelve a exponer las 12 palabras desde este flujo.
                   </Text>
                 </View>
 
@@ -727,7 +726,7 @@ export function WalletSetupFlow({
                   </Text>
                   <Text style={[styles.blockBody, { color: colors.textMuted }]}>
                     {importMode
-                      ? 'Tu billetera Web3 ya quedo lista dentro de OrbitX.'
+                      ? 'Tu billetera Web3 ya quedo lista dentro de QVEX.'
                       : 'Ya puedes copiar direcciones y recibir fondos.'}
                   </Text>
                 </View>

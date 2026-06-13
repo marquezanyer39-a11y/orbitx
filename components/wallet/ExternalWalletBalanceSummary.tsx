@@ -73,7 +73,7 @@ function statusCopy(status: ExternalWalletBalanceStatus, failedTokenCount: numbe
   }
 
   if (status === 'unsupported') {
-    return 'Red no soportada para balances en OrbitX.';
+    return 'Red no soportada para balances en QVEX.';
   }
 
   if (status === 'error') {

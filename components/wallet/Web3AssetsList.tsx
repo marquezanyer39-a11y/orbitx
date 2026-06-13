@@ -45,7 +45,7 @@ function AssetIcon({ asset }: { asset: ExternalWalletBalanceAsset }) {
         styles.logo,
         {
           backgroundColor: withOpacity(asset.type === 'native' ? colors.primary : colors.text, 0.1),
-          borderColor: withOpacity(colors.borderStrong, 0.32),
+          borderColor: withOpacity(colors.borderStrong, 0.18),
         },
       ]}
     >
@@ -80,7 +80,7 @@ export function Web3AssetsList({
           style={[
             styles.refreshButton,
             {
-              borderColor: withOpacity(colors.border, 0.5),
+              borderColor: withOpacity(colors.border, 0.28),
               opacity: isLoading ? 0.55 : 1,
             },
           ]}
@@ -100,7 +100,7 @@ export function Web3AssetsList({
                 styles.row,
                 {
                   borderBottomColor:
-                    index === assets.length - 1 ? 'transparent' : withOpacity(colors.border, 0.5),
+                    index === assets.length - 1 ? 'transparent' : withOpacity(colors.border, 0.22),
                 },
               ]}
             >
@@ -129,8 +129,8 @@ export function Web3AssetsList({
           style={[
             styles.emptyCard,
             {
-              backgroundColor: withOpacity(colors.fieldBackground, 0.18),
-              borderColor: withOpacity(colors.border, 0.48),
+              backgroundColor: withOpacity(colors.surfaceElevated, 0.16),
+              borderColor: withOpacity(colors.border, 0.26),
             },
           ]}
         >
@@ -147,7 +147,7 @@ export function Web3AssetsList({
               styles.emptyAction,
               {
                 backgroundColor: withOpacity(colors.primary, 0.14),
-                borderColor: withOpacity(colors.primary, 0.34),
+                borderColor: withOpacity(colors.primary, 0.22),
                 opacity: isLoading ? 0.55 : 1,
               },
             ]}

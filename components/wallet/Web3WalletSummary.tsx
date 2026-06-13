@@ -40,7 +40,7 @@ export function Web3WalletSummary({
         styles.card,
         {
           backgroundColor: withOpacity(colors.surfaceElevated, 0.24),
-          borderColor: withOpacity(colors.border, 0.42),
+          borderColor: withOpacity(colors.border, 0.26),
         },
       ]}
     >
@@ -61,7 +61,7 @@ export function Web3WalletSummary({
             styles.manageButton,
             {
               backgroundColor: withOpacity(colors.primary, 0.14),
-              borderColor: withOpacity(colors.primary, 0.32),
+              borderColor: withOpacity(colors.primary, 0.22),
             },
           ]}
         >
@@ -78,15 +78,15 @@ export function Web3WalletSummary({
       )}
 
       <View style={styles.actionRow}>
-        <Pressable style={[styles.action, { borderColor: withOpacity(colors.border, 0.5) }]}>
+        <Pressable style={[styles.action, { borderColor: withOpacity(colors.border, 0.28) }]}>
           <Ionicons name="arrow-up-outline" size={16} color={colors.textMuted} />
           <Text style={[styles.actionLabel, { color: colors.text }]}>Enviar</Text>
         </Pressable>
-        <Pressable style={[styles.action, { borderColor: withOpacity(colors.border, 0.5) }]}>
+        <Pressable style={[styles.action, { borderColor: withOpacity(colors.border, 0.28) }]}>
           <Ionicons name="arrow-down-outline" size={16} color={colors.textMuted} />
           <Text style={[styles.actionLabel, { color: colors.text }]}>Recibir</Text>
         </Pressable>
-        <Pressable style={[styles.action, { borderColor: withOpacity(colors.border, 0.5) }]}>
+        <Pressable style={[styles.action, { borderColor: withOpacity(colors.border, 0.28) }]}>
           <Ionicons name="swap-horizontal-outline" size={16} color={colors.textMuted} />
           <Text style={[styles.actionLabel, { color: colors.text }]}>Operar</Text>
         </Pressable>
@@ -96,7 +96,7 @@ export function Web3WalletSummary({
           style={[
             styles.action,
             {
-              borderColor: withOpacity(colors.border, 0.5),
+              borderColor: withOpacity(colors.border, 0.28),
               opacity: isLoading ? 0.55 : 1,
             },
           ]}

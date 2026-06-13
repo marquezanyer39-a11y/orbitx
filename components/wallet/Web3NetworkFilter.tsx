@@ -59,10 +59,10 @@ export function Web3NetworkFilter({ value, networks, onChange }: Web3NetworkFilt
               {
                 backgroundColor: active
                   ? withOpacity(colors.primary, 0.16)
-                  : withOpacity(colors.fieldBackground, 0.2),
+                  : withOpacity(colors.surfaceElevated, 0.14),
                 borderColor: active
-                  ? withOpacity(colors.primary, 0.36)
-                  : withOpacity(colors.border, 0.48),
+                  ? withOpacity(colors.primary, 0.24)
+                  : withOpacity(colors.border, 0.24),
               },
             ]}
           >
