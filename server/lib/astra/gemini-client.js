@@ -90,7 +90,7 @@ export async function generateGeminiStructuredJson(config, payload) {
   const request = async () => {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        console.info('[OrbitX][AstraCore] Gemini request', {
+        console.info('[QVEX][AstraCore] Gemini request', {
           model: config.model,
           attempt: attempt + 1,
         });
@@ -106,7 +106,7 @@ export async function generateGeminiStructuredJson(config, payload) {
         });
       } catch (error) {
         const classified = classifyGeminiError(error);
-        console.warn('[OrbitX][AstraCore] Gemini request failed', {
+        console.warn('[QVEX][AstraCore] Gemini request failed', {
           model: config.model,
           attempt: attempt + 1,
           code: classified.code,
