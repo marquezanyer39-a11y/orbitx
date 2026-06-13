@@ -16,6 +16,10 @@ import {
 } from './astra-schemas.js';
 import { generateGeminiStructuredJson } from './gemini-client.js';
 
+function isAstraBackendModelEnabled() {
+  return `${process.env.ASTRA_BACKEND_MODEL_ENABLED ?? 'false'}`.trim().toLowerCase() === 'true';
+}
+
 function normalizeOptionalText(value, maxLength = 240) {
   const text = `${value ?? ''}`.replace(/\s+/g, ' ').trim();
   return text ? text.slice(0, maxLength) : null;
@@ -410,13 +414,13 @@ function buildConceptExplanation(input, conceptKey) {
       input,
       t(
         input.language,
-        'Un wallet es una billetera digital que te permite guardar, recibir y enviar criptomonedas. En realidad no guarda las monedas "dentro", sino las claves que te dan acceso a tus fondos en la blockchain. Por ejemplo, si tienes BTC o USDT, los gestionas desde tu wallet. Algunas wallets son custodiales, donde una plataforma protege el acceso por ti, y otras son no custodiales, donde tú controlas tus claves. En OrbitX, la wallet es la base para depositar, retirar y moverte por el ecosistema con más contexto.',
-        'A wallet is a digital wallet that lets you store, receive and send cryptocurrencies. It does not literally hold the coins inside it. What it holds are the keys that let you access your funds on the blockchain. For example, if you own BTC or USDT, you manage them from your wallet. Some wallets are custodial, where a platform helps protect access for you, and others are non-custodial, where you control the keys yourself. In OrbitX, the wallet is the base layer for deposits, withdrawals and moving through the ecosystem with context.',
+        'Un wallet es una billetera digital que te permite guardar, recibir y enviar criptomonedas. En realidad no guarda las monedas "dentro", sino las claves que te dan acceso a tus fondos en la blockchain. Por ejemplo, si tienes BTC o USDT, los gestionas desde tu wallet. Algunas wallets son custodiales, donde una plataforma protege el acceso por ti, y otras son no custodiales, donde tú controlas tus claves. En QVEX, la wallet es la base para depositar, retirar y moverte por el ecosistema con más contexto.',
+        'A wallet is a digital wallet that lets you store, receive and send cryptocurrencies. It does not literally hold the coins inside it. What it holds are the keys that let you access your funds on the blockchain. For example, if you own BTC or USDT, you manage them from your wallet. Some wallets are custodial, where a platform helps protect access for you, and others are non-custodial, where you control the keys yourself. In QVEX, the wallet is the base layer for deposits, withdrawals and moving through the ecosystem with context.',
       ),
       t(
         input.language,
-        'Un wallet es tu billetera digital para guardar, recibir y mover crypto. En OrbitX es la base para usar deposito, retiro y trading.',
-        'A wallet is your digital wallet for holding, receiving and moving crypto. In OrbitX it is the base for deposits, withdrawals and trading.',
+        'Un wallet es tu billetera digital para guardar, recibir y mover crypto. En QVEX es la base para usar deposito, retiro y trading.',
+        'A wallet is your digital wallet for holding, receiving and moving crypto. In QVEX it is the base for deposits, withdrawals and trading.',
       ),
     );
   }
@@ -548,8 +552,8 @@ function buildWalletContextResponse(input, tools) {
   const longReply = !walletSummary.hasWallet
     ? t(
         input.language,
-        'Todavia no veo una wallet activa en OrbitX. Desde esta pantalla el siguiente paso real es crearla o importar una existente antes de operar.',
-        'I do not see an active wallet in OrbitX yet. From this screen the next real step is to create one or import an existing wallet before trading.',
+        'Todavia no veo una wallet activa en QVEX. Desde esta pantalla el siguiente paso real es crearla o importar una existente antes de operar.',
+        'I do not see an active wallet in QVEX yet. From this screen the next real step is to create one or import an existing wallet before trading.',
       )
     : t(
         input.language,
@@ -753,8 +757,8 @@ function buildDeterministicResponse(input, tools) {
         input,
         t(
           input.language,
-          `Hola ${input.username}. Puedo ayudarte con tu wallet, el mercado, Social o Bot Futures. Dime que quieres hacer y te marco el siguiente paso real dentro de OrbitX.`,
-          `Hi ${input.username}. I can help you with your wallet, the market, Social or Bot Futures. Tell me what you want to do and I will guide you to the next real step inside OrbitX.`,
+          `Hola ${input.username}. Puedo ayudarte con tu wallet, el mercado, Social o Bot Futures. Dime que quieres hacer y te marco el siguiente paso real dentro de QVEX.`,
+          `Hi ${input.username}. I can help you with your wallet, the market, Social or Bot Futures. Tell me what you want to do and I will guide you to the next real step inside QVEX.`,
         ),
         t(
           input.language,
@@ -774,8 +778,8 @@ function buildDeterministicResponse(input, tools) {
           input,
           t(
             input.language,
-            'Empieza creando tu wallet. Ese es el primer paso para usar OrbitX con sentido. Luego puedes depositar, explorar el mercado o empezar a operar.',
-            'Start by creating your wallet. That is the first useful step inside OrbitX. After that, you can deposit, explore the market or start trading.',
+            'Empieza creando tu wallet. Ese es el primer paso para usar QVEX con sentido. Luego puedes depositar, explorar el mercado o empezar a operar.',
+            'Start by creating your wallet. That is the first useful step inside QVEX. After that, you can deposit, explore the market or start trading.',
           ),
           t(
             input.language,
@@ -813,8 +817,8 @@ function buildDeterministicResponse(input, tools) {
         input,
         t(
           input.language,
-          'Tu ID lo puedes encontrar desde Perfil dentro de OrbitX. Si quieres, te llevo ahi para que lo revises con calma.',
-          'You can find your ID from Profile inside OrbitX. If you want, I can take you there now.',
+          'Tu ID lo puedes encontrar desde Perfil dentro de QVEX. Si quieres, te llevo ahi para que lo revises con calma.',
+          'You can find your ID from Profile inside QVEX. If you want, I can take you there now.',
         ),
         t(
           input.language,
@@ -842,13 +846,13 @@ function buildDeterministicResponse(input, tools) {
         walletSummary.hasWallet
           ? t(
               input.language,
-              `Puedes crear tu memecoin en minutos dentro de OrbitX. Primero conviene confirmar tu wallet y luego abrir el flujo de creacion de token. ${createTokenState?.summary ?? 'Dentro de ese flujo puedes subir tu imagen manualmente o usar "Crear imagen con Astra" para preparar el recurso visual.'}`,
-              `You can create your memecoin in minutes inside OrbitX. It is best to confirm your wallet first and then open the token creation flow. ${createTokenState?.summary ?? 'Inside that flow you can upload your image manually or use "Create image with Astra" to prepare the visual asset.'}`,
+              `Puedes crear tu memecoin en minutos dentro de QVEX. Primero conviene confirmar tu wallet y luego abrir el flujo de creacion de token. ${createTokenState?.summary ?? 'Dentro de ese flujo puedes subir tu imagen manualmente o usar "Crear imagen con Astra" para preparar el recurso visual.'}`,
+              `You can create your memecoin in minutes inside QVEX. It is best to confirm your wallet first and then open the token creation flow. ${createTokenState?.summary ?? 'Inside that flow you can upload your image manually or use "Create image with Astra" to prepare the visual asset.'}`,
             )
           : t(
               input.language,
-              'Puedes crear tu memecoin en OrbitX, pero antes necesitas tu wallet lista. Te puedo llevar primero a crearla y luego al flujo de token.',
-              'You can create your memecoin in OrbitX, but first you need your wallet ready. I can take you to create it first and then to the token flow.',
+              'Puedes crear tu memecoin en QVEX, pero antes necesitas tu wallet lista. Te puedo llevar primero a crearla y luego al flujo de token.',
+              'You can create your memecoin in QVEX, but first you need your wallet ready. I can take you to create it first and then to the token flow.',
             ),
         t(
           input.language,
@@ -875,8 +879,8 @@ function buildDeterministicResponse(input, tools) {
             )
           : t(
               input.language,
-              'Puedo ayudarte con contexto de mercado dentro de OrbitX. Si quieres revisar pares o pasar a Spot, te llevo al modulo correcto.',
-              'I can help you with market context inside OrbitX. If you want to review pairs or move to Spot, I can take you to the right module.',
+              'Puedo ayudarte con contexto de mercado dentro de QVEX. Si quieres revisar pares o pasar a Spot, te llevo al modulo correcto.',
+              'I can help you with market context inside QVEX. If you want to review pairs or move to Spot, I can take you to the right module.',
             ),
         marketSnapshot?.asset
           ? marketSnapshot?.hasRealtimeFeed
@@ -911,8 +915,8 @@ function buildDeterministicResponse(input, tools) {
         input,
         t(
           input.language,
-          'Social es el espacio para explorar actividad, perfiles y contenido dentro de OrbitX. Si quieres, te llevo al feed o a tu perfil.',
-          'Social is the place to explore activity, profiles and content inside OrbitX. If you want, I can take you to the feed or to your profile.',
+          'Social es el espacio para explorar actividad, perfiles y contenido dentro de QVEX. Si quieres, te llevo al feed o a tu perfil.',
+          'Social is the place to explore activity, profiles and content inside QVEX. If you want, I can take you to the feed or to your profile.',
         ),
         t(
           input.language,
@@ -979,8 +983,8 @@ function buildDeterministicResponse(input, tools) {
         uiDiagnosis?.issueDetected
           ? t(
               input.language,
-              `${uiDiagnosis.summary} Voy a orientarte con el siguiente paso seguro para aislar el problema dentro de OrbitX.`,
-              `${uiDiagnosis.summary} I will guide you through the next safe step to isolate the problem inside OrbitX.`,
+              `${uiDiagnosis.summary} Voy a orientarte con el siguiente paso seguro para aislar el problema dentro de QVEX.`,
+              `${uiDiagnosis.summary} I will guide you through the next safe step to isolate the problem inside QVEX.`,
             )
           : t(
               input.language,
@@ -1003,8 +1007,8 @@ function buildDeterministicResponse(input, tools) {
       input,
       t(
         input.language,
-        `Ahora mismo estoy tomando como contexto ${currentModule.title}${input.currentTask ? ` en ${input.currentTask}` : ''}${rampState?.summary ? `. ${rampState.summary}` : ''}. Puedo ayudarte a moverte dentro de OrbitX de forma clara y segura si me dices si quieres wallet, mercado, trade, Social o Bot Futures.`,
-        `Right now I am using ${currentModule.title}${input.currentTask ? ` in ${input.currentTask}` : ''}${rampState?.summary ? `. ${rampState.summary}` : ''}. I can help you move through OrbitX clearly and safely if you tell me whether you want wallet, markets, trade, Social or Bot Futures.`,
+        `Ahora mismo estoy tomando como contexto ${currentModule.title}${input.currentTask ? ` en ${input.currentTask}` : ''}${rampState?.summary ? `. ${rampState.summary}` : ''}. Puedo ayudarte a moverte dentro de QVEX de forma clara y segura si me dices si quieres wallet, mercado, trade, Social o Bot Futures.`,
+        `Right now I am using ${currentModule.title}${input.currentTask ? ` in ${input.currentTask}` : ''}${rampState?.summary ? `. ${rampState.summary}` : ''}. I can help you move through QVEX clearly and safely if you tell me whether you want wallet, markets, trade, Social or Bot Futures.`,
       ),
       t(
         input.language,
@@ -1062,8 +1066,9 @@ export async function orchestrateAstraChat({ config, input }) {
   const memory = buildAstraMemorySummary(identity);
   const tools = runAstraTools(safeInput);
   const fallbackResponse = buildDeterministicResponse(safeInput, tools);
+  const backendModelEnabled = isAstraBackendModelEnabled();
 
-  if (shouldPreferDeterministicResponse(safeInput, intent)) {
+  if (!backendModelEnabled || shouldPreferDeterministicResponse(safeInput, intent)) {
     appendAstraMemoryTurn(identity, {
       role: 'assistant',
       text: fallbackResponse.reply,
@@ -1077,16 +1082,17 @@ export async function orchestrateAstraChat({ config, input }) {
       lastScreen: safeInput.screen,
       lastTask: safeInput.currentTask,
     });
-    console.info('[OrbitX][AstraCore] deterministic response preferred', {
+    console.info('[QVEX][AstraCore] deterministic response preferred', {
       intent,
       screen: safeInput.screen,
       channel: safeInput.channel,
+      backendModelEnabled,
     });
     return fallbackResponse;
   }
 
   try {
-    console.info('[OrbitX][AstraCore] model request', {
+    console.info('[QVEX][AstraCore] model request', {
       model: config.model,
       channel: safeInput.channel,
       screen: safeInput.screen,
@@ -1119,7 +1125,7 @@ export async function orchestrateAstraChat({ config, input }) {
       lastScreen: safeInput.screen,
       lastTask: safeInput.currentTask,
     });
-    console.info('[OrbitX][AstraCore] model response ready', {
+    console.info('[QVEX][AstraCore] model response ready', {
       intent,
       mood: normalized.mood,
       actions: normalized.actions,
@@ -1130,7 +1136,24 @@ export async function orchestrateAstraChat({ config, input }) {
       error instanceof AstraSystemError &&
       error.code === 'ASTRA_BRAIN_NOT_CONFIGURED'
     ) {
-      throw error;
+      appendAstraMemoryTurn(identity, {
+        role: 'assistant',
+        text: fallbackResponse.reply,
+        intent,
+      });
+      updateAstraMemoryFacts(identity, {
+        lastIntent: intent,
+        lastToolNames: tools.toolsUsed,
+        walletCreated: safeInput.hasWallet,
+        identityVerified: safeInput.isVerified,
+        lastScreen: safeInput.screen,
+        lastTask: safeInput.currentTask,
+      });
+      console.warn('[QVEX][AstraCore] model not configured, fallback response used', {
+        intent,
+        screen: safeInput.screen,
+      });
+      return fallbackResponse;
     }
 
     appendAstraMemoryTurn(identity, {
@@ -1146,7 +1169,7 @@ export async function orchestrateAstraChat({ config, input }) {
       lastScreen: safeInput.screen,
       lastTask: safeInput.currentTask,
     });
-    console.warn('[OrbitX][AstraCore] fallback response used', {
+    console.warn('[QVEX][AstraCore] fallback response used', {
       intent,
       screen: safeInput.screen,
       reason: error instanceof Error ? error.message : 'UNKNOWN',
