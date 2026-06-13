@@ -215,7 +215,7 @@ export async function synthesizeAstraSpeech({ config, text, context, presetId })
       fallbackProfile.modelId !== primaryProfile?.modelId);
 
   if (shouldUseFallbackProfileFirst) {
-    console.warn('[OrbitX][AstraVoiceServer] voice preset missing, using fallback profile', {
+    console.warn('[QVEX][AstraVoiceServer] voice preset missing, using fallback profile', {
       requestedPresetId: presetId,
       primaryVoiceId: primaryProfile?.voiceId ?? null,
       primaryModelId: primaryProfile?.modelId ?? null,
@@ -240,7 +240,7 @@ export async function synthesizeAstraSpeech({ config, text, context, presetId })
       throw error;
     }
 
-    console.warn('[OrbitX][AstraVoiceServer] voice fallback triggered', {
+    console.warn('[QVEX][AstraVoiceServer] voice fallback triggered', {
       requestedPresetId: presetId,
       primaryVoiceId: primaryProfile?.voiceId,
       primaryModelId: primaryProfile?.modelId,
