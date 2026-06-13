@@ -156,7 +156,7 @@ export function createAstraChatController(config) {
       response.json(buildSuccessEnvelope(astraResponse));
     } catch (error) {
       const safeError = getSafeAstraError(error);
-      console.error('[OrbitX][AstraChat]', safeError.log);
+      console.error('[QVEX][AstraChat]', safeError.log);
       response.status(safeError.status).json(safeError.body);
     }
   };
