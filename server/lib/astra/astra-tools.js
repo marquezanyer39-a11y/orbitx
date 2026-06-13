@@ -114,7 +114,7 @@ export function getWalletSummary(input) {
       input.web3BalanceLabel ?? getContextLabel(input, 'totalWeb3Label'),
     summary: hasWallet
       ? `La wallet esta lista con balance reportado ${balanceLabel}.${posture.length ? ` Estado adicional: ${posture.join(', ')}.` : ''}`
-      : 'Todavia no hay una wallet creada en OrbitX.',
+      : 'Todavia no hay una wallet creada en QVEX.',
     nextStep: hasWallet
       ? hasFunds
         ? seedBackedUp
@@ -164,7 +164,7 @@ export function getMarketSnapshot(input) {
         : `No tengo un precio confirmado en vivo para ${pair ?? asset} en este momento.`,
     recommendation: liveFeed
       ? `Puedo ayudarte a leer ${pair ?? asset} o llevarte al panel de trade.`
-      : `Puedo llevarte al mercado o al grafico de ${pair ?? asset} dentro de OrbitX.`,
+      : `Puedo llevarte al mercado o al grafico de ${pair ?? asset} dentro de QVEX.`,
   };
 }
 

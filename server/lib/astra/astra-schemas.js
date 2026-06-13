@@ -67,7 +67,7 @@ export function buildStructuredResponse(payload = {}) {
   return {
     reply:
       truncate(payload.reply ?? payload.message, 700) ||
-      'Puedo ayudarte con eso dentro de OrbitX.',
+      'Puedo ayudarte con eso dentro de QVEX.',
     actions,
     mood: ALLOWED_MOODS.has(payload.mood) ? payload.mood : 'normal',
   };

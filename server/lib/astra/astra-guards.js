@@ -41,7 +41,7 @@ function buildSensitiveBlockResponse(reason) {
 
   return buildStructuredResponse({
     reply:
-      'No puedo ayudarte a desactivar protecciones de seguridad ni a debilitar tu cuenta. Si algo te bloquea, puedo orientarte para revisarlo con seguridad dentro de OrbitX.',
+      'No puedo ayudarte a desactivar protecciones de seguridad ni a debilitar tu cuenta. Si algo te bloquea, puedo orientarte para revisarlo con seguridad dentro de QVEX.',
     actions: ['review_security', 'diagnose_issue'],
     mood: 'warning',
   });
