@@ -20,7 +20,7 @@ export default function PrivacyScreen() {
     <ScreenContainer contentContainerStyle={styles.content}>
       <SectionHeader
         title="Privacidad"
-        subtitle="Ajusta como OrbitX muestra tu informacion y el nivel de proteccion visual."
+        subtitle="Ajusta como QVEX muestra tu informacion y el nivel de proteccion visual."
       />
 
       <View style={[styles.card, { backgroundColor: colors.fieldBackground, borderColor: colors.border }]}>
@@ -45,7 +45,7 @@ export default function PrivacyScreen() {
           Correo visible: {settings.privacyMode === 'strict' ? maskedEmail : email || 'No disponible'}
         </Text>
         <Text style={[styles.body, { color: colors.textMuted }]}>
-          OrbitX no expone frase semilla ni claves privadas desde esta pantalla.
+          QVEX no expone frase semilla ni claves privadas desde esta pantalla.
         </Text>
       </View>
     </ScreenContainer>

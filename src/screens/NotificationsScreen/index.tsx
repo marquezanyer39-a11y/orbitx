@@ -25,7 +25,7 @@ export default function NotificationsScreen() {
       />
 
       <View style={[styles.card, { backgroundColor: colors.fieldBackground, borderColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Avisos de OrbitX</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Avisos de QVEX</Text>
         <Text style={[styles.body, { color: colors.textMuted }]}>
           {settings.notificationsEnabled
             ? 'Las notificaciones de cuenta y mercado estan activas.'

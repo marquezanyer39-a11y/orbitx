@@ -161,20 +161,13 @@ export default function SecurityScreen() {
   const [seedModalMode, setSeedModalMode] = useState<SeedModalMode>('reveal');
   const [twoFactorVisible, setTwoFactorVisible] = useState(false);
 
-  const securityTone =
-    securityCenter.summary.level === 'Alto'
-      ? 'positive'
-      : securityCenter.summary.level === 'Medio'
-        ? 'warning'
-        : 'critical';
-
   const seedSection = useMemo(() => {
     if (!securityCenter.isWalletReady) {
       return {
         badge: 'Sin billetera',
         badgeTone: 'warning' as const,
         title: 'Frase semilla',
-        body: 'Crea una billetera OrbitX para generar tu frase semilla y proteger tus fondos.',
+        body: 'Crea una billetera QVEX para generar tu frase semilla y proteger tus fondos.',
         primaryLabel: 'Crear billetera',
         secondaryLabel: undefined,
         primaryAction: async () => {

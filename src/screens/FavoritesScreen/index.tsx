@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII } from '../../../constants/theme';
+import { FONT } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { MarketListRow } from '../../../components/lists/MarketListRow';
 import { useOrbitStore } from '../../../store/useOrbitStore';
@@ -12,7 +12,7 @@ import { SectionHeader } from '../../components/common/SectionHeader';
 import { useMarketData } from '../../hooks/useMarketData';
 import { navigateToTrade } from '../../navigation/AppNavigator';
 import { useProfileStore } from '../../store/profileStore';
-import { buildLegacyTokenPairId, findLegacyTokenForTradeId, mapLegacyTokenToMarketPair } from '../../utils/tradePairs';
+import { buildLegacyTokenPairId, findLegacyTokenForTradeId } from '../../utils/tradePairs';
 
 export default function FavoritesScreen() {
   const { colors } = useAppTheme();
@@ -43,7 +43,7 @@ export default function FavoritesScreen() {
     <ScreenContainer contentContainerStyle={styles.content}>
       <SectionHeader
         title="Favoritos"
-        subtitle="Tus pares guardados para volver rapido a mercado y operacion."
+        subtitle="Tus pares guardados para volver rápido a mercado y operación."
       />
 
       {pairs.length ? (
@@ -94,8 +94,8 @@ export default function FavoritesScreen() {
         </View>
       ) : (
         <EmptyState
-          title="Aun no guardas favoritos"
-          body="Marca estrellas desde Operar para construir tu lista rapida."
+          title="Aún no guardas favoritos"
+          body="Marca estrellas desde Operar para construir tu lista rápida."
         />
       )}
     </ScreenContainer>

@@ -63,9 +63,9 @@ function Row({
 
 function getMotionThemeLabel(motion: string, isSpanish: boolean) {
   const labels = {
-    bull: { es: 'Toro OrbitX', en: 'OrbitX Bull' },
-    bear: { es: 'Oso OrbitX', en: 'OrbitX Bear' },
-    battle: { es: 'Batalla OrbitX', en: 'OrbitX Battle' },
+    bull: { es: 'Toro QVEX', en: 'QVEX Bull' },
+    bear: { es: 'Oso QVEX', en: 'QVEX Bear' },
+    battle: { es: 'Batalla QVEX', en: 'QVEX Battle' },
   } as const;
 
   const entry = labels[motion as keyof typeof labels];
@@ -114,8 +114,8 @@ export default function PersonalizationScreen() {
   const isSpanish = settings.language === 'es';
   const astraVoiceTitle = isSpanish ? 'Voz de Astra' : 'Astra voice';
   const astraVoiceBody = isSpanish
-    ? 'Astra usa una voz oficial unificada dentro de OrbitX. Aqui solo controlas si responde con voz.'
-    : 'Astra uses one unified official voice across OrbitX. You only control whether voice replies stay enabled here.';
+    ? 'Astra usa una voz oficial unificada dentro de QVEX. Aqui solo controlas si responde con voz.'
+    : 'Astra uses one unified official voice across QVEX. You only control whether voice replies stay enabled here.';
   const astraVoiceModeLabel = isSpanish ? 'Respuesta por voz' : 'Voice replies';
   const astraVoiceModeValue =
     voicePreferences.voiceOutputEnabled ? t('common.on') : t('common.off');

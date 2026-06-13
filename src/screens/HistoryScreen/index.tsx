@@ -36,7 +36,7 @@ export default function HistoryScreen() {
       })),
       ...recentOrders.map((item) => ({
         id: item.id,
-        title: `Operacion ${item.side === 'buy' ? 'de compra' : 'de venta'}`,
+        title: `Operación ${item.side === 'buy' ? 'de compra' : 'de venta'}`,
         body: `${item.quantity} a ${item.price}`,
         timestamp: item.time,
         accent: item.side === 'buy' ? 'success' as const : 'warning' as const,
@@ -66,7 +66,7 @@ export default function HistoryScreen() {
     <ScreenContainer contentContainerStyle={styles.content}>
       <SectionHeader
         title="Historial"
-        subtitle="Actividad reciente de cuenta, billetera y operacion."
+        subtitle="Actividad reciente de cuenta, billetera y operación."
       />
 
       {items.length ? (
@@ -98,8 +98,8 @@ export default function HistoryScreen() {
         </View>
       ) : (
         <EmptyState
-          title="Aun no tienes movimientos"
-          body="Cuando operes, muevas fondos o ajustes tu cuenta, todo aparecera aqui."
+          title="Aún no tienes movimientos"
+          body="Cuando operes, muevas fondos o ajustes tu cuenta, todo aparecerá aquí."
         />
       )}
     </ScreenContainer>
