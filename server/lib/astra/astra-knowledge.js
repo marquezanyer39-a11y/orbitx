@@ -1,42 +1,42 @@
-import {
-  createNanobananaConfig,
-  describeNanobananaAvailability,
-} from './nanobanana-client.js';
-
 const STATUS_LEGEND = {
-  available: 'Disponible para el usuario dentro de OrbitX.',
+  available: 'Disponible para el usuario dentro de QVEX.',
   visual_demo: 'Visible en la interfaz, pero no necesariamente conectado a ejecucion real.',
   in_development: 'En desarrollo; puede verse parcialmente o estar preparado para la siguiente fase.',
   future: 'Planeado para una fase futura; no debe prometerse como activo hoy.',
   external_dependency: 'Depende de conexion externa o proveedor adicional.',
 };
 
-function getNanobananaAvailability() {
-  return describeNanobananaAvailability(createNanobananaConfig(process.env));
-}
+const DEFAULT_VISUAL_AVAILABILITY = {
+  providerLabel: 'Visual generation',
+  status: 'external_dependency',
+  stateLabel: 'Proveedor visual no conectado en modo seguro.',
+  model: null,
+  message: 'La generacion visual depende de un proveedor externo no conectado en este entorno.',
+  available: false,
+};
 
 const PRODUCT_IDENTITY = {
-  name: 'OrbitX',
+  name: 'QVEX',
   role: 'crypto super app',
   summary:
-    'OrbitX integra wallet, compra y venta, trading spot, mercados, social, herramientas inteligentes, Bot Futures y flujos creativos en una experiencia premium guiada por Astra.',
+    'QVEX integra wallet, compra y venta, trading spot, mercados, social, herramientas inteligentes, Bot Futures y flujos creativos en una experiencia premium guiada por Astra.',
   astraRole:
-    'Astra es la asistente inteligente oficial de OrbitX. Guia, explica, resuelve dudas, interpreta errores y orienta al usuario segun la pantalla actual.',
+    'Astra es la asistente inteligente oficial de QVEX. Guia, explica, resuelve dudas, interpreta errores y orienta al usuario segun la pantalla actual.',
   rules: [
     'No inventar funciones ni estados del sistema.',
     'No afirmar ejecuciones que no se confirmaron.',
     'Diferenciar entre disponible, visual/demo, en desarrollo y futuro.',
-    'Guiar al usuario hacia el siguiente paso real dentro de OrbitX.',
+    'Guiar al usuario hacia el siguiente paso real dentro de QVEX.',
   ],
 };
 
 const MODULES = {
   general: {
     id: 'general',
-    title: 'OrbitX',
+    title: 'QVEX',
     focus: 'Orientacion general entre wallet, mercado, trade, social, seguridad y Bot Futures.',
     whatUserSees: [
-      'Entradas principales al ecosistema OrbitX',
+      'Entradas principales al ecosistema QVEX',
       'Resumen general y accesos rapidos',
       'Ayuda transversal entre modulos',
     ],
@@ -140,7 +140,7 @@ const MODULES = {
   create_token: {
     id: 'create_token',
     title: 'Crear token',
-    focus: 'Wizard para configurar, firmar y lanzar un token o memecoin dentro del flujo OrbitX.',
+    focus: 'Wizard para configurar, firmar y lanzar un token o memecoin dentro del flujo QVEX.',
     whatUserSees: [
       'Seleccion de wallet y red',
       'Configuracion del token: nombre, simbolo, supply, decimales e imagen',
@@ -156,10 +156,7 @@ const MODULES = {
       { key: 'token_creation_wizard', status: 'available' },
       { key: 'real_evm_launch', status: 'available' },
       { key: 'protected_listing', status: 'in_development' },
-      {
-        key: 'astra_image_generation',
-        status: getNanobananaAvailability().available ? 'external_dependency' : 'in_development',
-      },
+      { key: 'astra_image_generation', status: 'external_dependency' },
     ],
     availableActions: ['create_memecoin', 'wallet_open', 'view_market'],
   },
@@ -248,7 +245,7 @@ const MODULES = {
   pool: {
     id: 'pool',
     title: 'Monthly Pool',
-    focus: 'Participacion en pool/rewards mensual dentro del ecosistema OrbitX.',
+    focus: 'Participacion en pool/rewards mensual dentro del ecosistema QVEX.',
     whatUserSees: ['Estado del pool', 'participacion', 'tiempo restante y posicion estimada'],
     helpTopics: ['como participar', 'estado del pool', 'tiempo restante'],
     capabilities: [
@@ -398,6 +395,61 @@ function buildModulesCatalog() {
   }));
 }
 
+function getVisualAvailability(options = {}) {
+  const visualAvailability = options.visualAvailability;
+
+  if (!visualAvailability || typeof visualAvailability !== 'object') {
+    return DEFAULT_VISUAL_AVAILABILITY;
+  }
+
+  return {
+    ...DEFAULT_VISUAL_AVAILABILITY,
+    ...visualAvailability,
+  };
+}
+
+function applyVisualAvailabilityToModule(module, visualAvailability) {
+  if (!module || module.id !== 'create_token') {
+    return module;
+  }
+
+  return {
+    ...module,
+    capabilities: module.capabilities.map((capability) =>
+      capability.key === 'astra_image_generation'
+        ? {
+            ...capability,
+            status:
+              visualAvailability.status === 'external_dependency'
+                ? 'external_dependency'
+                : 'in_development',
+          }
+        : capability,
+    ),
+  };
+}
+
+function buildModulesCatalogWithVisualAvailability(visualAvailability) {
+  return buildModulesCatalog().map((module) =>
+    module.id === 'create_token'
+      ? {
+          ...module,
+          capabilities: module.capabilities.map((capability) =>
+            capability.key === 'astra_image_generation'
+              ? {
+                  ...capability,
+                  status:
+                    visualAvailability.status === 'external_dependency'
+                      ? 'external_dependency'
+                      : 'in_development',
+                }
+              : capability,
+          ),
+        }
+      : module,
+  );
+}
+
 function buildRuntimeContext(input, currentModule) {
   return {
     screenName: input.screenName ?? null,
@@ -429,28 +481,31 @@ function buildRuntimeContext(input, currentModule) {
   };
 }
 
-export function getOrbitxKnowledge(input) {
-  const currentModule = pickModule(input.screen);
-  const nanobananaAvailability = getNanobananaAvailability();
-  const nanobananaReady = nanobananaAvailability.available;
+export function getOrbitxKnowledge(input, options = {}) {
+  const visualAvailability = getVisualAvailability(options);
+  const currentModule = applyVisualAvailabilityToModule(
+    pickModule(input.screen),
+    visualAvailability,
+  );
 
   return {
     product: PRODUCT_IDENTITY,
     statusLegend: STATUS_LEGEND,
     currentModule,
     runtimeContext: buildRuntimeContext(input, currentModule),
-    modulesCatalog: buildModulesCatalog(),
+    modulesCatalog: buildModulesCatalogWithVisualAvailability(visualAvailability),
     relevantFlows: pickRelevantFlows(currentModule.id),
     commonIssues: pickRelevantIssues(currentModule.id, input.message),
     creativeImageGeneration: {
       title: 'Crear imagen con Astra',
       summary:
         'Dentro del flujo de crear token existe una opcion adicional junto a subir imagen para generar imagen con Astra.',
-      providerLabel: nanobananaAvailability.providerLabel,
-      status: nanobananaReady ? 'external_dependency' : 'in_development',
-      stateLabel: nanobananaReady
-        ? `La arquitectura esta lista y depende del proveedor visual configurado (${nanobananaAvailability.model}).`
-        : nanobananaAvailability.message,
+      providerLabel: visualAvailability.providerLabel,
+      status:
+        visualAvailability.status === 'external_dependency'
+          ? 'external_dependency'
+          : 'in_development',
+      stateLabel: visualAvailability.stateLabel,
       supportedBehaviors: [
         'Sugerir prompts visuales automaticamente',
         'Ayudar a refinar el prompt antes de generar',
