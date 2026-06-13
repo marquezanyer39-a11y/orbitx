@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FONT, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 
 interface Props {
@@ -18,8 +18,8 @@ export function BalanceCard({ title, value, body, icon }: Props) {
       style={[
         styles.card,
         {
-          backgroundColor: withOpacity(colors.surfaceElevated, 0.36),
-          borderColor: withOpacity(colors.borderStrong, 0.4),
+          backgroundColor: withOpacity(colors.surfaceElevated, 0.22),
+          borderColor: withOpacity(colors.borderStrong, 0.22),
         },
       ]}
     >
@@ -60,10 +60,10 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   iconWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: RADII.pill,
-    borderWidth: 1,
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    borderWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },

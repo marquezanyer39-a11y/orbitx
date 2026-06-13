@@ -47,13 +47,13 @@ const styles = StyleSheet.create({
   },
   copy: {
     flex: 1,
-    gap: 8,
+    gap: 6,
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    paddingTop: 34,
+    paddingTop: 30,
   },
   icon: {
     width: 24,
@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
   },
   value: {
     fontFamily: FONT.bold,
-    fontSize: 45,
-    lineHeight: 50,
+    fontSize: 42,
+    lineHeight: 47,
   },
   subtitle: {
     fontFamily: FONT.regular,

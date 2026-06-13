@@ -47,8 +47,8 @@ export function WalletActions({
             style={[
               styles.actionButton,
               {
-                backgroundColor: withOpacity(colors.surfaceElevated, 0.26),
-                borderColor: withOpacity(colors.borderStrong, 0.32),
+                backgroundColor: withOpacity(colors.surfaceElevated, 0.18),
+                borderColor: withOpacity(colors.borderStrong, 0.2),
               },
             ]}
           >
@@ -64,7 +64,7 @@ export function WalletActions({
           styles.tradeButton,
           {
             backgroundColor: colors.primary,
-            borderColor: withOpacity(colors.primary, 0.88),
+            borderColor: withOpacity(colors.primary, 0.5),
           },
         ]}
       >

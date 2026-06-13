@@ -33,7 +33,7 @@ export function AssetList({ assets }: Props) {
             styles.row,
             {
               borderBottomColor:
-                index === assets.length - 1 ? 'transparent' : withOpacity(colors.border, 0.7),
+                index === assets.length - 1 ? 'transparent' : withOpacity(colors.border, 0.22),
             },
           ]}
         >
