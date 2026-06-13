@@ -18,6 +18,7 @@ import {
   resolvePreset,
 } from './lib/astra-voice-config.mjs';
 import { ElevenLabsVoiceError, synthesizeAstraSpeech } from './lib/elevenlabs-client.mjs';
+import { createOkxRouter } from './lib/providers/okx/okx-routes.js';
 
 const app = express();
 const host = `${process.env.HOST || '0.0.0.0'}`.trim() || '0.0.0.0';
@@ -54,7 +55,7 @@ function createCorsOriginResolver(rawValue) {
       return;
     }
 
-    console.warn('[OrbitX][AstraCore] blocked CORS origin', {
+    console.warn('[QVEX][AstraCore] blocked CORS origin', {
       origin,
       allowedOrigins: Array.from(allowedOrigins),
     });
@@ -145,6 +146,13 @@ app.post('/api/astra/realtime-session', (request, response) => {
 
 app.post('/api/astra/chat', astraChatController);
 app.post('/api/astra/generate-image', astraImageController);
+const isOkxBrokerEnabled = process.env.ENABLE_OKX_BROKER === 'true';
+
+if (isOkxBrokerEnabled) {
+  app.use(createOkxRouter());
+} else {
+  console.log('[QVEX Server] OKX broker routes disabled by default');
+}
 
 app.post('/api/voice/astra/speak', async (request, response) => {
   const rawText = request.body?.text;
@@ -164,7 +172,7 @@ app.post('/api/voice/astra/speak', async (request, response) => {
   }
 
   try {
-    console.info('[OrbitX][AstraVoiceServer] tts request', {
+    console.info('[QVEX][AstraVoiceServer] tts request', {
       provider: 'elevenlabs',
       presetId,
       context,
@@ -185,7 +193,7 @@ app.post('/api/voice/astra/speak', async (request, response) => {
     response.status(200).send(audioBuffer);
   } catch (error) {
     const safeError = getSafeVoiceError(error);
-    console.error('[OrbitX][AstraVoiceServer]', safeError.log);
+    console.error('[QVEX][AstraVoiceServer]', safeError.log);
     response.status(safeError.status).json(safeError.body);
   }
 });
@@ -193,11 +201,11 @@ app.post('/api/voice/astra/speak', async (request, response) => {
 app.listen(port, host, () => {
   const nanobananaRuntime = describeNanobananaAvailability(createNanobananaConfig(process.env));
   console.log(
-    `[OrbitX][AstraVoiceServer] listening on http://${host}:${port} (configured=${Boolean(
+    `[QVEX][AstraVoiceServer] listening on http://${host}:${port} (configured=${Boolean(
       config.apiKey,
     )})`,
   );
-  console.info('[OrbitX][AstraImageServer] runtime', {
+  console.info('[QVEX][AstraImageServer] runtime', {
     available: nanobananaRuntime.available,
     providerLabel: nanobananaRuntime.providerLabel,
     model: nanobananaRuntime.model,
