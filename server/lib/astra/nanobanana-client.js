@@ -1,11 +1,12 @@
 import { GoogleGenAI } from '@google/genai';
 
 import { AstraSystemError } from './astra-schemas.js';
+import {
+  createNanobananaConfig,
+  describeNanobananaAvailability,
+  isNanobananaConfigured,
+} from './nanobanana-config.js';
 
-const DEFAULT_GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com';
-const DEFAULT_GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
-const DEFAULT_PROVIDER_LABEL = 'Astra + Gemini Nano Banana';
-const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_ASPECT_RATIO = '1:1';
 const DEFAULT_IMAGE_SIZE = '1K';
 
@@ -34,39 +35,6 @@ function sanitizeBase64(value) {
   return `${value ?? ''}`.replace(/^data:[^;]+;base64,/, '').replace(/\s+/g, '').trim();
 }
 
-function toNumber(value, fallback) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function normalizeBaseUrl(value) {
-  const normalized = `${value ?? ''}`.trim().replace(/\/$/, '');
-  return normalized || DEFAULT_GEMINI_BASE_URL;
-}
-
-function resolveApiKey(env) {
-  const geminiApiKey = `${env.GEMINI_API_KEY ?? ''}`.trim();
-  if (geminiApiKey) {
-    return {
-      apiKey: geminiApiKey,
-      apiKeySource: 'GEMINI_API_KEY',
-    };
-  }
-
-  const nanobananaApiKey = `${env.NANOBANANA_API_KEY ?? ''}`.trim();
-  if (nanobananaApiKey) {
-    return {
-      apiKey: nanobananaApiKey,
-      apiKeySource: 'NANOBANANA_API_KEY',
-    };
-  }
-
-  return {
-    apiKey: '',
-    apiKeySource: null,
-  };
-}
-
 function buildPrompt(prompt, context) {
   const lines = [sanitizePrompt(prompt)];
 
@@ -89,8 +57,8 @@ function buildPrompt(prompt, context) {
 
   lines.push(
     language === 'es'
-      ? 'Entrega una imagen utilizable para branding de memecoin dentro de OrbitX.'
-      : 'Deliver an image that is usable for memecoin branding inside OrbitX.',
+      ? 'Entrega una imagen utilizable para branding de memecoin dentro de QVEX.'
+      : 'Deliver an image that is usable for memecoin branding inside QVEX.',
   );
 
   return lines.filter(Boolean).join('\n');
@@ -151,7 +119,7 @@ function extractErrorDetails(error) {
 function classifyNanobananaError(error) {
   const details = extractErrorDetails(error);
 
-  console.error('[OrbitX][AstraImage] Gemini image request failed', {
+  console.error('[QVEX][AstraImage] Gemini image request failed', {
     status: details.status,
     reason: details.rawMessage,
   });
@@ -247,69 +215,7 @@ function createGeminiImageClient(config) {
   });
 }
 
-export function createNanobananaConfig(env = process.env) {
-  const { apiKey, apiKeySource } = resolveApiKey(env);
-  const apiUrl = normalizeBaseUrl(
-    env.NANOBANANA_API_URL ?? env.GEMINI_NEXT_GEN_API_BASE_URL ?? '',
-  );
-  const model = `${env.NANOBANANA_MODEL ?? env.GEMINI_IMAGE_MODEL ?? DEFAULT_GEMINI_IMAGE_MODEL}`
-    .trim();
-  const timeoutMs = toNumber(env.NANOBANANA_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
-
-  return {
-    apiKey,
-    apiKeySource,
-    apiUrl,
-    endpoint: `${apiUrl}/v1beta/models/${model}:generateContent`,
-    model,
-    timeoutMs,
-    providerLabel: DEFAULT_PROVIDER_LABEL,
-  };
-}
-
-export function isNanobananaConfigured(config) {
-  return Boolean(config?.apiKey && config?.apiUrl && config?.model);
-}
-
-export function describeNanobananaAvailability(config) {
-  if (!isNanobananaConfigured(config)) {
-    return {
-      available: false,
-      configured: false,
-      providerLabel: config.providerLabel,
-      model: config.model,
-      endpoint: config.endpoint,
-      apiKeySource: config.apiKeySource,
-      message:
-        'La generacion visual de Astra necesita una API key de Gemini o Nanobanana para activarse en este entorno.',
-    };
-  }
-
-  try {
-    createGeminiImageClient(config);
-
-    return {
-      available: true,
-      configured: true,
-      providerLabel: config.providerLabel,
-      model: config.model,
-      endpoint: config.endpoint,
-      apiKeySource: config.apiKeySource,
-      message: `La generacion visual esta lista con ${config.model}.`,
-    };
-  } catch (error) {
-    const details = extractErrorDetails(error);
-    return {
-      available: false,
-      configured: false,
-      providerLabel: config.providerLabel,
-      model: config.model,
-      endpoint: config.endpoint,
-      apiKeySource: config.apiKeySource,
-      message: `No pudimos inicializar Gemini para imagen: ${details.rawMessage}`,
-    };
-  }
-}
+export { createNanobananaConfig, describeNanobananaAvailability, isNanobananaConfigured };
 
 export async function generateNanobananaImages({
   config,
@@ -339,8 +245,9 @@ export async function generateNanobananaImages({
 
   const runtime = describeNanobananaAvailability(config);
   if (!runtime.available) {
+    const code = runtime.enabled === false ? 'NANOBANANA_DISABLED' : 'NANOBANANA_INIT_FAILED';
     throw new AstraSystemError(runtime.message, {
-      code: 'NANOBANANA_INIT_FAILED',
+      code,
       status: 503,
       exposeMessage: true,
     });
@@ -362,7 +269,7 @@ export async function generateNanobananaImages({
         ]
       : enrichedPrompt;
 
-  console.info('[OrbitX][AstraImage] Gemini image request', {
+  console.info('[QVEX][AstraImage] Gemini image request', {
     providerLabel: config.providerLabel,
     endpoint: config.endpoint,
     model: config.model,
