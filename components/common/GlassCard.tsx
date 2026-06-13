@@ -3,7 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { RADII, SPACING, withOpacity } from '../../constants/theme';
+import { RADII, withOpacity } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 
 interface GlassCardProps {

@@ -48,7 +48,7 @@ export function BalanceHero({
   onToggleVisibility,
   onViewAnalysis,
 }: BalanceHeroProps) {
-  const chartWidth = Math.min(isSmallPhone ? 138 : 168, Math.floor(contentWidth * 0.46));
+  const chartWidth = Math.min(isSmallPhone ? 148 : 178, Math.floor(contentWidth * 0.5));
   const parsedAmount = extractNumericValue(amountLabel);
   const hasReliableDelta = (parsedAmount ?? 0) > 0 && extractNumericValue(deltaLabel) !== null;
   const accent = positive ? ORBITX_THEME.colors.primaryGreen : ORBITX_THEME.colors.lossRed;
@@ -63,6 +63,9 @@ export function BalanceHero({
   return (
     <View style={[styles.card, isSmallPhone ? styles.cardSmall : null]}>
       <View style={styles.glow} />
+      <View style={[styles.motionTrail, styles.motionTrailA]} />
+      <View style={[styles.motionTrail, styles.motionTrailB]} />
+      <View style={[styles.motionTrail, styles.motionTrailC]} />
 
       <Text style={styles.eyebrow}>Balance total</Text>
 
@@ -108,11 +111,19 @@ export function BalanceHero({
             onPress={onViewAnalysis}
             style={({ pressed }) => [styles.analysisButton, pressed ? styles.pressed : null]}
           >
-            <Ionicons name="analytics-outline" size={12} color={withOpacity('#FAFAFA', 0.58)} />
+            <Ionicons
+              name="analytics-outline"
+              size={12}
+              color={withOpacity(ORBITX_THEME.colors.textPrimary, 0.58)}
+            />
             <Text style={styles.analysisLabel} numberOfLines={1}>
               Ver análisis
             </Text>
-            <Ionicons name="chevron-forward" size={12} color={withOpacity('#FAFAFA', 0.46)} />
+            <Ionicons
+              name="chevron-forward"
+              size={12}
+              color={withOpacity(ORBITX_THEME.colors.textPrimary, 0.46)}
+            />
           </Pressable>
 
           {cacheLabel ? (
@@ -142,28 +153,55 @@ export function BalanceHero({
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    minHeight: 156,
+    minHeight: 148,
     borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.12),
-    backgroundColor: '#0B100D',
-    paddingHorizontal: 14,
-    paddingVertical: 15,
+    borderColor: ORBITX_THEME.colors.border,
+    backgroundColor: ORBITX_THEME.colors.surfaceSoft,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
     overflow: 'hidden',
   },
   cardSmall: {
-    minHeight: 150,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    minHeight: 144,
+    paddingHorizontal: 11,
+    paddingVertical: 13,
   },
   glow: {
     position: 'absolute',
-    right: -12,
-    top: -8,
+    right: -20,
+    top: 34,
     width: 170,
-    height: 132,
-    borderRadius: 80,
-    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.08),
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: ORBITX_THEME.colors.accentGlow,
+    transform: [{ rotate: '-16deg' }],
+  },
+  motionTrail: {
+    position: 'absolute',
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: withOpacity(ORBITX_THEME.colors.textPrimary, 0.055),
+  },
+  motionTrailA: {
+    right: 8,
+    top: 56,
+    width: 128,
+    transform: [{ rotate: '-16deg' }],
+  },
+  motionTrailB: {
+    right: -12,
+    top: 78,
+    width: 164,
+    backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.05),
+    transform: [{ rotate: '-16deg' }],
+  },
+  motionTrailC: {
+    right: 28,
+    bottom: 28,
+    width: 118,
+    backgroundColor: ORBITX_THEME.colors.accentGlow,
+    transform: [{ rotate: '-16deg' }],
   },
   eyebrow: {
     color: ORBITX_THEME.colors.textSecondary,
@@ -175,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: 8,
-    marginTop: 9,
+    marginTop: 8,
   },
   copyColumn: {
     flex: 1,
@@ -185,11 +223,11 @@ const styles = StyleSheet.create({
   amount: {
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.regular,
-    fontSize: 34,
+    fontSize: 33,
     letterSpacing: 0,
   },
   amountSmall: {
-    fontSize: 30,
+    fontSize: 29,
   },
   deltaRow: {
     flexDirection: 'row',
@@ -204,17 +242,17 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   rangePill: {
-    color: withOpacity('#FAFAFA', 0.72),
+    color: withOpacity(ORBITX_THEME.colors.textPrimary, 0.72),
     fontFamily: FONT.medium,
     fontSize: 11,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: RADII.pill,
-    backgroundColor: withOpacity('#FFFFFF', 0.08),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.textPrimary, 0.08),
     overflow: 'hidden',
   },
   analysisButton: {
-    marginTop: 8,
+    marginTop: 7,
     alignSelf: 'flex-start',
     minHeight: 28,
     paddingHorizontal: 10,
@@ -222,9 +260,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: withOpacity('#FFFFFF', 0.045),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.textPrimary, 0.045),
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.16),
+    borderColor: ORBITX_THEME.colors.border,
   },
   analysisLabel: {
     color: withOpacity(ORBITX_THEME.colors.textPrimary, 0.86),
@@ -246,7 +284,7 @@ const styles = StyleSheet.create({
     width: 182,
     height: 36,
     borderRadius: 14,
-    backgroundColor: withOpacity('#FAFAFA', 0.08),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.textPrimary, 0.08),
   },
   amountSkeletonSmall: {
     width: 158,
@@ -256,7 +294,7 @@ const styles = StyleSheet.create({
     width: 116,
     height: 14,
     borderRadius: RADII.pill,
-    backgroundColor: withOpacity('#FAFAFA', 0.07),
+    backgroundColor: withOpacity(ORBITX_THEME.colors.textPrimary, 0.07),
   },
   pressed: {
     opacity: 0.8,

@@ -15,7 +15,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getLocaleDirection } from '../../constants/i18n';
-import { FONT, SPACING, withOpacity } from '../../constants/theme';
+import { FONT, withOpacity } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { useOrbitStore } from '../../store/useOrbitStore';
 import { OrbitMotionVideoBackground } from './OrbitMotionVideoBackground';
@@ -183,7 +183,7 @@ const BEAR_FIRE_COLUMNS = [
   { left: 258, width: 10, height: 34 },
 ] as const;
 
-function DriftScene({ accent, text }: { accent: string; text: string }) {
+function _DriftScene({ accent, text }: { accent: string; text: string }) {
   return (
     <>
       {DRIFT_BEAMS.map((beam, index) => {
@@ -211,7 +211,7 @@ function DriftScene({ accent, text }: { accent: string; text: string }) {
   );
 }
 
-function HaloScene({ accent, text }: { accent: string; text: string }) {
+function _HaloScene({ accent, text }: { accent: string; text: string }) {
   return (
     <>
       {HALO_BANDS.map((band, index) => (
@@ -241,7 +241,7 @@ function HaloScene({ accent, text }: { accent: string; text: string }) {
   );
 }
 
-function ParallaxScene({
+function _ParallaxScene({
   accent,
   text,
   border,
@@ -281,7 +281,7 @@ function ParallaxScene({
   );
 }
 
-function DustCluster({ accent, text }: { accent: string; text: string }) {
+function _DustCluster({ accent, text }: { accent: string; text: string }) {
   return (
     <View style={styles.dustCluster}>
       {DUST_PARTICLES.map((particle, index) => {
@@ -308,7 +308,7 @@ function DustCluster({ accent, text }: { accent: string; text: string }) {
   );
 }
 
-function CandleRibbon({
+function _CandleRibbon({
   profit,
   loss,
   text,
@@ -917,7 +917,7 @@ export function Screen({
     ],
   }));
 
-  const secondarySceneStyle = useAnimatedStyle(() => ({
+  const _secondarySceneStyle = useAnimatedStyle(() => ({
     opacity: trailOpacity.value,
     transform: [
       { translateX: ambientShift.value },
@@ -926,7 +926,7 @@ export function Screen({
     ],
   }));
 
-  const panelFrontStyle = useAnimatedStyle(() => ({
+  const _panelFrontStyle = useAnimatedStyle(() => ({
     opacity: sceneOpacity.value,
     transform: [
       { translateX: sceneX.value * 0.6 },
@@ -935,7 +935,7 @@ export function Screen({
     ],
   }));
 
-  const panelRearStyle = useAnimatedStyle(() => ({
+  const _panelRearStyle = useAnimatedStyle(() => ({
     opacity: trailOpacity.value,
     transform: [
       { translateX: -ambientShift.value * 0.5 },
@@ -944,11 +944,11 @@ export function Screen({
     ],
   }));
 
-  const chartTrackStyle = useAnimatedStyle(() => ({
+  const _chartTrackStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: chartShift.value }],
   }));
 
-  const chartTrackOffsetStyle = useAnimatedStyle(() => ({
+  const _chartTrackOffsetStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: chartShift.value + CHART_RIBBON_WIDTH }],
   }));
 
@@ -962,7 +962,7 @@ export function Screen({
     ],
   }));
 
-  const creatureGhostStyle = useAnimatedStyle(() => ({
+  const _creatureGhostStyle = useAnimatedStyle(() => ({
     opacity: Math.max(0.08, chargeOpacity.value - 0.16),
     transform: [
       { perspective: 1000 },
@@ -1042,10 +1042,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: 140,
-    gap: SPACING.lg,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 118,
+    gap: 14,
   },
   sceneBlockTop: {
     position: 'absolute',

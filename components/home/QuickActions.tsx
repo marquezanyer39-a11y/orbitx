@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { FONT, withOpacity } from '../../constants/theme';
+import { FONT } from '../../constants/theme';
 import { ORBITX_THEME } from './orbitxTheme';
 
 interface QuickActionItem {
@@ -61,22 +61,22 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     alignItems: 'center',
-    gap: 7,
+    gap: 6,
   },
   iconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 34,
+    height: 30,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: withOpacity(ORBITX_THEME.colors.surface, 0.92),
-    borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.26),
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   iconWrapSmall: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 32,
+    height: 28,
+    borderRadius: 8,
   },
   label: {
     color: ORBITX_THEME.colors.textPrimary,

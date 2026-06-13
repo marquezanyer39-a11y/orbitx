@@ -5,7 +5,7 @@ import { useAppTheme } from '../../../hooks/useAppTheme';
 
 export function LoadingState({
   title = 'Actualizando',
-  body = 'OrbitX esta sincronizando la informacion.',
+  body = 'QVEX esta sincronizando la informacion.',
 }: {
   title?: string;
   body?: string;

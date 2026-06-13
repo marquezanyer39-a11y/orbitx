@@ -13,7 +13,6 @@ interface HomeHeaderProps {
 }
 
 export function HomeHeader({
-  avatarLabel,
   avatarUri,
   isSmallPhone = false,
   onProfilePress,
@@ -48,7 +47,7 @@ export function HomeHeader({
         </Pressable>
 
         <Text style={[styles.brand, isSmallPhone ? styles.brandSmall : null]} numberOfLines={1}>
-          ORBITX
+          QVEX
         </Text>
 
         <Pressable
@@ -75,7 +74,7 @@ const styles = StyleSheet.create({
     height: 56,
     backgroundColor: ORBITX_THEME.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: withOpacity(ORBITX_THEME.colors.border, 0.28),
+    borderBottomColor: withOpacity(ORBITX_THEME.colors.border, 0.08),
     justifyContent: 'center',
   },
   row: {
@@ -92,7 +91,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: ORBITX_THEME.colors.surface,
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.32),
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.14),
     overflow: 'hidden',
   },
   avatarImage: {

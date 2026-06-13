@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { FONT, RADII, withOpacity } from '../../constants/theme';
+import { FONT, withOpacity } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 
 interface TokenAvatarProps {

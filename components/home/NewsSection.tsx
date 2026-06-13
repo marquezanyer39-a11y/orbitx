@@ -41,6 +41,7 @@ export function NewsSection({
 }: NewsSectionProps) {
   return (
     <View style={styles.root}>
+      <View pointerEvents="none" style={styles.newsGlow} />
       <View style={styles.headerRow}>
         <Text style={styles.title}>Noticias</Text>
         <Pressable
@@ -102,7 +103,7 @@ export function NewsSection({
             <Ionicons
               name={loading ? 'refresh-outline' : 'newspaper-outline'}
               size={24}
-              color={withOpacity(ORBITX_THEME.colors.primaryGreen, 0.9)}
+              color={withOpacity('#8D78E8', 0.78)}
             />
           </View>
         )}
@@ -126,6 +127,17 @@ const styles = StyleSheet.create({
   root: {
     width: '100%',
     gap: 0,
+    position: 'relative',
+  },
+  newsGlow: {
+    position: 'absolute',
+    right: -12,
+    top: 44,
+    width: 152,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: withOpacity('#8D78E8', 0.08),
+    transform: [{ rotate: '-18deg' }],
   },
   headerRow: {
     flexDirection: 'row',
@@ -163,7 +175,7 @@ const styles = StyleSheet.create({
   },
   chipIdle: {
     backgroundColor: 'transparent',
-    borderColor: ORBITX_THEME.colors.border,
+    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.18),
   },
   chipLabel: {
     fontSize: 13,
@@ -202,14 +214,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: ORBITX_THEME.colors.surface,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: withOpacity('#7B3FE4', 0.06),
   },
   storyImageFallback: {
     width: '100%',
     aspectRatio: 16 / 9,
     borderRadius: 12,
-    backgroundColor: '#253026',
+    backgroundColor: '#15191A',
     borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.border, 0.5),
+    borderColor: withOpacity('#7B3FE4', 0.08),
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,

@@ -25,7 +25,7 @@ export function SocialEntryStrip({ isSmallPhone = false, onPress }: SocialEntryS
 
       <View style={styles.copy}>
         <Text style={styles.title} numberOfLines={1}>
-          Social OrbitX
+          Social QVEX
         </Text>
         <Text style={styles.subtitle} numberOfLines={1} ellipsizeMode="tail">
           Comunidad y transmisiones en vivo
@@ -61,14 +61,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   iconShell: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 30,
+    height: 28,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.1),
-    borderWidth: 1,
-    borderColor: withOpacity(ORBITX_THEME.colors.primaryGreen, 0.2),
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   copy: {
     flex: 1,

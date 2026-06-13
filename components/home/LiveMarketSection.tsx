@@ -1,6 +1,7 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../constants/theme';
+import { FEATURE_STATUS } from '../../src/constants/featureStatus';
 import { MiniSparkline } from './MiniSparkline';
 import { ORBITX_THEME } from './orbitxTheme';
 
@@ -22,6 +23,7 @@ interface LiveMarketSectionProps {
   error?: string | null;
   contentWidth: number;
   isSmallPhone?: boolean;
+  usingFallback?: boolean;
   onRetry: () => void;
   onViewAll: () => void;
 }
@@ -51,6 +53,7 @@ export function LiveMarketSection({
   error,
   contentWidth,
   isSmallPhone = false,
+  usingFallback = false,
   onRetry,
   onViewAll,
 }: LiveMarketSectionProps) {
@@ -79,6 +82,12 @@ export function LiveMarketSection({
           <Pressable onPress={onRetry} style={({ pressed }) => [styles.retryButton, pressed ? styles.pressed : null]}>
             <Text style={styles.retryLabel}>Reintentar</Text>
           </Pressable>
+        </View>
+      ) : null}
+
+      {usingFallback ? (
+        <View style={styles.fallbackNotice}>
+          <Text style={styles.fallbackNoticeText}>{FEATURE_STATUS.marketFallback.notice}</Text>
         </View>
       ) : null}
 
@@ -229,6 +238,20 @@ const styles = StyleSheet.create({
     color: ORBITX_THEME.colors.textPrimary,
     fontFamily: FONT.medium,
     fontSize: 11,
+  },
+  fallbackNotice: {
+    minHeight: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    backgroundColor: withOpacity('#F59E0B', 0.08),
+    borderWidth: 1,
+    borderColor: withOpacity('#F59E0B', 0.2),
+  },
+  fallbackNoticeText: {
+    color: ORBITX_THEME.colors.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 10.5,
   },
   list: {
     gap: 0,

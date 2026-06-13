@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { FONT, RADII, SPACING } from '../../constants/theme';
+import { FONT, RADII } from '../../constants/theme';
 import { useAppTheme } from '../../hooks/useAppTheme';
 
 export interface SegmentedOption<T extends string> {
