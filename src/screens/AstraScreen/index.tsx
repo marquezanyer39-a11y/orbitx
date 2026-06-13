@@ -38,7 +38,6 @@ import type {
   AstraGuideId,
   AstraGuideProgress,
   AstraMessage,
-  AstraResponse,
   AstraSupportContext,
 } from '../../types/astra';
 
@@ -72,7 +71,7 @@ interface FlowConfig {
 const COPY: Partial<Record<ChatLanguage, ScreenCopy>> = {
   es: {
     headerTitle: 'Astra',
-    headerSubtitle: 'Asistente OrbitX',
+    headerSubtitle: 'Asistente QVEX',
     active: 'Activa',
     placeholder: 'Pregúntale algo a Astra',
     typing: 'Astra está preparando la mejor siguiente acción...',
@@ -81,11 +80,11 @@ const COPY: Partial<Record<ChatLanguage, ScreenCopy>> = {
     menuUnmute: 'Activar voz',
     menuClose: 'Cerrar Astra',
     menuOpenCurrent: 'Abrir módulo actual',
-    footerBrand: 'OrbitX',
+    footerBrand: 'QVEX',
   },
   en: {
     headerTitle: 'Astra',
-    headerSubtitle: 'OrbitX Assistant',
+    headerSubtitle: 'QVEX Assistant',
     active: 'Active',
     placeholder: 'Ask Astra anything',
     typing: 'Astra is preparing the best next action...',
@@ -94,7 +93,7 @@ const COPY: Partial<Record<ChatLanguage, ScreenCopy>> = {
     menuUnmute: 'Enable voice',
     menuClose: 'Close Astra',
     menuOpenCurrent: 'Open current module',
-    footerBrand: 'OrbitX',
+    footerBrand: 'QVEX',
   },
 };
 
@@ -110,13 +109,13 @@ function getScreenCopy(language: ChatLanguage): ScreenCopy {
   return {
     headerTitle: 'Astra',
     headerSubtitle: screenText(language, {
-      en: 'OrbitX Assistant',
-      pt: 'Assistente OrbitX',
-      'zh-Hans': 'OrbitX \u52a9\u624b',
-      hi: 'OrbitX \u0938\u0939\u093e\u092f\u0915',
-      ru: '\u0410\u0441\u0441\u0438\u0441\u0442\u0435\u043d\u0442 OrbitX',
-      ar: '\u0645\u0633\u0627\u0639\u062f OrbitX',
-      id: 'Asisten OrbitX',
+      en: 'QVEX Assistant',
+      pt: 'Assistente QVEX',
+      'zh-Hans': 'QVEX \u52a9\u624b',
+      hi: 'QVEX \u0938\u0939\u093e\u092f\u0915',
+      ru: '\u0410\u0441\u0441\u0438\u0441\u0442\u0435\u043d\u0442 QVEX',
+      ar: '\u0645\u0633\u0627\u0639\u062f QVEX',
+      id: 'Asisten QVEX',
     }),
     active: screenText(language, {
       en: 'Active',
@@ -190,7 +189,7 @@ function getScreenCopy(language: ChatLanguage): ScreenCopy {
       ar: '\u0641\u062a\u062d \u0627\u0644\u0648\u062d\u062f\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629',
       id: 'Buka modul saat ini',
     }),
-    footerBrand: 'OrbitX',
+    footerBrand: 'QVEX',
   };
 }
 
@@ -201,14 +200,14 @@ function createFallbackContext(language: ChatLanguage): AstraSupportContext {
     language,
     screenName: getLocalizedAstraSurfaceLabel(language, 'general'),
     summary: screenText(language, {
-      en: 'Astra is ready to help you inside OrbitX.',
-      es: 'Astra lista para ayudarte dentro de OrbitX.',
-      pt: 'A Astra esta pronta para ajudar voce dentro da OrbitX.',
-      'zh-Hans': 'Astra \u5df2\u51c6\u5907\u597d\u5728 OrbitX \u5185\u5e2e\u52a9\u4f60\u3002',
-      hi: 'Astra OrbitX \u0915\u0947 \u0905\u0902\u0926\u0930 \u0924\u0941\u092e\u094d\u0939\u093e\u0930\u0940 \u092e\u0926\u0926 \u0915\u0947 \u0932\u093f\u090f \u0924\u0948\u092f\u093e\u0930 \u0939\u0948\u0964',
-      ru: 'Astra \u0433\u043e\u0442\u043e\u0432\u0430 \u043f\u043e\u043c\u043e\u0433\u0430\u0442\u044c \u0442\u0435\u0431\u0435 \u0432\u043d\u0443\u0442\u0440\u0438 OrbitX.',
-      ar: 'Astra \u062c\u0627\u0647\u0632\u0629 \u0644\u0645\u0633\u0627\u0639\u062f\u062a\u0643 \u062f\u0627\u062e\u0644 OrbitX.',
-      id: 'Astra siap membantumu di dalam OrbitX.',
+      en: 'Astra is ready to help you inside QVEX.',
+      es: 'Astra lista para ayudarte dentro de QVEX.',
+      pt: 'A Astra esta pronta para ajudar voce dentro da QVEX.',
+      'zh-Hans': 'Astra \u5df2\u51c6\u5907\u597d\u5728 QVEX \u5185\u5e2e\u52a9\u4f60\u3002',
+      hi: 'Astra QVEX \u0915\u0947 \u0905\u0902\u0926\u0930 \u0924\u0941\u092e\u094d\u0939\u093e\u0930\u0940 \u092e\u0926\u0926 \u0915\u0947 \u0932\u093f\u090f \u0924\u0948\u092f\u093e\u0930 \u0939\u0948\u0964',
+      ru: 'Astra \u0433\u043e\u0442\u043e\u0432\u0430 \u043f\u043e\u043c\u043e\u0433\u0430\u0442\u044c \u0442\u0435\u0431\u0435 \u0432\u043d\u0443\u0442\u0440\u0438 QVEX.',
+      ar: 'Astra \u062c\u0627\u0647\u0632\u0629 \u0644\u0645\u0633\u0627\u0639\u062f\u062a\u0643 \u062f\u0627\u062e\u0644 QVEX.',
+      id: 'Astra siap membantumu di dalam QVEX.',
     }),
   };
 }
@@ -258,7 +257,7 @@ function getGuideFlow(language: ChatLanguage, guideId?: AstraGuideId | null): Fl
     case 'activate_security':
       return {
         title: screenText(language, { en: 'Security', es: 'Seguridad', pt: 'Seguranca', 'zh-Hans': '\u5b89\u5168', hi: '\u0938\u0941\u0930\u0915\u094d\u0937\u093e', ru: '\u0411\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c', ar: '\u0627\u0644\u0623\u0645\u0627\u0646', id: 'Keamanan' }),
-        subtitle: screenText(language, { en: 'Protect your OrbitX account', es: 'Protege tu cuenta OrbitX', pt: 'Proteja sua conta OrbitX', 'zh-Hans': '\u4fdd\u62a4\u4f60\u7684 OrbitX \u8d26\u6237', hi: '\u0905\u092a\u0928\u093e OrbitX account \u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u0915\u0930\u0947\u0902', ru: '\u0417\u0430\u0449\u0438\u0442\u0438 \u0441\u0432\u043e\u0439 \u0430\u043a\u043a\u0430\u0443\u043d\u0442 OrbitX', ar: '\u0627\u062d\u0645 \u062d\u0633\u0627\u0628 OrbitX \u0627\u0644\u062e\u0627\u0635 \u0628\u0643', id: 'Lindungi akun OrbitX kamu' }),
+        subtitle: screenText(language, { en: 'Protect your QVEX account', es: 'Protege tu cuenta QVEX', pt: 'Proteja sua conta QVEX', 'zh-Hans': '\u4fdd\u62a4\u4f60\u7684 QVEX \u8d26\u6237', hi: '\u0905\u092a\u0928\u093e QVEX account \u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u0915\u0930\u0947\u0902', ru: '\u0417\u0430\u0449\u0438\u0442\u0438 \u0441\u0432\u043e\u0439 \u0430\u043a\u043a\u0430\u0443\u043d\u0442 QVEX', ar: '\u0627\u062d\u0645 \u062d\u0633\u0627\u0628 QVEX \u0627\u0644\u062e\u0627\u0635 \u0628\u0643', id: 'Lindungi akun QVEX kamu' }),
         steps: [
           { id: '2fa', label: '2FA' },
           { id: 'sessions', label: screenText(language, { en: 'Sessions', es: 'Sesiones', pt: 'Sessoes', 'zh-Hans': '\u4f1a\u8bdd', hi: '\u0938\u0947\u0936\u0928', ru: '\u0421\u0435\u0441\u0441\u0438\u0438', ar: '\u0627\u0644\u062c\u0644\u0633\u0627\u062a', id: 'Sesi' }) },
@@ -300,7 +299,7 @@ function getSurfaceFlow(language: ChatLanguage, context: AstraSupportContext): F
             id: 'Jelajahi konten dan profil',
           }),
           steps: [
-            { id: 'feed', label: 'Feed' },
+            { id: 'feed', label: es ? 'Actividad' : 'Feed' },
             { id: 'profile', label: screenText(language, { en: 'Profile', pt: 'Perfil', 'zh-Hans': '\u4e2a\u4eba\u8d44\u6599', hi: '\u092a\u094d\u0930\u094b\u092b\u093e\u0907\u0932', ru: '\u041f\u0440\u043e\u0444\u0438\u043b\u044c', ar: '\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a', id: 'Profil' }) },
             { id: 'market', label: screenText(language, { en: 'Market', pt: 'Mercado', 'zh-Hans': '\u5e02\u573a', hi: '\u092c\u093e\u091c\u093e\u0930', ru: '\u0420\u044b\u043d\u043e\u043a', ar: '\u0627\u0644\u0633\u0648\u0642', id: 'Pasar' }) },
             { id: 'action', label: screenText(language, { en: 'Action', pt: 'Acao', 'zh-Hans': '\u64cd\u4f5c', hi: '\u0915\u093e\u0930\u094d\u0930\u0935\u093e\u0908', ru: '\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0435', ar: '\u0625\u062c\u0631\u0627\u0621', id: 'Aksi' }) },
@@ -311,8 +310,8 @@ function getSurfaceFlow(language: ChatLanguage, context: AstraSupportContext): F
           title: screenText(language, { en: 'Create token', pt: 'Criar token', 'zh-Hans': '\u521b\u5efa token', hi: 'Token \u092c\u0928\u093e\u090f\u0901', ru: '\u0421\u043e\u0437\u0434\u0430\u0442\u044c token', ar: '\u0625\u0646\u0634\u0627\u0621 token', id: 'Buat token' }),
           subtitle: screenText(language, { en: 'Name, image and launch', pt: 'Nome, imagem e lancamento', 'zh-Hans': '\u540d\u79f0\u3001\u56fe\u50cf\u548c\u53d1\u5e03', hi: '\u0928\u093e\u092e, image \u0914\u0930 launch', ru: '\u0418\u043c\u044f, \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435 \u0438 \u0437\u0430\u043f\u0443\u0441\u043a', ar: '\u0627\u0644\u0627\u0633\u0645 \u0648\u0627\u0644\u0635\u0648\u0631\u0629 \u0648\u0627\u0644\u0625\u0637\u0644\u0627\u0642', id: 'Nama, gambar, dan peluncuran' }),
           steps: [
-            { id: 'wallet', label: 'Wallet' },
-            { id: 'config', label: screenText(language, { en: 'Config', pt: 'Config', 'zh-Hans': '\u914d\u7f6e', hi: '\u0915\u0949\u0928\u094d\u092b\u093f\u0917', ru: '\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430', ar: '\u0627\u0644\u0625\u0639\u062f\u0627\u062f', id: 'Konfig' }) },
+            { id: 'wallet', label: es ? 'Billetera' : 'Wallet' },
+            { id: 'config', label: es ? 'Configuraci?n' : 'Config' },
             { id: 'image', label: screenText(language, { en: 'Image', pt: 'Imagem', 'zh-Hans': '\u56fe\u50cf', hi: '\u0907\u092e\u0947\u091c', ru: '\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435', ar: '\u0635\u0648\u0631\u0629', id: 'Gambar' }) },
             { id: 'launch', label: screenText(language, { en: 'Launch', pt: 'Lancar', 'zh-Hans': '\u53d1\u5e03', hi: '\u0932\u0949\u0928\u094d\u091a', ru: '\u0417\u0430\u043f\u0443\u0441\u043a', ar: '\u0625\u0637\u0644\u0627\u0642', id: 'Luncurkan' }) },
           ],
@@ -357,13 +356,13 @@ function getSurfaceFlow(language: ChatLanguage, context: AstraSupportContext): F
     case 'wallet':
       return {
         title: context.walletReady
-          ? screenText(language, { en: 'Wallet ready', es: 'Wallet activa', pt: 'Wallet pronta', 'zh-Hans': 'Wallet \u5df2\u5c31\u7eea', hi: 'Wallet \u0924\u0948\u092f\u093e\u0930 \u0939\u0948', ru: 'Wallet \u0433\u043e\u0442\u043e\u0432', ar: 'Wallet \u062c\u0627\u0647\u0632\u0629', id: 'Wallet siap' })
-          : screenText(language, { en: 'Create wallet', es: 'Crear wallet', pt: 'Criar wallet', 'zh-Hans': '\u521b\u5efa wallet', hi: 'Wallet \u092c\u0928\u093e\u090f\u0901', ru: '\u0421\u043e\u0437\u0434\u0430\u0442\u044c wallet', ar: '\u0625\u0646\u0634\u0627\u0621 wallet', id: 'Buat wallet' }),
+          ? screenText(language, { en: 'Wallet ready', es: 'Billetera activa', pt: 'Wallet pronta', 'zh-Hans': 'Wallet ???', hi: 'Wallet ????? ??', ru: 'Wallet ?????', ar: 'Wallet ?????', id: 'Wallet siap' })
+          : screenText(language, { en: 'Create wallet', es: 'Crear billetera', pt: 'Criar wallet', 'zh-Hans': '?? wallet', hi: 'Wallet ?????', ru: '??????? wallet', ar: '????? wallet', id: 'Buat wallet' }),
         subtitle: context.walletReady
           ? screenText(language, { en: 'Manage balance and security', es: 'Gestiona saldo y seguridad', pt: 'Gerencie saldo e seguranca', 'zh-Hans': '\u7ba1\u7406\u4f59\u989d\u4e0e\u5b89\u5168', hi: '\u092c\u0948\u0932\u0947\u0902\u0938 \u0914\u0930 security \u092e\u0948\u0928\u0947\u091c \u0915\u0930\u0947\u0902', ru: '\u0423\u043f\u0440\u0430\u0432\u043b\u044f\u0439 \u0431\u0430\u043b\u0430\u043d\u0441\u043e\u043c \u0438 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c\u044e', ar: '\u0623\u062f\u0631 \u0627\u0644\u0631\u0635\u064a\u062f \u0648\u0627\u0644\u0623\u0645\u0627\u0646', id: 'Kelola saldo dan keamanan' })
           : screenText(language, { en: 'Activate your Web3 space', es: 'Activa tu espacio Web3', pt: 'Ative seu espaco Web3', 'zh-Hans': '\u542f\u7528\u4f60\u7684 Web3 \u7a7a\u95f4', hi: '\u0905\u092a\u0928\u093e Web3 space \u0938\u0915\u094d\u0930\u093f\u092f \u0915\u0930\u0947\u0902', ru: '\u0410\u043a\u0442\u0438\u0432\u0438\u0440\u0443\u0439 \u0441\u0432\u043e\u0451 Web3-\u043f\u0440\u043e\u0441\u0442\u0440\u0430\u043d\u0441\u0442\u0432\u043e', ar: '\u0641\u0639\u0644 \u0645\u0633\u0627\u062d\u062a\u0643 Web3', id: 'Aktifkan ruang Web3 kamu' }),
         steps: [
-          { id: 'wallet', label: 'Wallet' },
+          { id: 'wallet', label: es ? 'Billetera' : 'Wallet' },
           { id: 'fund', label: screenText(language, { en: 'Funds', es: 'Fondos', pt: 'Fundos', 'zh-Hans': '\u8d44\u91d1', hi: '\u092b\u0902\u0921\u094d\u0938', ru: '\u0421\u0440\u0435\u0434\u0441\u0442\u0432\u0430', ar: '\u0627\u0644\u0623\u0645\u0648\u0627\u0644', id: 'Dana' }) },
           { id: 'protect', label: screenText(language, { en: 'Security', es: 'Seguridad', pt: 'Seguranca', 'zh-Hans': '\u5b89\u5168', hi: '\u0938\u0941\u0930\u0915\u094d\u0937\u093e', ru: '\u0411\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u044c', ar: '\u0627\u0644\u0623\u0645\u0627\u0646', id: 'Keamanan' }) },
           { id: 'use', label: screenText(language, { en: 'Use', es: 'Usar', pt: 'Usar', 'zh-Hans': '\u4f7f\u7528', hi: '\u0909\u092a\u092f\u094b\u0917', ru: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c', ar: '\u0627\u0633\u062a\u062e\u062f\u0627\u0645', id: 'Gunakan' }) },
@@ -396,10 +395,10 @@ function getSurfaceFlow(language: ChatLanguage, context: AstraSupportContext): F
         title: 'Social',
         subtitle: screenText(language, { en: 'Explore content and profiles', es: 'Explora contenido y perfiles', pt: 'Explore conteudo e perfis', 'zh-Hans': '\u63a2\u7d22\u5185\u5bb9\u548c\u4e2a\u4eba\u8d44\u6599', hi: '\u0915\u0902\u091f\u0947\u0902\u091f \u0914\u0930 profiles \u090f\u0915\u094d\u0938\u092a\u094d\u0932\u094b\u0930 \u0915\u0930\u0947\u0902', ru: '\u0418\u0437\u0443\u0447\u0430\u0439 \u043a\u043e\u043d\u0442\u0435\u043d\u0442 \u0438 \u043f\u0440\u043e\u0444\u0438\u043b\u0438', ar: '\u0627\u0633\u062a\u0643\u0634\u0641 \u0627\u0644\u0645\u062d\u062a\u0648\u0649 \u0648\u0627\u0644\u0645\u0644\u0641\u0627\u062a', id: 'Jelajahi konten dan profil' }),
         steps: [
-          { id: 'feed', label: 'Feed' },
+          { id: 'feed', label: es ? 'Actividad' : 'Feed' },
           { id: 'profile', label: screenText(language, { en: 'Profile', es: 'Perfil', pt: 'Perfil', 'zh-Hans': '\u4e2a\u4eba\u8d44\u6599', hi: '\u092a\u094d\u0930\u094b\u092b\u093e\u0907\u0932', ru: '\u041f\u0440\u043e\u0444\u0438\u043b\u044c', ar: '\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a', id: 'Profil' }) },
           { id: 'market', label: screenText(language, { en: 'Market', es: 'Mercado', pt: 'Mercado', 'zh-Hans': '\u5e02\u573a', hi: '\u092c\u093e\u091c\u093e\u0930', ru: '\u0420\u044b\u043d\u043e\u043a', ar: '\u0627\u0644\u0633\u0648\u0642', id: 'Pasar' }) },
-          { id: 'action', label: es ? 'Acción' : 'Action' },
+          { id: 'action', label: es ? 'Acci?n' : 'Action' },
         ],
       };
     case 'create_token':
@@ -407,10 +406,10 @@ function getSurfaceFlow(language: ChatLanguage, context: AstraSupportContext): F
         title: es ? 'Crear token' : 'Create token',
         subtitle: es ? 'Nombre, imagen y lanzamiento' : 'Name, image and launch',
         steps: [
-          { id: 'wallet', label: es ? 'Wallet' : 'Wallet' },
-          { id: 'config', label: es ? 'Config' : 'Config' },
+          { id: 'wallet', label: es ? 'Billetera' : 'Wallet' },
+          { id: 'config', label: es ? 'Configuraci?n' : 'Config' },
           { id: 'image', label: es ? 'Imagen' : 'Image' },
-          { id: 'launch', label: es ? 'Launch' : 'Launch' },
+          { id: 'launch', label: es ? 'Lanzamiento' : 'Launch' },
         ],
       };
     case 'bot_futures':
@@ -440,9 +439,9 @@ function getSurfaceFlow(language: ChatLanguage, context: AstraSupportContext): F
         title: es ? 'Empezar' : 'Get started',
         subtitle: es ? 'Astra se adapta a tu pantalla actual' : 'Astra adapts to your current screen',
         steps: [
-          { id: 'wallet', label: es ? 'Wallet' : 'Wallet' },
+          { id: 'wallet', label: es ? 'Billetera' : 'Wallet' },
           { id: 'market', label: es ? 'Mercado' : 'Market' },
-          { id: 'trade', label: es ? 'Trade' : 'Trade' },
+          { id: 'trade', label: es ? 'Operar' : 'Trade' },
           { id: 'profile', label: es ? 'Perfil' : 'Profile' },
         ],
       };
@@ -721,9 +720,7 @@ export default function AstraScreen() {
   const advanceGuide = useAstraStore((state) => state.advanceGuide);
   const retreatGuide = useAstraStore((state) => state.retreatGuide);
   const cancelGuide = useAstraStore((state) => state.cancelGuide);
-  const pauseGuide = useAstraStore((state) => state.pauseGuide);
   const appendUserMessage = useAstraStore((state) => state.appendUserMessage);
-  const pushAssistantResponse = useAstraStore((state) => state.pushAssistantResponse);
   const primeConversation = useAstraStore((state) => state.primeConversation);
   const context = useAstraStore((state) => state.context);
   const { colors } = useAppTheme();

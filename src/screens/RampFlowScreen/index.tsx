@@ -191,7 +191,7 @@ export default function RampFlowScreen() {
     }
 
     if (
-      url.startsWith('orbitx://ramp/result') ||
+      url.startsWith('qvex://ramp/result') ||
       directCallback?.status === 'completed' ||
       directCallback?.status === 'failed' ||
       directCallback?.status === 'cancelled'

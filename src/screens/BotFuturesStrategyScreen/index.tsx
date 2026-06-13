@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useAppTheme } from '../../../hooks/useAppTheme';
 import { BotControlBar } from '../../components/botFutures/BotControlBar';
 import { BotFuturesHeader } from '../../components/botFutures/BotFuturesHeader';
 import { BotQuickSummaryCard } from '../../components/botFutures/BotQuickSummaryCard';
@@ -39,7 +38,6 @@ const presets = [
 ];
 
 export default function BotFuturesStrategyScreen() {
-  const { colors } = useAppTheme();
   const [mode, setMode] = useState('simulated');
   const [preset, setPreset] = useState('trend');
 

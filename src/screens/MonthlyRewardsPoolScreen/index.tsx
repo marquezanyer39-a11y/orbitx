@@ -1,27 +1,26 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FONT, RADII, SPACING, withOpacity } from '../../../constants/theme';
-import { useAppTheme } from '../../../hooks/useAppTheme';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
-import { useMonthlyRewardsPool } from '../../hooks/useMonthlyRewardsPool';
-import { useUiStore } from '../../store/uiStore';
-import { useAuthStore } from '../../store/authStore';
 import { LiveParticipantsList } from '../../components/rewardsPool/LiveParticipantsList';
 import { ParticipateBottomSheet } from '../../components/rewardsPool/ParticipateBottomSheet';
-import { PoolCountdownPill } from '../../components/rewardsPool/PoolCountdownPill';
 import { PoolFinalResultsCard } from '../../components/rewardsPool/PoolFinalResultsCard';
 import { PoolHeader } from '../../components/rewardsPool/PoolHeader';
-import { PoolProgressBar } from '../../components/rewardsPool/PoolProgressBar';
 import { PoolStateBanner } from '../../components/rewardsPool/PoolStateBanner';
+import { POOL_THEME } from '../../components/rewardsPool/poolVisualTheme';
 import { RewardsBreakdown } from '../../components/rewardsPool/RewardsBreakdown';
 import { UserPoolPositionCard } from '../../components/rewardsPool/UserPoolPositionCard';
+import { useMonthlyRewardsPool } from '../../hooks/useMonthlyRewardsPool';
+import { useAuthStore } from '../../store/authStore';
+import { useUiStore } from '../../store/uiStore';
 import type { RewardsPoolAssetSymbol } from '../../types/rewardsPool';
+import { PoolHeroCard } from './components/PoolHeroCard';
+import { PoolParticipateButton } from './components/PoolParticipateButton';
 
 export default function MonthlyRewardsPoolScreen() {
-  const { colors } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const showToast = useUiStore((state) => state.showToast);
   const profile = useAuthStore((state) => state.profile);
   const params = useLocalSearchParams<{ participate?: string }>();
@@ -49,6 +48,8 @@ export default function MonthlyRewardsPoolScreen() {
     amountInput,
   });
   const poolStatus = snapshot.status;
+  const displayCountdownLabel =
+    copy.language === 'es' ? countdownLabel.replace('remaining', 'restantes') : countdownLabel;
 
   const lastPositionRef = useRef<number | null>(null);
   const lastTop4Ref = useRef<boolean | null>(null);
@@ -99,7 +100,7 @@ export default function MonthlyRewardsPoolScreen() {
     ) {
       showToast(
         copy.language === 'es'
-          ? `Subiste a la posicion #${currentUserDisplayRow.position}.`
+          ? `Subiste a la posición #${currentUserDisplayRow.position}.`
           : `You climbed to position #${currentUserDisplayRow.position}.`,
         'success',
       );
@@ -182,104 +183,69 @@ export default function MonthlyRewardsPoolScreen() {
         ? copy.participatedLabel
         : copy.blockedLabel
       : copy.participateLabel;
-  const displayCtaLabel =
-    poolStatus === 'open' && !hasRealParticipation ? `[ ${ctaLabel} ]` : ctaLabel;
 
   return (
-    <ScreenContainer contentContainerStyle={styles.content} backgroundMode="default">
-      <View style={styles.headerWrap}>
+    <ScreenContainer
+      scrollable={false}
+      contentContainerStyle={styles.content}
+      backgroundMode="plain"
+    >
+      <View style={styles.screen}>
         <PoolHeader
-          title={copy.currentPoolTitle}
+          title="Pool mensual"
           backLabel={copy.headerBack}
           astraLabel={copy.astraLabel}
           onBack={() => router.back()}
           onAstra={handleOpenAstra}
         />
-      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <LinearGradient
-          colors={['rgba(10, 18, 31, 0.98)', 'rgba(8, 12, 20, 0.98)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
-          style={[
-            styles.hero,
-            {
-              borderColor: withOpacity('#22E8FF', 0.12),
-            },
-          ]}
-        >
-          <View style={styles.heroCopy}>
-            <Text style={styles.heroTitle}>{copy.headerTitle}</Text>
-            <Text style={styles.heroBody}>{copy.headerBody}</Text>
-          </View>
-
-          <PoolCountdownPill label={countdownLabel} />
-          <PoolProgressBar
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <PoolHeroCard
+            title={copy.headerTitle}
+            subtitle={copy.headerBody}
+            countdownLabel={displayCountdownLabel}
             amountLabel={amountLabel}
             percentLabel={progressLabel}
             progressPercent={snapshot.progressPercent}
           />
-        </LinearGradient>
 
-        <PoolStateBanner status={poolStatus} copy={copy} />
+          <PoolStateBanner status={poolStatus} copy={copy} />
 
-        <UserPoolPositionCard
-          copy={copy}
-          language={copy.language}
-          row={currentUserDisplayRow}
-          result={currentUserDisplayResult}
-        />
-
-        <RewardsBreakdown copy={copy} />
-
-        <LiveParticipantsList copy={copy} rows={liveRows} language={copy.language} />
-
-        {poolStatus === 'finalized' ? (
-          <PoolFinalResultsCard
+          <UserPoolPositionCard
             copy={copy}
             language={copy.language}
-            summary={finalSummary}
-            top4={snapshot.top4}
-            currentUserResult={snapshot.currentUserResult}
-            onWallet={() => router.push('/(tabs)/wallet')}
+            row={currentUserDisplayRow}
+            result={currentUserDisplayResult}
           />
-        ) : null}
-      </ScrollView>
 
-      <View style={styles.footer}>
-        <Pressable
-          onPress={() => {
-            if (poolStatus !== 'open' || hasRealParticipation) {
-              return;
-            }
-            setSheetVisible(true);
-          }}
-          disabled={poolStatus !== 'open' || hasRealParticipation}
-        >
-          <LinearGradient
-            colors={
-              poolStatus !== 'open' || hasRealParticipation
-                ? ['rgba(117, 126, 138, 0.5)', 'rgba(52, 60, 74, 0.8)']
-                : ['#39ECFF', '#73D5FF']
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.ctaButton}
-          >
-            <Text
-              style={[
-                styles.ctaLabel,
-                {
-                  color:
-                    pool.status !== 'open' || hasRealParticipation ? colors.textSoft : '#082330',
-                },
-              ]}
-            >
-              {displayCtaLabel}
-            </Text>
-          </LinearGradient>
-        </Pressable>
+          <RewardsBreakdown copy={copy} />
+
+          <LiveParticipantsList copy={copy} rows={liveRows} language={copy.language} />
+
+          {poolStatus === 'finalized' ? (
+            <PoolFinalResultsCard
+              copy={copy}
+              language={copy.language}
+              summary={finalSummary}
+              top4={snapshot.top4}
+              currentUserResult={snapshot.currentUserResult}
+              onWallet={() => router.push('/(tabs)/wallet')}
+            />
+          ) : null}
+        </ScrollView>
+
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 18) }]}>
+          <PoolParticipateButton
+            label={ctaLabel}
+            disabled={poolStatus !== 'open' || hasRealParticipation}
+            onPress={() => {
+              if (poolStatus !== 'open' || hasRealParticipation) {
+                return;
+              }
+              setSheetVisible(true);
+            }}
+          />
+        </View>
       </View>
 
       <ParticipateBottomSheet
@@ -307,54 +273,30 @@ export default function MonthlyRewardsPoolScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 12,
-    paddingBottom: SPACING.xs,
+    flex: 1,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    backgroundColor: POOL_THEME.colors.background,
   },
-  headerWrap: {
-    paddingTop: 0,
+  screen: {
+    flex: 1,
+    backgroundColor: POOL_THEME.colors.background,
   },
   scrollContent: {
-    gap: 12,
-    paddingBottom: 12,
-  },
-  hero: {
-    borderWidth: 1,
-    borderRadius: 20,
-    padding: 14,
-    gap: 10,
-  },
-  heroCopy: {
-    gap: 2,
-  },
-  heroTitle: {
-    color: '#FFFFFF',
-    fontFamily: FONT.bold,
-    fontSize: 22,
-    lineHeight: 25,
-  },
-  heroBody: {
-    color: '#B1BDCF',
-    fontFamily: FONT.regular,
-    fontSize: 12,
-    lineHeight: 16,
+    gap: 14,
+    paddingHorizontal: POOL_THEME.spacing.screenH,
+    paddingTop: 16,
+    paddingBottom: 124,
   },
   footer: {
-    paddingBottom: SPACING.xs,
-  },
-  ctaButton: {
-    minHeight: 48,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#22E8FF',
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
-  },
-  ctaLabel: {
-    fontFamily: FONT.bold,
-    fontSize: 18,
-    letterSpacing: 0.2,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderTopWidth: 1,
+    borderTopColor: POOL_THEME.colors.border,
+    backgroundColor: 'rgba(8,9,11,0.94)',
+    paddingHorizontal: POOL_THEME.spacing.screenH,
+    paddingTop: 10,
   },
 });

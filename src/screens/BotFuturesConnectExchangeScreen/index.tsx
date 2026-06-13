@@ -30,7 +30,7 @@ export default function BotFuturesConnectExchangeScreen() {
     <ScreenContainer contentContainerStyle={styles.content}>
       <BotFuturesWizardHeader
         title="Conectar Exchange"
-        subtitle="Selecciona el exchange que usaras con OrbitX"
+        subtitle="Selecciona el exchange que usaras con QVEX"
         onBack={() => router.back()}
       />
 

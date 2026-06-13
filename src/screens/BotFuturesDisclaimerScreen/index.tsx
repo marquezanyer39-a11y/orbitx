@@ -27,7 +27,7 @@ export default function BotFuturesDisclaimerScreen() {
     <ScreenContainer contentContainerStyle={styles.content}>
       <BotFuturesHeader
         title="Risk Disclosure"
-        subtitle="Antes de entrar al entorno avanzado del bot futures, OrbitX deja claro el alcance de Astra, el riesgo del producto y la responsabilidad final del usuario."
+        subtitle="Antes de entrar al entorno avanzado del bot futures, QVEX deja claro el alcance de Astra, el riesgo del producto y la responsabilidad final del usuario."
       />
 
       <View
@@ -42,7 +42,7 @@ export default function BotFuturesDisclaimerScreen() {
         <ExchangeAvailabilityPill label="Binance Futures" tone="featured" />
         <BotSectionTitle
           title="Analisis y asistencia operativa, no promesa de ganancias"
-          subtitle="OrbitX y Astra brindan analisis, senales y apoyo tactico de entrada o salida. No garantizan rendimiento ni reemplazan el criterio del usuario."
+          subtitle="QVEX y Astra brindan analisis, senales y apoyo tactico de entrada o salida. No garantizan rendimiento ni reemplazan el criterio del usuario."
         />
       </View>
 
@@ -72,7 +72,7 @@ export default function BotFuturesDisclaimerScreen() {
         <RiskModeNoticeCard
           label="Real"
           title="Mayor responsabilidad"
-          body="En modo real, OrbitX y Astra solo asisten con analisis y lectura operativa. El usuario mantiene la responsabilidad final sobre la operacion."
+          body="En modo real, QVEX y Astra solo asisten con analisis y lectura operativa. El usuario mantiene la responsabilidad final sobre la operacion."
           active={mode === 'real'}
           tone="real"
           onPress={() => setMode('real')}

@@ -25,17 +25,21 @@ export default function BotFuturesConnectSuccessScreen() {
 
   const exchange = BOT_FUTURES_EXCHANGE_DEFINITIONS[selectedExchange ?? 'binance'];
   const mode = BOT_FUTURES_MODE_DEFINITIONS[selectedMode ?? 'simulated'];
+  const isSimulated = selectedMode === 'simulated';
 
-  const body =
-    selectedMode === 'simulated'
+  const body = isSimulated
       ? 'Modo simulado listo. No se solicitaron claves y el flujo queda preparado para practicar sin riesgo.'
-      : `Cuenta ${mode.name} conectada visualmente. El bot queda listo para pasar a configuracion sin contradicciones de modo.`;
+      : `La conexión real para ${exchange.name} sigue bloqueada hasta que QVEX habilite backend seguro. No se guardaron claves ni secrets en la app.`;
 
   return (
     <ScreenContainer contentContainerStyle={styles.content}>
       <BotFuturesWizardHeader
-        title="Confirmacion"
-        subtitle="La conexion quedo lista dentro del flujo del modulo"
+        title={isSimulated ? 'Confirmación' : 'Próximamente'}
+        subtitle={
+          isSimulated
+            ? 'La conexión quedó lista dentro del flujo del módulo'
+            : 'El broker real sigue bloqueado hasta habilitar autorización segura'
+        }
         onBack={() => router.back()}
       />
 
@@ -49,7 +53,7 @@ export default function BotFuturesConnectSuccessScreen() {
 
       <View style={styles.buttonStack}>
         <PrimaryButton
-          label="Ir a configuracion"
+          label="Ir a configuración"
           onPress={() => router.push('/bot-futures/configuration')}
         />
         <PrimaryButton

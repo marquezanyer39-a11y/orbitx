@@ -15,9 +15,9 @@ import { ScreenContainer } from '../../components/common/ScreenContainer';
 
 function getGuideSteps(exchangeName: string) {
   return [
-    `Inicia sesion en ${exchangeName} y abre API Management.`,
-    'Crea una nueva clave para OrbitX con permisos de trading.',
-    'No habilites retiros y guarda la API Key y la Secret Key en un lugar seguro.',
+    `QVEX esta preparando una conexion segura para ${exchangeName} desde backend protegido.`,
+    'La autorizacion futura debera usar permisos minimos y nunca firmarse dentro de la app.',
+    'Nunca ingreses API Key, API Secret o passphrase directamente en QVEX.',
   ];
 }
 
@@ -39,7 +39,7 @@ export default function BotFuturesConnectGuideScreen() {
     <ScreenContainer contentContainerStyle={styles.content}>
       <BotFuturesWizardHeader
         title={`Como conectar ${exchange.name}`}
-        subtitle="Guia corta y clara para conectar el exchange con seguridad"
+        subtitle="Guia honesta sobre el flujo seguro que QVEX habilitara despues"
         onBack={() => router.back()}
       />
 
@@ -52,11 +52,11 @@ export default function BotFuturesConnectGuideScreen() {
       <ConnectionGuideCard
         title={`Paso 3: Como conectar ${exchange.name}`}
         steps={getGuideSteps(exchange.name)}
-        warning={`Modo seleccionado: ${mode.name}. Nunca habilites retiros para OrbitX.`}
+        warning={`Modo seleccionado: ${mode.name}. QVEX no acepta API secrets en frontend.`}
       />
 
       <PrimaryButton
-        label="Ya tengo mis claves"
+        label="Revisar disponibilidad"
         onPress={() => {
           completeGuide();
           router.push('/bot-futures/connect-keys');

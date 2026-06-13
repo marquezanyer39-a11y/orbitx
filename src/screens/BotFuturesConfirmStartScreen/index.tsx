@@ -38,7 +38,7 @@ export default function BotFuturesConfirmStartScreen() {
         />
         <ConfirmStartCard
           title="Responsabilidad y riesgo"
-          body="OrbitX y Astra entregan analisis y asistencia operativa. La decision final sigue siendo del usuario y el modo Real implica riesgo de perdidas reales."
+          body="QVEX y Astra entregan analisis y asistencia operativa. La decision final sigue siendo del usuario y el modo Real implica riesgo de perdidas reales."
         />
       </View>
 
@@ -62,7 +62,7 @@ export default function BotFuturesConfirmStartScreen() {
       </View>
 
       <EmergencyActionCard
-        body="Incluso antes de iniciar, OrbitX deja visible la salida de contencion para reforzar confianza, control y disciplina institucional."
+        body="Incluso antes de iniciar, QVEX deja visible la salida de contencion para reforzar confianza, control y disciplina institucional."
       />
 
       <BotControlBar
