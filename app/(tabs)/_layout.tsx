@@ -29,15 +29,15 @@ function StandardTabIcon({
       style={[
         styles.standardTabIconShell,
         {
-          backgroundColor: focused ? withOpacity(colors.profit, 0.12) : 'transparent',
+          backgroundColor: focused ? withOpacity(colors.profit, 0.15) : 'transparent',
           borderColor: 'transparent',
         },
       ]}
     >
       <Ionicons
         name={icon ?? 'ellipse-outline'}
-        color={focused ? colors.profit : withOpacity(colors.text, 0.6)}
-        size={focused ? 18 : 17}
+        color={focused ? colors.profit : withOpacity(colors.text, 0.38)}
+        size={focused ? 20 : 17}
       />
     </View>
   );
@@ -51,7 +51,7 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
       style={[
         styles.tradeTabOuter,
         {
-          backgroundColor: focused ? withOpacity(colors.profit, 0.12) : 'transparent',
+          backgroundColor: focused ? withOpacity(colors.profit, 0.15) : 'transparent',
           borderColor: 'transparent',
         },
       ]}
@@ -67,7 +67,7 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
       >
         <Ionicons
           name="swap-horizontal"
-          color={focused ? colors.profit : colors.text}
+          color={focused ? colors.profit : withOpacity(colors.text, 0.38)}
           size={20}
         />
       </View>
@@ -95,9 +95,9 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
       style={[
         styles.tabBarShell,
         {
-          backgroundColor: withOpacity(colors.card, 0.82),
-          borderTopColor: withOpacity(colors.text, 0.045),
-          paddingBottom: Math.max(insets.bottom, 4),
+          backgroundColor: colors.background,
+          borderTopColor: withOpacity(colors.text, 0.07),
+          paddingBottom: Math.max(insets.bottom, 8),
         },
       ]}
     >
@@ -153,6 +153,7 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityState={focused ? { selected: true } : {}}
               style={[styles.tabBarItem, isTrade ? styles.tabBarItemTrade : null]}
             >
+              <View style={[styles.activeIndicator, focused && { backgroundColor: colors.profit }]} />
               {isTrade ? (
                 <TradeTabIcon focused={focused} />
               ) : route.name === 'home' ? (
@@ -173,7 +174,7 @@ function OrbitTabBar({ state, navigation }: BottomTabBarProps) {
                       ? isTrade
                         ? colors.text
                         : colors.profit
-                      : withOpacity(colors.text, 0.5),
+                      : withOpacity(colors.text, 0.35),
                   },
                 ]}
               >
@@ -238,8 +239,8 @@ const styles = StyleSheet.create({
   },
   tabBarShell: {
     borderTopWidth: 1,
-    paddingTop: 4,
-    paddingHorizontal: 6,
+    paddingTop: 6,
+    paddingHorizontal: 12,
   },
   tabBarRow: {
     flexDirection: 'row',
@@ -252,7 +253,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 1,
-    paddingTop: 1,
+    paddingTop: 2,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    top: 0,
+    width: 20,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'transparent',
   },
   tabBarItemTrade: {
     gap: 2,
