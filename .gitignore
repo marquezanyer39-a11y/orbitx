@@ -45,3 +45,7 @@ expo-go-qr.png
 # generated native folders
 /ios
 /android
+
+# generated docs and design exports
+docs/pdf/
+stitch_design_*/
