@@ -124,7 +124,7 @@ class AstraTTSService {
     const requestVersion = ++this.requestVersion;
     await this.cleanupPlayer();
     const runtimeConfig = getAstraVoiceRuntimeConfig();
-    devWarn('[OrbitX][AstraTTS] provider selected', {
+    devWarn('[QVEX][AstraTTS] provider selected', {
       provider: runtimeConfig.provider,
       presetId: options.presetId ?? runtimeConfig.selectedPresetId,
       context,
@@ -149,7 +149,7 @@ class AstraTTSService {
         if (!cachedUri) {
           await this.deleteFileIfExists(fileUri);
         }
-        devWarn('[OrbitX][AstraTTS] playback request superseded before audio start', {
+        devWarn('[QVEX][AstraTTS] playback request superseded before audio start', {
           requestVersion,
         });
         return;
@@ -177,15 +177,7 @@ class AstraTTSService {
 
       this.player = player;
       this.currentFileUri = fileUri;
-      this.playerSubscription = player.addListener('playbackStatusUpdate', (status) => {
-        if (requestVersion !== this.requestVersion) {
-          return;
-        }
-
-        if (status.didJustFinish) {
-          void this.finishPlayback();
-        }
-      });
+      this.playerSubscription = this.watchPlaybackCompletion(player, requestVersion);
 
       this.setState({
         status: 'speaking',
@@ -220,7 +212,7 @@ class AstraTTSService {
 
   async stop() {
     this.requestVersion += 1;
-    devWarn('[OrbitX][AstraTTS] playback interrupted', {
+    devWarn('[QVEX][AstraTTS] playback interrupted', {
       requestVersion: this.requestVersion,
       currentText: this.state.currentText,
       currentContext: this.state.currentContext,
@@ -260,12 +252,34 @@ class AstraTTSService {
   }
 
   private async finishPlayback() {
-    devWarn('[OrbitX][AstraTTS] playback finished', {
+    devWarn('[QVEX][AstraTTS] playback finished', {
       currentText: this.state.currentText,
       currentContext: this.state.currentContext,
     });
     await this.cleanupPlayer();
     this.setState(createInitialState());
+  }
+
+  private watchPlaybackCompletion(player: AudioPlayer, requestVersion: number): PlayerSubscription {
+    const intervalId: ReturnType<typeof setInterval> = setInterval(() => {
+      if (requestVersion !== this.requestVersion) {
+        return;
+      }
+
+      const status = player.currentStatus;
+      const reachedEnd =
+        status.duration > 0 && status.currentTime >= Math.max(status.duration - 0.08, 0);
+
+      if (status.didJustFinish || (!status.playing && reachedEnd)) {
+        void this.finishPlayback();
+      }
+    }, 240);
+
+    return {
+      remove: () => {
+        clearInterval(intervalId);
+      },
+    };
   }
 
   private async cleanupPlayer() {

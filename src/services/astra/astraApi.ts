@@ -419,7 +419,7 @@ async function postJson<TResponse>(
 ): Promise<TResponse> {
   const baseUrl = getAstraBackendBaseUrl();
   if (!baseUrl) {
-    throw new Error('OrbitX backend is not configured.');
+    throw new Error('QVEX backend is not configured.');
   }
 
   for (let attempt = 0; attempt < 2; attempt += 1) {

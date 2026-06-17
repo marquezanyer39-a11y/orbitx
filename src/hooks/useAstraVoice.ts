@@ -7,7 +7,6 @@ import type {
   ExpoSpeechRecognitionResultEvent,
 } from 'expo-speech-recognition';
 
-import { getLocaleTag } from '../../constants/i18n';
 import { useOrbitStore } from '../../store/useOrbitStore';
 import { useAuthStore } from '../store/authStore';
 import { useUiStore } from '../store/uiStore';
@@ -52,175 +51,32 @@ import {
   mapVoiceActionToAstraAction,
 } from '../services/astra/astraVoiceActions';
 import { useAstraStore } from '../store/astraStore';
-import type { AstraResponse, AstraSupportContext } from '../types/astra';
+import type { AstraResponse } from '../types/astra';
 import type {
   AstraResolvedVoicePreset,
   AstraVoiceActionPayload,
   AstraVoiceContextPayload,
-  AstraVoiceFeatureFlags,
   AstraVoiceSession,
   AstraVoiceState,
 } from '../types/astraVoice';
 import { devWarn } from '../utils/devLog';
-
-type SpeechRecognitionModuleType =
-  typeof import('expo-speech-recognition').ExpoSpeechRecognitionModule;
-type SpeechModuleType = typeof import('expo-speech');
-type ListenerHandle = { remove: () => void };
-type AstraVoicePermissionResult = { granted: boolean };
-type RecognitionPreflightResult = {
-  chosenServicePackage: string | null;
-};
-
-const PREFERRED_ANDROID_RECOGNITION_SERVICES = [
-  'com.google.android.as',
-  'com.google.android.googlequicksearchbox',
-  'com.samsung.android.bixby.agent',
-  'com.google.android.tts',
-] as const;
-
-function chooseRecognitionService(
-  installedServices: string[],
-  defaultServicePackage: string | null,
-) {
-  if (defaultServicePackage && installedServices.includes(defaultServicePackage)) {
-    return defaultServicePackage;
-  }
-
-  const preferredService = PREFERRED_ANDROID_RECOGNITION_SERVICES.find((servicePackage) =>
-    installedServices.includes(servicePackage),
-  );
-
-  return preferredService ?? installedServices[0] ?? null;
-}
-
-function buildFeatureFlags(context: AstraSupportContext | null): AstraVoiceFeatureFlags {
-  if (!context) {
-    return {
-      wallet: false,
-      createWallet: false,
-      importWallet: false,
-      externalWallet: false,
-      trade: false,
-      markets: true,
-      convert: false,
-      buy: false,
-      sell: false,
-      pay: false,
-      social: false,
-      pool: false,
-      p2p: false,
-      security: false,
-    };
-  }
-
-  const capabilities = getAstraCapabilities(context);
-  return {
-    wallet: capabilities.hasWalletModule,
-    createWallet: capabilities.hasWalletCreate,
-    importWallet: capabilities.hasWalletImport,
-    externalWallet: capabilities.hasExternalWalletConnect,
-    trade: capabilities.hasTradeModule,
-    markets: true,
-    convert: capabilities.hasRampConvert,
-    buy: capabilities.hasRampBuy,
-    sell: capabilities.hasRampSell,
-    pay: capabilities.hasRampPay,
-    social: capabilities.hasSocial,
-    pool: capabilities.hasMonthlyRewardsPool,
-    p2p: capabilities.hasP2P,
-    security: capabilities.hasSecurityCenter,
-  };
-}
-
-function mapSurfaceToVoiceScreen(
-  surface?: AstraSupportContext['surface'],
-): AstraVoiceContextPayload['screen'] {
-  switch (surface) {
-    case 'create_token':
-      return 'create_token';
-    case 'wallet':
-      return 'wallet';
-    case 'trade':
-      return 'trade';
-    case 'market':
-      return 'market';
-    case 'social':
-      return 'social';
-    case 'bot_futures':
-      return 'bot_futures';
-    case 'security':
-      return 'security';
-    case 'settings':
-      return 'settings';
-    case 'profile':
-      return 'profile';
-    case 'pool':
-      return 'pool';
-    case 'ramp':
-      return 'ramp';
-    case 'home':
-      return 'home';
-    default:
-      return 'general';
-  }
-}
-
-function findSpeechLocale(language: AstraSupportContext['language']) {
-  return getLocaleTag(language);
-}
-
-function inferTtsContext(text: string): AstraTTSContext {
-  const normalized = text.toLowerCase();
-
-  if (/alerta|riesgo|confirma|revisa|cuidado|warning|atencion/.test(normalized)) {
-    return 'alert';
-  }
-
-  if (/listo|confirm|complet|hecho|correctamente/.test(normalized)) {
-    return 'confirm';
-  }
-
-  if (/hola|bienvenido|soy astra/.test(normalized)) {
-    return 'welcome';
-  }
-
-  return 'explain';
-}
-
-function isExpoGoLikeEnvironment() {
-  return Constants.executionEnvironment === 'storeClient';
-}
-
-function isExpired(session: AstraVoiceSession | null) {
-  if (!session) {
-    return true;
-  }
-
-  return new Date(session.expiresAt).getTime() <= Date.now() + 30_000;
-}
-
-function buildFallbackSession(): AstraVoiceSession {
-  const runtimeConfig = getAstraVoiceRuntimeConfig();
-  return {
-    sessionId: `astra-local-${Date.now()}`,
-    expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-    state: 'ready',
-    transport: 'turn_based_voice',
-    voiceOutput: runtimeConfig.outputMode,
-    speechInput: 'native_stt',
-    model: hasAstraBrainBackend() ? 'orbitx-astra-brain' : 'local-astra-fallback',
-  };
-}
-
-function buildFallbackSuggestions(response: AstraResponse) {
-  const suggestions = [
-    ...response.actions.map((action) => action.label),
-    ...(response.steps ?? []),
-  ];
-
-  return Array.from(new Set(suggestions.filter(Boolean))).slice(0, 4);
-}
+import {
+  buildFallbackSession,
+  buildFallbackSuggestions,
+  buildFeatureFlags,
+  chooseRecognitionService,
+  findSpeechLocale,
+  inferTtsContext,
+  isExpoGoLikeEnvironment,
+  isExpired,
+  mapSurfaceToVoiceScreen,
+  useAstraVoiceTimers,
+  type AstraVoicePermissionResult,
+  type ListenerHandle,
+  type RecognitionPreflightResult,
+  type SpeechModuleType,
+  type SpeechRecognitionModuleType,
+} from './astraVoice';
 
 export function useAstraVoice() {
   const context = useAstraStore((state) => state.context);
@@ -261,7 +117,6 @@ export function useAstraVoice() {
   const finalTranscriptRef = useRef('');
   const isMountedRef = useRef(true);
   const startConversationRef = useRef<(() => Promise<void>) | null>(null);
-  const resumeConversationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef<AstraVoiceState>('idle');
   const pendingAutoResumeRef = useRef(false);
   const speechPlaybackActiveRef = useRef(false);
@@ -269,6 +124,11 @@ export function useAstraVoice() {
   const premiumVoiceBlockedUntilRef = useRef(0);
   const premiumVoiceFailureCodeRef = useRef<string | null>(null);
   const voiceFallbackNoticeShownRef = useRef(false);
+  const handleResumeTimerCleared = useCallback(() => {
+    devWarn('[QVEX][AstraVoice] cleared auto-resume timer');
+  }, []);
+  const { clearResumeConversationTimeout, scheduleResumeConversationTimeout } =
+    useAstraVoiceTimers(handleResumeTimerCleared);
 
   const hasFunds = useMemo(
     () =>
@@ -302,7 +162,7 @@ export function useAstraVoice() {
       summary: context.summary,
       errorTitle: context.errorTitle,
       errorBody: context.errorBody,
-      features: buildFeatureFlags(context),
+      features: buildFeatureFlags(context, getAstraCapabilities),
     };
   }, [context, emailVerified, hasFunds, language, portfolioValue, profile.name, walletReady]);
 
@@ -333,13 +193,13 @@ export function useAstraVoice() {
     (nextState: AstraVoiceState, reason: string) => {
       setState((current) => {
         if (current !== nextState) {
-          devWarn('[OrbitX][AstraVoice] state transition', {
+          devWarn('[QVEX][AstraVoice] state transition', {
             from: current,
             to: nextState,
             reason,
           });
         } else {
-          devWarn('[OrbitX][AstraVoice] state reaffirmed', {
+          devWarn('[QVEX][AstraVoice] state reaffirmed', {
             state: nextState,
             reason,
           });
@@ -364,14 +224,6 @@ export function useAstraVoice() {
     setSuggestions([]);
     setResponseActions([]);
   }, [setVoiceState]);
-
-  const clearResumeConversationTimeout = useCallback(() => {
-    if (resumeConversationTimeoutRef.current) {
-      clearTimeout(resumeConversationTimeoutRef.current);
-      resumeConversationTimeoutRef.current = null;
-      devWarn('[OrbitX][AstraVoice] cleared auto-resume timer');
-    }
-  }, []);
 
   const cleanupListeners = useCallback(() => {
     listenerHandlesRef.current.forEach((subscription) => {
@@ -398,7 +250,7 @@ export function useAstraVoice() {
     clearResumeConversationTimeout();
 
     if (wasPlaybackActive) {
-      devWarn('[OrbitX][AstraVoice] audio playback interrupted', {
+      devWarn('[QVEX][AstraVoice] audio playback interrupted', {
         state: stateRef.current,
       });
     }
@@ -413,7 +265,7 @@ export function useAstraVoice() {
         }
       }
     } catch (error) {
-      devWarn('[OrbitX][AstraVoice] stopSpeaking failed', error);
+      devWarn('[QVEX][AstraVoice] stopSpeaking failed', error);
     }
   }, [clearResumeConversationTimeout]);
 
@@ -434,7 +286,7 @@ export function useAstraVoice() {
       return recognitionModuleRef.current;
     }
 
-    if (isExpoGoLikeEnvironment()) {
+    if (isExpoGoLikeEnvironment(Constants.executionEnvironment)) {
       throw new Error(copy.unavailableInExpoGo);
     }
 
@@ -448,7 +300,7 @@ export function useAstraVoice() {
       recognitionModuleRef.current = recognitionModule;
       return recognitionModule;
     } catch (error) {
-      devWarn('[OrbitX][AstraVoice] recognition module unavailable', error);
+      devWarn('[QVEX][AstraVoice] recognition module unavailable', error);
       throw new Error(getStaleVoiceBuildMessage(language));
     }
   }, [copy.unavailableInExpoGo, language]);
@@ -464,23 +316,23 @@ export function useAstraVoice() {
       try {
         installedServices = recognitionModule.getSpeechRecognitionServices() ?? [];
       } catch (error) {
-        devWarn('[OrbitX][AstraVoice] getSpeechRecognitionServices failed', error);
+        devWarn('[QVEX][AstraVoice] getSpeechRecognitionServices failed', error);
       }
 
       try {
         defaultServicePackage =
           recognitionModule.getDefaultRecognitionService?.().packageName ?? null;
       } catch (error) {
-        devWarn('[OrbitX][AstraVoice] getDefaultRecognitionService failed', error);
+        devWarn('[QVEX][AstraVoice] getDefaultRecognitionService failed', error);
       }
 
       try {
         recognitionAvailable = recognitionModule.isRecognitionAvailable();
       } catch (error) {
-        devWarn('[OrbitX][AstraVoice] isRecognitionAvailable failed', error);
+        devWarn('[QVEX][AstraVoice] isRecognitionAvailable failed', error);
       }
 
-      devWarn('[OrbitX][AstraVoice] recognition diagnostics', {
+      devWarn('[QVEX][AstraVoice] recognition diagnostics', {
         installedServices,
         defaultServicePackage,
         recognitionAvailable,
@@ -520,13 +372,13 @@ export function useAstraVoice() {
       if (!presets.some((preset) => preset.id === voicePreferences.selectedPresetId)) {
         setSelectedVoicePresetId(DEFAULT_ASTRA_VOICE_PRESET_ID);
       }
-      devWarn('[OrbitX][AstraVoice] runtime voice configured', {
+      devWarn('[QVEX][AstraVoice] runtime voice configured', {
         provider: runtimeConfig.provider,
         presetId: voicePreferences.selectedPresetId,
         allowDeviceFallback: runtimeConfig.allowDeviceFallback,
       });
     } catch (error) {
-      devWarn('[OrbitX][AstraVoice] getAvailableVoicesAsync failed', error);
+      devWarn('[QVEX][AstraVoice] getAvailableVoicesAsync failed', error);
       setVoicePresets(getDefaultAstraVoicePresets());
     }
   }, [
@@ -551,10 +403,16 @@ export function useAstraVoice() {
     try {
       session = hasAstraVoiceBackend()
         ? await createAstraVoiceSession(voiceContext)
-        : buildFallbackSession();
+        : buildFallbackSession({
+            hasBrainBackend: hasAstraBrainBackend(),
+            outputMode: getAstraVoiceRuntimeConfig().outputMode,
+          });
     } catch (error) {
-      devWarn('[OrbitX][AstraVoice] session creation failed, using fallback', error);
-      session = buildFallbackSession();
+      devWarn('[QVEX][AstraVoice] session creation failed, using fallback', error);
+      session = buildFallbackSession({
+        hasBrainBackend: hasAstraBrainBackend(),
+        outputMode: getAstraVoiceRuntimeConfig().outputMode,
+      });
     }
 
     sessionRef.current = session;
@@ -576,14 +434,13 @@ export function useAstraVoice() {
 
   const scheduleConversationResume = useCallback(
     (reason: string, delayMs: number) => {
-      clearResumeConversationTimeout();
-      resumeConversationTimeoutRef.current = setTimeout(() => {
+      scheduleResumeConversationTimeout(() => {
         if (!isMountedRef.current || !useAstraStore.getState().isVoiceOpen) {
           return;
         }
 
         if (speechPlaybackActiveRef.current || stateRef.current === 'speaking') {
-          devWarn('[OrbitX][AstraVoice] skipped auto-resume while still speaking', {
+          devWarn('[QVEX][AstraVoice] skipped auto-resume while still speaking', {
             reason,
             state: stateRef.current,
           });
@@ -594,11 +451,11 @@ export function useAstraVoice() {
         setTranscript('');
         setInputLevel(0);
         setErrorMessage(null);
-        devWarn('[OrbitX][AstraVoice] auto-resume listening', { reason });
+        devWarn('[QVEX][AstraVoice] auto-resume listening', { reason });
         void startConversationRef.current?.();
       }, delayMs);
     },
-    [clearResumeConversationTimeout],
+    [scheduleResumeConversationTimeout],
   );
 
   const handleSpeechPlaybackFinished = useCallback(
@@ -608,7 +465,7 @@ export function useAstraVoice() {
         useAstraStore.getState().isVoiceOpen &&
         voicePreferences.voiceInputEnabled;
 
-      devWarn('[OrbitX][AstraVoice] speech playback finished', {
+      devWarn('[QVEX][AstraVoice] speech playback finished', {
         reason,
         shouldContinueListening,
       });
@@ -635,7 +492,7 @@ export function useAstraVoice() {
       }
 
       const runtimeConfig = getAstraVoiceRuntimeConfig();
-      devWarn('[OrbitX][AstraVoice] TTS runtime selected', {
+      devWarn('[QVEX][AstraVoice] TTS runtime selected', {
         provider: runtimeConfig.provider,
         presetId: selectedVoicePreset.id,
         allowDeviceFallback: runtimeConfig.allowDeviceFallback,
@@ -648,7 +505,7 @@ export function useAstraVoice() {
 
         voiceFallbackNoticeShownRef.current = true;
         showToast(copy.premiumVoiceFallback, 'info');
-        devWarn('[OrbitX][AstraVoice] explicit device fallback notice', { reason });
+        devWarn('[QVEX][AstraVoice] explicit device fallback notice', { reason });
       };
 
       const playWithDeviceSpeech = async () => {
@@ -656,7 +513,7 @@ export function useAstraVoice() {
         deviceSpeechPlaybackIdRef.current = playbackId;
         speechPlaybackActiveRef.current = true;
         const locale = selectedVoicePreset.language ?? findSpeechLocale(language);
-        devWarn('[OrbitX][AstraVoice] device TTS selected', {
+        devWarn('[QVEX][AstraVoice] device TTS selected', {
           presetId: selectedVoicePreset.id,
           matchedVoiceName: selectedVoicePreset.matchedVoiceName,
           voiceIdentifier: selectedVoicePreset.voiceIdentifier,
@@ -700,7 +557,7 @@ export function useAstraVoice() {
         premiumVoiceFailureCodeRef.current !== null;
 
       if (premiumVoiceBlocked) {
-        devWarn('[OrbitX][AstraVoice] premium TTS temporarily bypassed', {
+        devWarn('[QVEX][AstraVoice] premium TTS temporarily bypassed', {
           code: premiumVoiceFailureCodeRef.current,
           blockedUntil: premiumVoiceBlockedUntilRef.current,
         });
@@ -725,7 +582,7 @@ export function useAstraVoice() {
         } catch (error) {
           speechPlaybackActiveRef.current = false;
           pendingAutoResumeRef.current = false;
-          devWarn('[OrbitX][AstraVoice] premium voice failed', error);
+          devWarn('[QVEX][AstraVoice] premium voice failed', error);
           if (error instanceof AstraTTSBackendError) {
             premiumVoiceFailureCodeRef.current = error.code;
             premiumVoiceBlockedUntilRef.current = Date.now() + (error.retryable ? 60_000 : 10 * 60_000);
@@ -750,7 +607,7 @@ export function useAstraVoice() {
         return;
       }
 
-      devWarn('[OrbitX][AstraVoice] device TTS fallback triggered', {
+      devWarn('[QVEX][AstraVoice] device TTS fallback triggered', {
         provider: runtimeConfig.provider,
         presetId: selectedVoicePreset.id,
         premiumFailureCode: premiumVoiceFailureCodeRef.current,
@@ -811,7 +668,7 @@ export function useAstraVoice() {
             channel: 'voice',
           });
         } catch (error) {
-          devWarn('[OrbitX][AstraVoice] backend voice reply failed, using unavailable response', error);
+          devWarn('[QVEX][AstraVoice] backend voice reply failed, using unavailable response', error);
 
           return buildAstraUnavailableResponse({
             context,
@@ -866,7 +723,7 @@ export function useAstraVoice() {
 
         if (voicePreferences.autoPlayResponses && voicePreferences.voiceOutputEnabled) {
           pendingAutoResumeRef.current = shouldContinueListening;
-          devWarn('[OrbitX][AstraVoice] waiting for speech completion before resume', {
+          devWarn('[QVEX][AstraVoice] waiting for speech completion before resume', {
             shouldContinueListening,
           });
           setVoiceState('processing', 'awaiting-tts-playback');
@@ -879,7 +736,7 @@ export function useAstraVoice() {
           }
         }
       } catch (error) {
-        devWarn('[OrbitX][AstraVoice] sendTranscript failed', error);
+        devWarn('[QVEX][AstraVoice] sendTranscript failed', error);
         const message =
           error instanceof Error
             ? error.message
@@ -914,7 +771,7 @@ export function useAstraVoice() {
     try {
       recognitionModule.stop();
     } catch (error) {
-      devWarn('[OrbitX][AstraVoice] stopListening failed', error);
+      devWarn('[QVEX][AstraVoice] stopListening failed', error);
     }
     setVoiceState('idle', 'stop-listening');
   }, [clearResumeConversationTimeout, setVoiceState]);
@@ -941,7 +798,7 @@ export function useAstraVoice() {
         recognitionModule.addListener('error', (event: ExpoSpeechRecognitionErrorEvent) => {
           if (event.error === 'aborted') {
             if (speechPlaybackActiveRef.current || stateRef.current === 'speaking') {
-              devWarn('[OrbitX][AstraVoice] ignored aborted recognition during playback');
+              devWarn('[QVEX][AstraVoice] ignored aborted recognition during playback');
               return;
             }
 
@@ -949,7 +806,7 @@ export function useAstraVoice() {
             return;
           }
 
-          devWarn('[OrbitX][AstraVoice] recognition error', event);
+          devWarn('[QVEX][AstraVoice] recognition error', event);
 
           if (event.error === 'not-allowed') {
             setPermissionDenied(true);
@@ -969,7 +826,7 @@ export function useAstraVoice() {
 
           if (event.error === 'no-speech') {
             if (speechPlaybackActiveRef.current || stateRef.current === 'speaking') {
-              devWarn('[OrbitX][AstraVoice] ignored no-speech while Astra playback was active');
+              devWarn('[QVEX][AstraVoice] ignored no-speech while Astra playback was active');
               return;
             }
 
@@ -985,7 +842,7 @@ export function useAstraVoice() {
         recognitionModule.addListener('end', () => {
           setInputLevel(0);
           if (speechPlaybackActiveRef.current || stateRef.current === 'speaking') {
-            devWarn('[OrbitX][AstraVoice] ignored recognition end while speaking');
+            devWarn('[QVEX][AstraVoice] ignored recognition end while speaking');
             return;
           }
 
@@ -1032,14 +889,14 @@ export function useAstraVoice() {
     }
 
     if (speechPlaybackActiveRef.current || stateRef.current === 'speaking') {
-      devWarn('[OrbitX][AstraVoice] startConversation blocked while Astra is still speaking', {
+      devWarn('[QVEX][AstraVoice] startConversation blocked while Astra is still speaking', {
         state: stateRef.current,
       });
       return;
     }
 
     if (stateRef.current === 'listening') {
-      devWarn('[OrbitX][AstraVoice] startConversation ignored because listening is already active');
+      devWarn('[QVEX][AstraVoice] startConversation ignored because listening is already active');
       return;
     }
 
@@ -1068,7 +925,7 @@ export function useAstraVoice() {
         continuous: false,
         addsPunctuation: true,
         contextualStrings: [
-          'OrbitX',
+          'QVEX',
           'Astra',
           'Wallet',
           'Spot',
@@ -1088,7 +945,7 @@ export function useAstraVoice() {
           : {}),
       });
     } catch (error) {
-      devWarn('[OrbitX][AstraVoice] startConversation failed', error);
+      devWarn('[QVEX][AstraVoice] startConversation failed', error);
       setFriendlyError(
         error instanceof Error ? error.message : copy.unavailableInExpoGo,
       );
@@ -1119,7 +976,7 @@ export function useAstraVoice() {
       try {
         recognitionModule.abort();
       } catch (error) {
-        devWarn('[OrbitX][AstraVoice] abort failed', error);
+        devWarn('[QVEX][AstraVoice] abort failed', error);
       }
     }
 
@@ -1236,7 +1093,7 @@ export function useAstraVoice() {
     try {
       await Linking.openSettings();
     } catch (error) {
-      devWarn('[OrbitX][AstraVoice] openSettings failed', error);
+      devWarn('[QVEX][AstraVoice] openSettings failed', error);
     }
   }, []);
 

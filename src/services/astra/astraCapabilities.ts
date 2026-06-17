@@ -1,7 +1,7 @@
 import type { AstraCapabilities, AstraSupportContext } from '../../types/astra';
 import { isRampModeEnabled } from '../ramp/rampConfig';
 
-export function getAstraCapabilities(context: AstraSupportContext): AstraCapabilities {
+export function getAstraCapabilities(_context: AstraSupportContext): AstraCapabilities {
   return {
     hasWalletModule: true,
     hasWalletCreate: true,
