@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 
 import { formatCurrencyByLanguage } from '../../constants/i18n';
+import { FEATURE_STATUS } from '../constants/featureStatus';
 import { useOrbitStore } from '../../store/useOrbitStore';
+import { getTotalPortfolioBalanceUsd } from '../utils/portfolioTotals';
+import { useExternalWallet } from './useExternalWallet';
+import { useExternalWalletBalances } from './useExternalWalletBalances';
 import { useWalletStore } from '../store/walletStore';
 import { useMarketStore } from '../store/marketStore';
 
@@ -29,9 +33,18 @@ function buildHeroSeries(seriesList: number[][]) {
 export function usePortfolioData() {
   const language = useOrbitStore((state) => state.settings.language);
   const wallet = useWalletStore();
+  const externalWallet = useExternalWallet();
   const liveMarkets = useMarketStore((state) => state.homeMarkets);
   const marketsLoading = useMarketStore((state) => state.loading);
   const marketError = useMarketStore((state) => state.error);
+  const externalWalletAddress =
+    externalWallet.address?.trim() || wallet.externalWallet.address?.trim() || '';
+  const externalWalletChainId = externalWallet.chainId ?? wallet.externalWallet.chainId;
+  const externalWalletBalances = useExternalWalletBalances({
+    address: externalWalletAddress,
+    chainId: externalWalletChainId,
+    enabled: Boolean(externalWalletAddress),
+  });
 
   const marketMap = useMemo(
     () => new Map(liveMarkets.map((market) => [market.baseSymbol.toUpperCase(), market])),
@@ -55,28 +68,43 @@ export function usePortfolioData() {
     [marketMap, wallet.spotBalances],
   );
 
+  const verifiedSpotAssets = FEATURE_STATUS.trade.isDemoMode ? [] : spotAssets;
   const totalSpot = useMemo(
+    () => verifiedSpotAssets.reduce((sum, asset) => sum + asset.usdValue, 0),
+    [verifiedSpotAssets],
+  );
+  const demoSpotTotal = useMemo(
     () => spotAssets.reduce((sum, asset) => sum + asset.usdValue, 0),
     [spotAssets],
   );
-  const totalWeb3 = useMemo(
+  const totalLocalWalletWeb3 = useMemo(
     () => wallet.assets.reduce((sum, asset) => sum + asset.usdValue, 0),
     [wallet.assets],
   );
-  const totalBalance = totalSpot + totalWeb3;
+  const totalExternalWeb3 = externalWalletAddress ? externalWalletBalances.totalUsdEstimate : 0;
+  const totalWeb3 = totalLocalWalletWeb3 + totalExternalWeb3;
+  const totalBalance = getTotalPortfolioBalanceUsd({
+    spotBalanceUsd: totalSpot,
+    localAccountBalanceUsd: 0,
+    web3BalanceUsd: totalWeb3,
+  });
 
   const holdingsWithChange = useMemo(() => {
     const web3 = wallet.assets.map((asset) => ({
       usdValue: asset.usdValue,
       change24h: marketMap.get(asset.symbol.toUpperCase())?.change24h ?? 0,
     }));
-    const spot = spotAssets.map((asset) => ({
+    const externalWeb3 = externalWalletBalances.assets.map((asset) => ({
+      usdValue: asset.usdValue,
+      change24h: marketMap.get(asset.symbol.toUpperCase())?.change24h ?? 0,
+    }));
+    const spot = verifiedSpotAssets.map((asset) => ({
       usdValue: asset.usdValue,
       change24h: marketMap.get(asset.symbol.toUpperCase())?.change24h ?? 0,
     }));
 
-    return [...web3, ...spot].filter((item) => item.usdValue > 0);
-  }, [marketMap, spotAssets, wallet.assets]);
+    return [...web3, ...externalWeb3, ...spot].filter((item) => item.usdValue > 0);
+  }, [externalWalletBalances.assets, marketMap, verifiedSpotAssets, wallet.assets]);
 
   const changePct = useMemo(() => {
     const weightedUsd = holdingsWithChange.reduce((sum, item) => sum + item.usdValue, 0);
@@ -100,11 +128,18 @@ export function usePortfolioData() {
 
   return {
     walletReady: wallet.isWalletReady,
-    loading: !wallet.hasHydrated || (marketsLoading && !liveMarkets.length),
+    loading:
+      !wallet.hasHydrated ||
+      (marketsLoading && !liveMarkets.length) ||
+      (externalWalletBalances.isLoading && totalBalance === 0),
     marketError,
     totalBalance,
     totalSpot,
+    totalLocalAccount: 0,
+    totalLocalWalletWeb3,
     totalWeb3,
+    totalExternalWeb3,
+    demoSpotTotal,
     totalBalanceLabel: formatCurrencyByLanguage(language, totalBalance || 0, 'USD'),
     totalSpotLabel: formatCurrencyByLanguage(language, totalSpot || 0, 'USD'),
     totalWeb3Label: formatCurrencyByLanguage(language, totalWeb3 || 0, 'USD'),

@@ -160,7 +160,7 @@ export function useSecurityCenter() {
   async function handleCreateWallet() {
     const wallet = await createWallet();
     if (wallet) {
-      showToast('Tu billetera OrbitX ya esta lista para respaldarse.', 'success');
+      showToast('Tu billetera QVEX ya esta lista para respaldarse.', 'success');
       return true;
     }
 
@@ -191,7 +191,7 @@ export function useSecurityCenter() {
   async function handleBiometricsToggle() {
     const enabled = await security.enableBiometrics();
     if (enabled) {
-      showToast('Actualizamos la biometria de OrbitX.', 'success');
+      showToast('Actualizamos la biometria de QVEX.', 'success');
       return;
     }
     showToast('No pudimos cambiar la biometria en este momento.', 'error');

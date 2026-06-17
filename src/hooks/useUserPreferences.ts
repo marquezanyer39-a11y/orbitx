@@ -57,19 +57,19 @@ export const MOTION_THEME_PRESETS: ReadonlyArray<{
   colors: [string, string];
 }> = [
   {
-    label: 'Toro OrbitX',
+    label: 'Toro QVEX',
     motion: 'bull',
     description: 'Video cyber bull premium visible solo en Home y Perfil',
     colors: ['#7B3FE4', '#16F0A0'],
   },
   {
-    label: 'Oso OrbitX',
+    label: 'Oso QVEX',
     motion: 'bear',
     description: 'Video cyber bear premium para el lado bajista del mercado',
     colors: ['#7B3FE4', '#FF3D57'],
   },
   {
-    label: 'Batalla OrbitX',
+    label: 'Batalla QVEX',
     motion: 'battle',
     description: 'Choque epico entre toro y oso con energia de mercado',
     colors: ['#16F0A0', '#FF3D57'],

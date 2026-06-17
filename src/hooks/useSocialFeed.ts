@@ -8,7 +8,7 @@ function normalizeHandle(name: string, email: string) {
   const base =
     name.trim().replace(/[^a-zA-Z0-9]/g, '').toLowerCase() ||
     email.split('@')[0]?.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() ||
-    'orbitxuser';
+    'qvexuser';
 
   return `@${base.slice(0, 16)}`;
 }
@@ -47,11 +47,11 @@ export function useSocialFeed(feedTab: SocialFeedTab = 'for_you') {
   const currentCreator = useMemo(
     () => ({
       id: authProfile.orbitId || 'current-user',
-      displayName: authProfile.name || 'OrbitX User',
+      displayName: authProfile.name || 'QVEX User',
       handle: authProfile.handle || normalizeHandle(authProfile.name, authProfile.email),
       avatar: authProfile.avatar || authProfile.name.slice(0, 1).toUpperCase() || 'O',
       avatarUri: authProfile.avatarUri ?? null,
-      bio: 'Mi actividad dentro de OrbitX.',
+      bio: 'Mi actividad dentro de QVEX.',
       verified: session.emailConfirmed,
       followers: 0,
       following: followingCreatorIds.length,
