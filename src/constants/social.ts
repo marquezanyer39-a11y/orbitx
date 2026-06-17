@@ -10,9 +10,21 @@ import type {
 } from '../types/social';
 
 export const SOCIAL_DISCLAIMER =
-  'El contenido publicado por usuarios no constituye asesoria financiera. OrbitX no se hace responsable por decisiones tomadas en base a este contenido.';
+  'El contenido publicado por usuarios no constituye asesoria financiera. QVEX no se hace responsable por decisiones tomadas en base a este contenido.';
 
 export const SOCIAL_CREATORS: SocialCreator[] = [
+  {
+    id: 'creator-bitqueenie',
+    displayName: 'BitQueenie',
+    handle: '@BitQueenie',
+    avatar: 'B',
+    avatarUri:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80',
+    bio: 'Streams de breakouts, momentum y narrativa Solana.',
+    verified: true,
+    followers: 42800,
+    following: 128,
+  },
   {
     id: 'creator-nebula',
     displayName: 'Nebula Alpha',
@@ -45,6 +57,27 @@ export const SOCIAL_CREATORS: SocialCreator[] = [
 ];
 
 export const SOCIAL_POSTS: SocialPost[] = [
+  {
+    id: 'post-sol-live-bitqueenie',
+    authorId: 'creator-bitqueenie',
+    mediaType: 'image',
+    mediaUri:
+      'https://images.unsplash.com/photo-1642104704074-907c0698cbd9?auto=format&fit=crop&w=1200&q=90',
+    posterUri:
+      'https://images.unsplash.com/photo-1642104704074-907c0698cbd9?auto=format&fit=crop&w=1200&q=90',
+    description:
+      'Analizando el breakout de $SOL en vivo. ¿Es hora de entrar en largo? 🚀',
+    hashtags: ['#Crypto', '#Trading', '#SOL'],
+    tokenSymbol: 'SOL',
+    category: 'analysis',
+    commentsEnabled: true,
+    createdAt: '2026-05-19T08:00:00.000Z',
+    likes: 42800,
+    comments: 1204,
+    shares: 342,
+    isLive: true,
+    liveViewers: 6180,
+  },
   {
     id: 'post-eth-live',
     authorId: 'creator-jupiter',
