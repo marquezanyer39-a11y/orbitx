@@ -12,6 +12,7 @@ import {
 } from '../../config/runtimeMode';
 import { useAstra } from '../../hooks/useAstra';
 import { useAuthStore } from '../../store/authStore';
+import { EmptyState } from '../../components/common/EmptyState';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { ErrorState } from '../../components/common/ErrorState';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -337,19 +338,12 @@ export default function MarketsScreen() {
             ))}
           </View>
         ) : (
-          <View
-            style={[
-              styles.emptyLaunchpad,
-              { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.emptyLaunchpadTitle, { color: colors.text }]}>
-              No hay memecoins visibles por ahora
-            </Text>
-            <Text style={[styles.emptyLaunchpadBody, { color: colors.textMuted }]}>
-              Vuelve cuando entren nuevos listados o crea tu primer meme dentro de QVEX.
-            </Text>
-          </View>
+          <EmptyState
+            variant="glass"
+            icon="rocket-outline"
+            title="No hay memecoins visibles por ahora"
+            body="Vuelve cuando entren nuevos listados o crea tu primer meme dentro de QVEX."
+          />
         )
       ) : myMemeTokens.length ? (
         <View>
@@ -368,19 +362,12 @@ export default function MarketsScreen() {
           ))}
         </View>
       ) : (
-        <View
-          style={[
-            styles.emptyLaunchpad,
-            { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.emptyLaunchpadTitle, { color: colors.text }]}>
-            Aun no tienes memes creadas
-          </Text>
-          <Text style={[styles.emptyLaunchpadBody, { color: colors.textMuted }]}>
-            Cuando lances un token desde QVEX, aparecera aqui con su estado y acceso a trade.
-          </Text>
-        </View>
+          <EmptyState
+            variant="glass"
+            icon="star-outline"
+            title="Aun no tienes memes creadas"
+            body="Cuando lances un token desde QVEX, aparecera aqui con su estado y acceso a trade."
+          />
       )}
     </ScreenContainer>
   );
@@ -432,21 +419,5 @@ const styles = StyleSheet.create({
   searchInput: {
     fontFamily: FONT.medium,
     fontSize: 13,
-  },
-  emptyLaunchpad: {
-    borderWidth: 1,
-    borderRadius: RADII.md,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    gap: 6,
-  },
-  emptyLaunchpadTitle: {
-    fontFamily: FONT.semibold,
-    fontSize: 13,
-  },
-  emptyLaunchpadBody: {
-    fontFamily: FONT.regular,
-    fontSize: 11,
-    lineHeight: 16,
   },
 });

@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FONT } from '../../../constants/theme';
+import { EmptyState } from '../../components/common/EmptyState';
 import { CommentsBottomSheet } from '../../components/social/comments/CommentsBottomSheet';
 import { SocialDisclaimerModal } from '../../components/social/SocialDisclaimerModal';
 import { SocialBottomNav } from '../../components/social/SocialBottomNav';
@@ -143,7 +144,15 @@ export default function SocialFeedScreen() {
         viewabilityConfig={viewabilityConfig}
         onViewableItemsChanged={onViewableItemsChanged}
         contentContainerStyle={feedItems.length ? undefined : { flex: 1 }}
-        ListEmptyComponent={<EmptySocialState height={height} />}
+        ListEmptyComponent={
+          <View style={[styles.emptyWrap, { minHeight: height * 0.5 }]}>
+            <EmptyState
+              icon="people-outline"
+              title="Esta pestaña no tiene contenido aun"
+              body="Cuando los creadores publiquen, sus posts apareceran aqui."
+            />
+          </View>
+        }
       />
 
       <TopTabs
@@ -245,14 +254,6 @@ function TopTabs({
   );
 }
 
-function EmptySocialState({ height }: { height: number }) {
-  return (
-    <View style={[styles.empty, { minHeight: height }]}>
-      <Text style={styles.emptyTitle}>Feed sin contenido</Text>
-      <Text style={styles.emptyBody}>Los mocks sociales no tienen posts para esta pestaña.</Text>
-    </View>
-  );
-}
 
 function normalizeInitialTab(tab?: string): SocialFeedTab {
   if (
@@ -319,23 +320,10 @@ const styles = StyleSheet.create({
     opacity: 0.78,
     transform: [{ scale: 0.98 }],
   },
-  empty: {
+  emptyWrap: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 26,
-    gap: 10,
     backgroundColor: '#08090B',
-  },
-  emptyTitle: {
-    color: '#FFFFFF',
-    fontFamily: FONT.bold,
-    fontSize: 20,
-  },
-  emptyBody: {
-    color: '#BBCBB8',
-    fontFamily: FONT.medium,
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 19,
   },
 });
