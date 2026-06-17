@@ -210,7 +210,7 @@ async function getSecureRandomBytes(length: number) {
   }
 
   throw new Error(
-    'No encontramos una fuente segura de aleatoriedad para crear tu billetera. Reinicia OrbitX o actualiza la app e intentalo de nuevo.',
+    'No encontramos una fuente segura de aleatoriedad para crear tu billetera. Reinicia QVEX o actualiza la app e intentalo de nuevo.',
   );
 }
 
@@ -281,7 +281,7 @@ async function deriveEvmAddress(mnemonic: string) {
   } catch (error) {
     throw new Error(
       error instanceof Error && /getRandomValues/i.test(error.message)
-        ? 'OrbitX no pudo inicializar el motor seguro de billetera. Cierra y vuelve a abrir la app.'
+        ? 'QVEX no pudo inicializar el motor seguro de billetera. Cierra y vuelve a abrir la app.'
         : 'No se pudo derivar la direccion EVM desde la frase semilla.',
     );
   }
