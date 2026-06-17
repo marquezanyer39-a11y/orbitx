@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FONT, withOpacity } from '../../../constants/theme';
+import { FEATURE_STATUS } from '../../constants/featureStatus';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import type { OpenOrder, RecentTradeRow } from '../../types';
 
@@ -73,11 +74,26 @@ export function TradeActivityPanel({
         })}
       </View>
 
+      <View
+        style={[
+          styles.demoBanner,
+          {
+            backgroundColor: withOpacity(colors.warning, 0.07),
+            borderColor: withOpacity(colors.warning, 0.22),
+          },
+        ]}
+      >
+        <Ionicons name="information-circle-outline" size={14} color={colors.warning} />
+        <Text style={[styles.demoBannerText, { color: colors.textMuted }]} numberOfLines={2}>
+          {FEATURE_STATUS.trade.notice}
+        </Text>
+      </View>
+
       {tab === 'open' ? (
         <>
           <Pressable style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { color: colors.textSoft }]}>
-              Todas las abiertas ({filteredOrders.length})
+              Ordenes demo abiertas ({filteredOrders.length})
             </Text>
             <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
           </Pressable>
@@ -94,10 +110,12 @@ export function TradeActivityPanel({
             <View style={styles.balanceBlock}>
               <Text style={[styles.balanceLabel, { color: colors.textMuted }]}>{quoteSymbol}</Text>
               <Text style={[styles.balanceValue, { color: colors.text }]}>{quoteBalance.toFixed(0)} {quoteSymbol}</Text>
+              <Text style={[styles.balanceFootnote, { color: colors.textMuted }]}>Disponible, no reservado</Text>
             </View>
             <View style={styles.balanceBlock}>
               <Text style={[styles.balanceLabel, { color: colors.textMuted }]}>{baseSymbol}</Text>
               <Text style={[styles.balanceValue, { color: colors.text }]}>{baseBalance.toFixed(4)} {baseSymbol}</Text>
+              <Text style={[styles.balanceFootnote, { color: colors.textMuted }]}>Disponible, no reservado</Text>
             </View>
           </View>
 
@@ -165,7 +183,7 @@ export function TradeActivityPanel({
           </View>
         ) : (
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            No hay operaciones recientes todavia.
+            No hay simulaciones recientes todavia.
           </Text>
         )
       ) : null}
@@ -223,6 +241,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  demoBanner: {
+    minHeight: 42,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 7,
+  },
+  demoBannerText: {
+    flex: 1,
+    fontFamily: FONT.medium,
+    fontSize: 10.5,
+    lineHeight: 15,
+  },
   summaryLabel: {
     fontFamily: FONT.medium,
     fontSize: 12,
@@ -250,6 +284,11 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: 18,
     lineHeight: 20,
+  },
+  balanceFootnote: {
+    fontFamily: FONT.medium,
+    fontSize: 9.5,
+    lineHeight: 12,
   },
   bottomActionRow: {
     alignItems: 'flex-end',

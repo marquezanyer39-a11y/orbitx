@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import type { OrderType, TradeSide } from '../types';
+import { FEATURE_STATUS } from '../constants/featureStatus';
 import { simulateSwapOrder } from '../services/dex/swapSimulation';
 import { useTradeStore } from '../store/tradeStore';
 import { useWalletStore } from '../store/walletStore';
@@ -155,48 +156,9 @@ export function useTradeForm() {
         return result;
       }
 
-      const baseAsset = {
-        id: livePairSymbols.base.toLowerCase(),
-        symbol: livePairSymbols.base,
-        name: livePairSymbols.base,
-        amount: liveQuantityValue,
-        usdValue: result.total,
-        network: 'spot' as const,
-        environment: 'spot' as const,
-      };
-
-      if (liveTradeState.orderType === 'market') {
-        if (side === 'buy') {
-          if (
-            !liveWalletState.consumeSpotQuote(
-              livePairSymbols.quote,
-              result.total + result.fee,
-            )
-          ) {
-            showToast('No tienes saldo suficiente para comprar.', 'error');
-            return {
-              ...result,
-              ok: false,
-              message: 'No tienes saldo suficiente para comprar.',
-            };
-          }
-
-          liveWalletState.creditSpotBase(baseAsset);
-        } else {
-          if (!liveWalletState.debitSpotBase(livePairSymbols.base, liveQuantityValue)) {
-            showToast('No tienes saldo suficiente para vender.', 'error');
-            return {
-              ...result,
-              ok: false,
-              message: 'No tienes saldo suficiente para vender.',
-            };
-          }
-
-          liveWalletState.depositToSpot(livePairSymbols.quote, result.total - result.fee);
-        }
-      } else {
+      if (liveTradeState.orderType !== 'market') {
         liveTradeState.addOpenOrder({
-          id: `order-${Date.now()}`,
+          id: `demo-order-${Date.now()}`,
           side,
           type: liveTradeState.orderType,
           pairId: liveTradeState.selectedPairId,
@@ -208,7 +170,7 @@ export function useTradeForm() {
       }
 
       liveTradeState.addRecentOrder({
-        id: `trade-${Date.now()}`,
+        id: `demo-trade-${Date.now()}`,
         side,
         price: resolvedPrice,
         quantity: liveQuantityValue,
@@ -218,14 +180,15 @@ export function useTradeForm() {
       liveTradeState.resetForm();
       showToast(
         liveTradeState.orderType === 'market'
-          ? side === 'buy'
-            ? `Compra ejecutada: ${livePairSymbols.base}`
-            : `Venta ejecutada: ${livePairSymbols.base}`
-          : `Orden ${liveTradeState.orderType} registrada`,
-        'success',
+          ? `Simulacion ${side === 'buy' ? 'de compra' : 'de venta'} registrada. No se envio una orden real.`
+          : `Orden demo ${liveTradeState.orderType} registrada. No se envio al mercado.`,
+        'info',
       );
 
-      return result;
+      return {
+        ...result,
+        message: FEATURE_STATUS.trade.notice,
+      };
     },
     [showToast],
   );

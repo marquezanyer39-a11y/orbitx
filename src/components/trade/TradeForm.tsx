@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FEATURE_STATUS } from '../../constants/featureStatus';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { PrimaryButton } from '../common/PrimaryButton';
@@ -114,7 +115,10 @@ export function TradeForm(props: Props) {
   const [tpSlEnabled, setTpSlEnabled] = useState(false);
   const [takeProfit, setTakeProfit] = useState('');
   const [stopLoss, setStopLoss] = useState('');
-  const actionLabel = props.side === 'buy' ? `Comprar ${props.baseSymbol}` : `Vender ${props.baseSymbol}`;
+  const actionLabel =
+    props.side === 'buy'
+      ? `Simular compra ${props.baseSymbol}`
+      : `Simular venta ${props.baseSymbol}`;
   const totalValue = Number(props.total || 0);
 
   return (
@@ -135,6 +139,23 @@ export function TradeForm(props: Props) {
           <Text style={[styles.quoteText, { color: colors.text }]}>{props.quoteSymbol}</Text>
           <Text style={[styles.quoteArrow, { color: colors.textMuted }]}>v</Text>
         </Pressable>
+      </View>
+
+      <View
+        style={[
+          styles.demoNotice,
+          {
+            backgroundColor: withOpacity(colors.warning, 0.08),
+            borderColor: withOpacity(colors.warning, 0.24),
+          },
+        ]}
+      >
+        <Text style={[styles.demoNoticeLabel, { color: colors.warning }]}>
+          {FEATURE_STATUS.trade.dataSourceLabel}
+        </Text>
+        <Text style={[styles.demoNoticeText, { color: colors.textMuted }]} numberOfLines={2}>
+          No envia ordenes reales ni mueve fondos.
+        </Text>
       </View>
 
       <OrderTypeTabs value={props.orderType} onChange={props.onChangeOrderType} />
@@ -251,6 +272,25 @@ const styles = StyleSheet.create({
   quoteArrow: {
     fontFamily: FONT.semibold,
     fontSize: 11,
+  },
+  demoNotice: {
+    minHeight: 42,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 3,
+  },
+  demoNoticeLabel: {
+    fontFamily: FONT.bold,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  demoNoticeText: {
+    fontFamily: FONT.medium,
+    fontSize: 10.5,
+    lineHeight: 14,
   },
   fieldRow: {
     minHeight: 38,

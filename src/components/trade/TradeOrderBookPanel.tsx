@@ -1,16 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FONT, ORBITX_COLORS, RADII, withOpacity } from '../../../constants/theme';
 import type { MarketRealtimeStatus, OrderBookRow, TradeSide } from '../../types';
 import { getTradeRealtimeStatusLabel } from '../../utils/tradeRealtimeUi';
 
-const BUY = '#00C853';
-const SELL = '#FF5252';
-const TEXT = '#FAFAFA';
+const BUY = ORBITX_COLORS.green;
+const SELL = ORBITX_COLORS.red;
+const TEXT = ORBITX_COLORS.textPrimary;
 const TEXT_SOFT = '#D4D4D8';
-const TEXT_MUTED = '#A1A1AA';
-const BORDER = '#2D3139';
+const TEXT_MUTED = ORBITX_COLORS.textSecondary;
+const BORDER = ORBITX_COLORS.border;
 
 interface Props {
   rows: OrderBookRow[];
@@ -51,7 +51,7 @@ function buildDepth(rows: OrderBookRow[], side: 'buy' | 'sell', limit: number) {
 
 function getTone(status: MarketRealtimeStatus) {
   if (status === 'live') return BUY;
-  if (status === 'reconnecting' || status === 'connecting') return '#6F3FF5';
+  if (status === 'reconnecting' || status === 'connecting') return ORBITX_COLORS.purpleSoft;
   if (status === 'error') return SELL;
   return TEXT_MUTED;
 }
@@ -243,7 +243,7 @@ export function TradeOrderBookPanel({
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>Sin profundidad todavía</Text>
           <Text style={styles.emptyBody}>
-            {error || 'OrbitX está esperando el snapshot del libro de órdenes para este par.'}
+            {error || 'QVEX está esperando el snapshot del libro de órdenes para este par.'}
           </Text>
         </View>
       )}
