@@ -21,6 +21,12 @@ export interface OrbitLightweightChartRuntimeConfig {
   interactive: boolean;
   attribution: boolean;
   colors: OrbitChartHtmlColors;
+  tradeMarker?: {
+    side: 'buy' | 'sell';
+    price: number;
+    label?: string;
+    pnlPercent?: number;
+  } | null;
 }
 
 interface BuildLightweightChartHtmlOptions {
@@ -72,9 +78,7 @@ export function buildLightweightChartHtml({
         height: 100%;
         min-height: 180px;
         isolation: isolate;
-        background:
-          radial-gradient(circle at 50% 6%, rgba(123, 63, 228, 0.08) 0%, transparent 34%),
-          linear-gradient(180deg, #101015 0%, #0b0b0f 100%);
+        background: linear-gradient(180deg, #090a0d 0%, #08090b 100%);
       }
 
       #chart-shell::before {
@@ -83,8 +87,8 @@ export function buildLightweightChartHtml({
         inset: 0;
         pointer-events: none;
         background:
-          radial-gradient(circle at 84% 18%, rgba(123, 63, 228, 0.06) 0%, transparent 18%),
-          radial-gradient(circle at 18% 82%, rgba(123, 63, 228, 0.05) 0%, transparent 20%);
+          linear-gradient(106deg, transparent 0%, rgba(123, 63, 228, 0.055) 45%, transparent 72%),
+          linear-gradient(16deg, transparent 0%, rgba(56, 189, 248, 0.035) 40%, transparent 70%);
         z-index: 0;
       }
 
@@ -164,13 +168,13 @@ export function buildLightweightChartHtml({
         const total = container.clientHeight || 360;
         const mainHeight = payload.compact
           ? total
-          : Math.round(total * (payload.showVolume || indicators.length ? 0.56 : 0.82));
+          : Math.round(total * (payload.showVolume || indicators.length ? 0.74 : 0.86));
 
         panes[0]?.setHeight?.(mainHeight);
 
         let paneCursor = 1;
         if (payload.showVolume) {
-          panes[paneCursor]?.setHeight?.(Math.round(total * 0.16));
+          panes[paneCursor]?.setHeight?.(Math.round(total * 0.12));
           paneCursor += 1;
         }
 
@@ -199,6 +203,8 @@ export function buildLightweightChartHtml({
 
         const { createChart, CandlestickSeries, HistogramSeries, LineSeries } = window.LightweightCharts;
         const indicators = Array.isArray(payload.indicators) ? payload.indicators : [];
+        const withHexAlpha = (color, alpha) =>
+          typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color) ? color + alpha : color;
 
         const chart = createChart(container, {
           width: container.clientWidth || 360,
@@ -224,14 +230,14 @@ export function buildLightweightChartHtml({
             touch: config.interactive,
           },
           grid: {
-            vertLines: { color: colors.grid, visible: true, style: 0 },
+            vertLines: { color: colors.grid, visible: true, style: 2 },
             horzLines: { color: colors.grid, visible: true, style: 0 },
           },
           rightPriceScale: {
             visible: true,
             borderVisible: true,
             borderColor: colors.borderStrong,
-            scaleMargins: { top: payload.compact ? 0.12 : 0.08, bottom: payload.compact ? 0.1 : 0.08 },
+            scaleMargins: { top: payload.compact ? 0.12 : 0.06, bottom: payload.compact ? 0.1 : 0.05 },
           },
           leftPriceScale: {
             visible: false,
@@ -281,9 +287,9 @@ export function buildLightweightChartHtml({
             borderColor: colors.borderStrong,
             timeVisible: true,
             secondsVisible: false,
-            rightOffset: payload.compact ? 4 : 6,
-            barSpacing: payload.compact ? 7 : 10,
-            minBarSpacing: payload.compact ? 5 : 4,
+            rightOffset: payload.compact ? 4 : 8,
+            barSpacing: payload.compact ? 5.2 : 5.8,
+            minBarSpacing: payload.compact ? 3.4 : 3.2,
             fixLeftEdge: false,
             lockVisibleTimeRangeOnResize: true,
             ticksVisible: true,
@@ -307,8 +313,8 @@ export function buildLightweightChartHtml({
                   upColor: colors.profit,
                   downColor: colors.loss,
                   borderVisible: false,
-                  wickUpColor: colors.profit,
-                  wickDownColor: colors.loss,
+                  wickUpColor: withHexAlpha(colors.profit, 'CC'),
+                  wickDownColor: withHexAlpha(colors.loss, 'CC'),
                   lastValueVisible: true,
                   priceLineVisible: true,
                   priceLineWidth: 1,
@@ -325,7 +331,7 @@ export function buildLightweightChartHtml({
                     payload.line[payload.line.length - 1].value >= payload.line[0].value
                       ? colors.profit
                       : colors.loss,
-                  lineWidth: payload.compact ? 2 : 2.5,
+                  lineWidth: payload.compact ? 1.6 : 1.8,
                   crosshairMarkerVisible: false,
                   lastValueVisible: true,
                   priceLineVisible: true,
@@ -342,24 +348,42 @@ export function buildLightweightChartHtml({
           mainSeries.setData(payload.line);
         }
 
+        const marker = config.tradeMarker;
+        if (marker && Number.isFinite(marker.price) && marker.price > 0) {
+          const markerPositive = marker.side !== 'sell';
+          const markerColor = markerPositive ? colors.profit : colors.loss;
+          const pnlLabel =
+            Number.isFinite(marker.pnlPercent)
+              ? ' ' + (marker.pnlPercent >= 0 ? '+' : '') + marker.pnlPercent.toFixed(2) + '%'
+              : '';
+          mainSeries.createPriceLine({
+            price: marker.price,
+            color: markerColor,
+            lineWidth: 1,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: (marker.label || (markerPositive ? 'Tu entrada' : 'Tu salida')) + pnlLabel,
+          });
+        }
+
         if (indicators.includes('MA')) {
           const maSeriesConfigs = [
             {
               data: Array.isArray(payload.maFast) && payload.maFast.length ? payload.maFast : payload.ma,
               color: '#F6D365',
-              lineWidth: 1.2,
+              lineWidth: 1,
               lineStyle: 0,
             },
             {
               data: Array.isArray(payload.maMid) ? payload.maMid : [],
               color: '#58A6FF',
-              lineWidth: 1.15,
+              lineWidth: 1,
               lineStyle: 2,
             },
             {
               data: Array.isArray(payload.maSlow) ? payload.maSlow : [],
               color: '#C58BFF',
-              lineWidth: 1.05,
+              lineWidth: 0.9,
               lineStyle: 1,
             },
           ].filter((item) => Array.isArray(item.data) && item.data.length);
@@ -388,7 +412,7 @@ export function buildLightweightChartHtml({
             {
               priceFormat,
               color: '#58A6FF',
-              lineWidth: 1.25,
+              lineWidth: 1,
               lineStyle: 2,
               crosshairMarkerVisible: false,
               lastValueVisible: false,
@@ -405,7 +429,7 @@ export function buildLightweightChartHtml({
             {
               priceFormat,
               color: '#D7A5FF',
-              lineWidth: 1.1,
+              lineWidth: 0.9,
               lineStyle: 1,
               crosshairMarkerVisible: false,
               lastValueVisible: false,
@@ -420,7 +444,7 @@ export function buildLightweightChartHtml({
             {
               priceFormat,
               color: '#8C6BFF',
-              lineWidth: 1.1,
+              lineWidth: 0.9,
               lineStyle: 1,
               crosshairMarkerVisible: false,
               lastValueVisible: false,
@@ -437,7 +461,7 @@ export function buildLightweightChartHtml({
             {
               priceFormat,
               color: '#7CE7FF',
-              lineWidth: 1.25,
+              lineWidth: 1,
               lineStyle: 2,
               crosshairMarkerVisible: false,
               lastValueVisible: false,
@@ -463,7 +487,7 @@ export function buildLightweightChartHtml({
             nextPaneIndex
           );
           volumeSeries.priceScale().applyOptions({
-            scaleMargins: { top: 0.08, bottom: 0.04 },
+            scaleMargins: { top: 0.12, bottom: 0.06 },
             visible: true,
             borderVisible: false,
           });
@@ -552,7 +576,14 @@ export function buildLightweightChartHtml({
         };
 
         resize();
-        chart.timeScale().fitContent();
+        if (payload.line.length > 54) {
+          chart.timeScale().setVisibleLogicalRange({
+            from: Math.max(payload.line.length - 72, 0),
+            to: payload.line.length + 6,
+          });
+        } else {
+          chart.timeScale().fitContent();
+        }
 
         requestAnimationFrame(() => {
           const canvases = container.querySelectorAll('canvas');

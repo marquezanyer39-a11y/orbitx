@@ -38,6 +38,7 @@ export interface OrbitLightweightChartProps {
   attribution?: boolean;
   style?: StyleProp<ViewStyle>;
   colorOverrides?: Partial<OrbitChartHtmlColors>;
+  tradeMarker?: OrbitLightweightChartRuntimeConfig['tradeMarker'];
   emptyTitle?: string;
   emptyBody?: string;
 }
@@ -55,8 +56,9 @@ function OrbitLightweightChartComponent({
   attribution = false,
   style,
   colorOverrides,
+  tradeMarker,
   emptyTitle = 'Grafico no disponible',
-  emptyBody = 'OrbitX mostrara el grafico cuando reciba datos verificables del mercado.',
+  emptyBody = 'QVEX mostrara el grafico cuando reciba datos verificables del mercado.',
 }: OrbitLightweightChartProps) {
   const { colors } = useAppTheme();
   const webViewRef = useRef<WebView>(null);
@@ -124,6 +126,7 @@ function OrbitLightweightChartComponent({
         loss: colors.loss,
         ...colorOverrides,
       },
+      tradeMarker,
     }),
     [
       attribution,
@@ -140,6 +143,7 @@ function OrbitLightweightChartComponent({
       height,
       interactive,
       payload,
+      tradeMarker,
     ],
   );
 
@@ -188,7 +192,7 @@ function OrbitLightweightChartComponent({
       <View style={[styles.shell, { height }, style]}>
         <iframe
           srcDoc={html}
-          title="OrbitX Trading Chart"
+          title="QVEX Trading Chart"
           style={{
             width: '100%',
             height: '100%',

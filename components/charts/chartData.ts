@@ -142,7 +142,7 @@ function buildVolume(
     return {
       time: candle.time,
       value,
-      color: candle.close >= candle.open ? `${positiveColor}55` : `${negativeColor}55`,
+      color: candle.close >= candle.open ? `${positiveColor}38` : `${negativeColor}38`,
     };
   });
 }
@@ -531,8 +531,8 @@ export function buildOrbitChartPayloadFromHistory(
           ...point,
           color:
             normalized.candles[index]?.close >= normalized.candles[index]?.open
-              ? `${positiveColor}55`
-              : `${negativeColor}55`,
+              ? `${positiveColor}38`
+              : `${negativeColor}38`,
         }))
       : buildVolume(normalized.candles, positiveColor, negativeColor);
   const vwap = buildVwap(times, normalized.candles, volume);
