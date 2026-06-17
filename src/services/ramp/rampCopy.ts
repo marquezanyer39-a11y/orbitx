@@ -76,7 +76,7 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
             ? 'Convert crypto into fiat through the provider off-ramp flow.'
             : 'Pay with crypto only when the provider enables that product.',
     summaryTitle: 'Review before continuing',
-    summarySubtitle: 'OrbitX shows context, fees and provider status before redirecting you.',
+    summarySubtitle: 'QVEX shows context, fees and provider status before redirecting you.',
     providerRecommended: 'Recommended provider',
     providerPendingQuote: 'Live quote pending provider configuration',
     providerUnavailable: 'Provider unavailable',
@@ -93,12 +93,12 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
       status === 'completed' ? 'Order completed' : status === 'cancelled' ? 'Flow cancelled' : 'Order failed',
     resultBody: (status, provider) =>
       status === 'completed'
-        ? `${provider} confirmed the order and sent the final result back to OrbitX.`
+        ? `${provider} confirmed the order and sent the final result back to QVEX.`
         : status === 'cancelled'
           ? `The ${provider} flow was cancelled before completion.`
           : `${provider} returned a failure or incomplete result. Review the details before retrying.`,
     askAstra: 'Ask Astra',
-    partnerFee: 'OrbitX partner fee',
+    partnerFee: 'QVEX partner fee',
     providerFee: 'Provider fees',
     providerFeePending: 'Will be confirmed by the provider',
     totalEstimated: 'Estimated total',
@@ -110,17 +110,17 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     revenueHint: 'Estimated revenue share',
     configMissingTitle: 'Provider setup pending',
     configMissingBody: (provider) =>
-      `${provider} still needs the quote or widget-session endpoint configured before OrbitX can launch the live flow.`,
+      `${provider} still needs the quote or widget-session endpoint configured before QVEX can launch the live flow.`,
     statusLabel: 'Status',
     flowComplete: 'Completed',
     flowCancel: 'Cancel flow',
     flowRetry: 'Retry',
-    activeCountryDisabled: 'This country is not enabled in the current OrbitX configuration.',
+    activeCountryDisabled: 'This country is not enabled in the current QVEX configuration.',
     unsupportedMode: 'This mode is not enabled yet for the selected provider.',
     backToWallet: 'Back to wallet',
     liveProviderNotice: (provider) =>
-      `KYC, AML, fiat processing and execution are handled directly by ${provider}. OrbitX only orchestrates the experience.`,
-    pendingQuoteHint: 'OrbitX will show exact provider fees as soon as the provider quote endpoint is configured.',
+      `KYC, AML, fiat processing and execution are handled directly by ${provider}. QVEX only orchestrates the experience.`,
+    pendingQuoteHint: 'QVEX will show exact provider fees as soon as the provider quote endpoint is configured.',
     providerDepends: 'The financial flow depends on the external provider.',
     continueDisabled: 'Complete provider setup to unlock the live flow.',
     buyLabel: 'Buy',
@@ -148,7 +148,7 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
             ? 'Convierte crypto a fiat usando el flujo off-ramp del proveedor.'
             : 'Paga con crypto solo cuando el proveedor tenga ese producto habilitado.',
     summaryTitle: 'Revisa antes de continuar',
-    summarySubtitle: 'OrbitX te muestra contexto, comisiones y estado del proveedor antes de redirigirte.',
+    summarySubtitle: 'QVEX te muestra contexto, comisiones y estado del proveedor antes de redirigirte.',
     providerRecommended: 'Proveedor recomendado',
     providerPendingQuote: 'Cotizacion real pendiente de configuracion del proveedor',
     providerUnavailable: 'Proveedor no disponible',
@@ -165,12 +165,12 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
       status === 'completed' ? 'Orden completada' : status === 'cancelled' ? 'Flujo cancelado' : 'Orden fallida',
     resultBody: (status, provider) =>
       status === 'completed'
-        ? `${provider} confirmo la orden y devolvio el resultado final a OrbitX.`
+        ? `${provider} confirmo la orden y devolvio el resultado final a QVEX.`
         : status === 'cancelled'
           ? `El flujo de ${provider} se cancelo antes de completarse.`
           : `${provider} devolvio un resultado fallido o incompleto. Revisa los detalles antes de reintentar.`,
     askAstra: 'Preguntar a Astra',
-    partnerFee: 'Partner fee OrbitX',
+    partnerFee: 'Partner fee QVEX',
     providerFee: 'Comisiones del proveedor',
     providerFeePending: 'Se confirmara dentro del proveedor',
     totalEstimated: 'Total estimado',
@@ -182,17 +182,17 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     revenueHint: 'Revenue share estimado',
     configMissingTitle: 'Configuracion del proveedor pendiente',
     configMissingBody: (provider) =>
-      `${provider} aun necesita el endpoint de cotizacion o de sesion del widget antes de que OrbitX pueda lanzar el flujo real.`,
+      `${provider} aun necesita el endpoint de cotizacion o de sesion del widget antes de que QVEX pueda lanzar el flujo real.`,
     statusLabel: 'Estado',
     flowComplete: 'Completado',
     flowCancel: 'Cancelar flujo',
     flowRetry: 'Reintentar',
-    activeCountryDisabled: 'Este pais no esta habilitado en la configuracion actual de OrbitX.',
+    activeCountryDisabled: 'Este pais no esta habilitado en la configuracion actual de QVEX.',
     unsupportedMode: 'Este modo todavia no esta habilitado para el proveedor seleccionado.',
     backToWallet: 'Volver a billetera',
     liveProviderNotice: (provider) =>
-      `KYC, AML, procesamiento fiat y ejecucion financiera dependen directamente de ${provider}. OrbitX solo orquesta la experiencia.`,
-    pendingQuoteHint: 'OrbitX mostrara comisiones exactas en cuanto el endpoint de cotizacion del proveedor quede configurado.',
+      `KYC, AML, procesamiento fiat y ejecucion financiera dependen directamente de ${provider}. QVEX solo orquesta la experiencia.`,
+    pendingQuoteHint: 'QVEX mostrara comisiones exactas en cuanto el endpoint de cotizacion del proveedor quede configurado.',
     providerDepends: 'El flujo financiero depende del proveedor externo.',
     continueDisabled: 'Completa la configuracion del proveedor para desbloquear el flujo real.',
     buyLabel: 'Comprar',
@@ -213,7 +213,7 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
             ? 'Converta cripto em fiat usando o fluxo off-ramp do provedor.'
             : 'Pague com cripto somente quando o provedor habilitar esse produto.',
     summaryTitle: 'Revise antes de continuar',
-    summarySubtitle: 'A OrbitX mostra contexto, taxas e status do provedor antes do redirecionamento.',
+    summarySubtitle: 'A QVEX mostra contexto, taxas e status do provedor antes do redirecionamento.',
     providerRecommended: 'Provedor recomendado',
     providerPendingQuote: 'Cotacao real pendente de configuracao do provedor',
     providerUnavailable: 'Provedor indisponivel',
@@ -229,12 +229,12 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     resultTitle: (status) => (status === 'completed' ? 'Ordem concluida' : status === 'cancelled' ? 'Fluxo cancelado' : 'Ordem falhou'),
     resultBody: (status, provider) =>
       status === 'completed'
-        ? `${provider} confirmou a ordem e devolveu o resultado final para a OrbitX.`
+        ? `${provider} confirmou a ordem e devolveu o resultado final para a QVEX.`
         : status === 'cancelled'
           ? `O fluxo de ${provider} foi cancelado antes da conclusao.`
           : `${provider} devolveu um resultado com falha ou incompleto. Revise os detalhes antes de tentar novamente.`,
     askAstra: 'Perguntar para Astra',
-    partnerFee: 'Partner fee OrbitX',
+    partnerFee: 'Partner fee QVEX',
     providerFee: 'Taxas do provedor',
     providerFeePending: 'Sera confirmado dentro do provedor',
     totalEstimated: 'Total estimado',
@@ -245,16 +245,16 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     method: 'Metodo de pagamento',
     revenueHint: 'Revenue share estimado',
     configMissingTitle: 'Configuracao do provedor pendente',
-    configMissingBody: (provider) => `${provider} ainda precisa do endpoint de cotacao ou de sessao do widget antes que a OrbitX possa iniciar o fluxo real.`,
+    configMissingBody: (provider) => `${provider} ainda precisa do endpoint de cotacao ou de sessao do widget antes que a QVEX possa iniciar o fluxo real.`,
     statusLabel: 'Status',
     flowComplete: 'Concluido',
     flowCancel: 'Cancelar fluxo',
     flowRetry: 'Tentar novamente',
-    activeCountryDisabled: 'Este pais nao esta habilitado na configuracao atual da OrbitX.',
+    activeCountryDisabled: 'Este pais nao esta habilitado na configuracao atual da QVEX.',
     unsupportedMode: 'Este modo ainda nao esta habilitado para o provedor selecionado.',
     backToWallet: 'Voltar para carteira',
-    liveProviderNotice: (provider) => `KYC, AML, processamento fiat e execucao financeira dependem diretamente da ${provider}. A OrbitX so orquestra a experiencia.`,
-    pendingQuoteHint: 'A OrbitX exibira taxas exatas assim que o endpoint de cotacao do provedor estiver configurado.',
+    liveProviderNotice: (provider) => `KYC, AML, processamento fiat e execucao financeira dependem diretamente da ${provider}. A QVEX so orquestra a experiencia.`,
+    pendingQuoteHint: 'A QVEX exibira taxas exatas assim que o endpoint de cotacao do provedor estiver configurado.',
     providerDepends: 'O fluxo financeiro depende do provedor externo.',
     continueDisabled: 'Conclua a configuracao do provedor para liberar o fluxo real.',
     buyLabel: 'Comprar',
@@ -275,7 +275,7 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
             ? '通过服务商的 off-ramp 流程把加密资产转换为法币。'
             : '仅当服务商支持时，才可使用加密资产支付。',
     summaryTitle: '继续前请确认',
-    summarySubtitle: 'OrbitX 会先展示上下文、费用和服务商状态，再进行跳转。',
+    summarySubtitle: 'QVEX 会先展示上下文、费用和服务商状态，再进行跳转。',
     providerRecommended: '推荐服务商',
     providerPendingQuote: '实时报价等待服务商配置完成',
     providerUnavailable: '服务商不可用',
@@ -291,12 +291,12 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     resultTitle: (status) => (status === 'completed' ? '订单已完成' : status === 'cancelled' ? '流程已取消' : '订单失败'),
     resultBody: (status, provider) =>
       status === 'completed'
-        ? `${provider} 已确认订单，并将最终结果返回给 OrbitX。`
+        ? `${provider} 已确认订单，并将最终结果返回给 QVEX。`
         : status === 'cancelled'
           ? `${provider} 流程在完成前已被取消。`
           : `${provider} 返回了失败或不完整的结果。请先查看详情再重试。`,
     askAstra: '询问 Astra',
-    partnerFee: 'OrbitX 合作费',
+    partnerFee: 'QVEX 合作费',
     providerFee: '服务商费用',
     providerFeePending: '将在服务商页面确认',
     totalEstimated: '预计总额',
@@ -307,16 +307,16 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     method: '支付方式',
     revenueHint: '预计分成',
     configMissingTitle: '服务商配置未完成',
-    configMissingBody: (provider) => `${provider} 仍需要配置报价或 widget 会话端点，OrbitX 才能发起真实流程。`,
+    configMissingBody: (provider) => `${provider} 仍需要配置报价或 widget 会话端点，QVEX 才能发起真实流程。`,
     statusLabel: '状态',
     flowComplete: '已完成',
     flowCancel: '取消流程',
     flowRetry: '重试',
-    activeCountryDisabled: '当前 OrbitX 配置尚未启用该国家/地区。',
+    activeCountryDisabled: '当前 QVEX 配置尚未启用该国家/地区。',
     unsupportedMode: '所选服务商暂未启用此模式。',
     backToWallet: '返回钱包',
-    liveProviderNotice: (provider) => `KYC、AML、法币处理和金融执行均由 ${provider} 直接负责，OrbitX 仅负责前端编排。`,
-    pendingQuoteHint: '一旦服务商报价端点配置完成，OrbitX 就会显示准确费用。',
+    liveProviderNotice: (provider) => `KYC、AML、法币处理和金融执行均由 ${provider} 直接负责，QVEX 仅负责前端编排。`,
+    pendingQuoteHint: '一旦服务商报价端点配置完成，QVEX 就会显示准确费用。',
     providerDepends: '金融流程由外部服务商负责。',
     continueDisabled: '请先完成服务商配置，再开启真实流程。',
     buyLabel: '买入',
@@ -337,7 +337,7 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
             ? 'प्रदाता के off-ramp फ्लो से crypto को fiat में बदलें।'
             : 'केवल तब भुगतान करें जब प्रदाता यह उत्पाद सक्रिय करे।',
     summaryTitle: 'आगे बढ़ने से पहले समीक्षा करें',
-    summarySubtitle: 'OrbitX रीडायरेक्ट से पहले संदर्भ, शुल्क और प्रदाता की स्थिति दिखाता है।',
+    summarySubtitle: 'QVEX रीडायरेक्ट से पहले संदर्भ, शुल्क और प्रदाता की स्थिति दिखाता है।',
     providerRecommended: 'सुझाया गया प्रदाता',
     providerPendingQuote: 'लाइव कोट प्रदाता कॉन्फ़िगरेशन की प्रतीक्षा में है',
     providerUnavailable: 'प्रदाता उपलब्ध नहीं है',
@@ -353,12 +353,12 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     resultTitle: (status) => (status === 'completed' ? 'ऑर्डर पूरा हुआ' : status === 'cancelled' ? 'फ्लो रद्द हुआ' : 'ऑर्डर विफल हुआ'),
     resultBody: (status, provider) =>
       status === 'completed'
-        ? `${provider} ने ऑर्डर की पुष्टि की और अंतिम परिणाम OrbitX को लौटाया।`
+        ? `${provider} ने ऑर्डर की पुष्टि की और अंतिम परिणाम QVEX को लौटाया।`
         : status === 'cancelled'
           ? `${provider} फ्लो पूरा होने से पहले रद्द कर दिया गया।`
           : `${provider} ने विफल या अधूरा परिणाम लौटाया। दोबारा कोशिश से पहले विवरण देखें।`,
     askAstra: 'Astra से पूछें',
-    partnerFee: 'OrbitX पार्टनर शुल्क',
+    partnerFee: 'QVEX पार्टनर शुल्क',
     providerFee: 'प्रदाता शुल्क',
     providerFeePending: 'प्रदाता के भीतर पुष्टि होगी',
     totalEstimated: 'अनुमानित कुल',
@@ -369,16 +369,16 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     method: 'भुगतान विधि',
     revenueHint: 'अनुमानित रेवेन्यू शेयर',
     configMissingTitle: 'प्रदाता सेटअप लंबित है',
-    configMissingBody: (provider) => `${provider} को अभी quote या widget-session endpoint की आवश्यकता है, तभी OrbitX लाइव फ्लो शुरू कर सकता है।`,
+    configMissingBody: (provider) => `${provider} को अभी quote या widget-session endpoint की आवश्यकता है, तभी QVEX लाइव फ्लो शुरू कर सकता है।`,
     statusLabel: 'स्थिति',
     flowComplete: 'पूरा हुआ',
     flowCancel: 'फ्लो रद्द करें',
     flowRetry: 'फिर कोशिश करें',
-    activeCountryDisabled: 'यह देश OrbitX की वर्तमान कॉन्फ़िगरेशन में सक्षम नहीं है।',
+    activeCountryDisabled: 'यह देश QVEX की वर्तमान कॉन्फ़िगरेशन में सक्षम नहीं है।',
     unsupportedMode: 'यह मोड चुने हुए प्रदाता के लिए अभी सक्षम नहीं है।',
     backToWallet: 'वॉलेट पर वापस जाएं',
-    liveProviderNotice: (provider) => `KYC, AML, fiat प्रोसेसिंग और वित्तीय निष्पादन सीधे ${provider} संभालता है। OrbitX केवल अनुभव को व्यवस्थित करता है।`,
-    pendingQuoteHint: 'जैसे ही प्रदाता quote endpoint कॉन्फ़िगर होगा, OrbitX सटीक शुल्क दिखाएगा।',
+    liveProviderNotice: (provider) => `KYC, AML, fiat प्रोसेसिंग और वित्तीय निष्पादन सीधे ${provider} संभालता है। QVEX केवल अनुभव को व्यवस्थित करता है।`,
+    pendingQuoteHint: 'जैसे ही प्रदाता quote endpoint कॉन्फ़िगर होगा, QVEX सटीक शुल्क दिखाएगा।',
     providerDepends: 'वित्तीय फ्लो बाहरी प्रदाता पर निर्भर करता है।',
     continueDisabled: 'लाइव फ्लो खोलने के लिए पहले प्रदाता सेटअप पूरा करें।',
     buyLabel: 'खरीदें',
@@ -399,7 +399,7 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
             ? 'Конвертация crypto в fiat через off-ramp провайдера.'
             : 'Оплата криптой доступна только если провайдер поддерживает этот продукт.',
     summaryTitle: 'Проверьте перед продолжением',
-    summarySubtitle: 'OrbitX сначала показывает контекст, комиссии и статус провайдера.',
+    summarySubtitle: 'QVEX сначала показывает контекст, комиссии и статус провайдера.',
     providerRecommended: 'Рекомендуемый провайдер',
     providerPendingQuote: 'Реальная котировка ждёт настройки провайдера',
     providerUnavailable: 'Провайдер недоступен',
@@ -415,12 +415,12 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     resultTitle: (status) => (status === 'completed' ? 'Ордер завершен' : status === 'cancelled' ? 'Поток отменен' : 'Ордер завершился ошибкой'),
     resultBody: (status, provider) =>
       status === 'completed'
-        ? `${provider} подтвердил ордер и вернул результат в OrbitX.`
+        ? `${provider} подтвердил ордер и вернул результат в QVEX.`
         : status === 'cancelled'
           ? `Поток ${provider} был отменен до завершения.`
           : `${provider} вернул ошибку или неполный результат. Проверьте детали перед повтором.`,
     askAstra: 'Спросить Astra',
-    partnerFee: 'Партнерская комиссия OrbitX',
+    partnerFee: 'Партнерская комиссия QVEX',
     providerFee: 'Комиссии провайдера',
     providerFeePending: 'Будет подтверждено у провайдера',
     totalEstimated: 'Оценочный итог',
@@ -431,16 +431,16 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     method: 'Способ оплаты',
     revenueHint: 'Оценочный revenue share',
     configMissingTitle: 'Настройка провайдера не завершена',
-    configMissingBody: (provider) => `${provider} всё ещё требует настроить quote или widget-session endpoint, прежде чем OrbitX сможет запустить реальный поток.`,
+    configMissingBody: (provider) => `${provider} всё ещё требует настроить quote или widget-session endpoint, прежде чем QVEX сможет запустить реальный поток.`,
     statusLabel: 'Статус',
     flowComplete: 'Завершено',
     flowCancel: 'Отменить поток',
     flowRetry: 'Повторить',
-    activeCountryDisabled: 'Эта страна не включена в текущей конфигурации OrbitX.',
+    activeCountryDisabled: 'Эта страна не включена в текущей конфигурации QVEX.',
     unsupportedMode: 'Этот режим пока не включен для выбранного провайдера.',
     backToWallet: 'Назад в кошелек',
-    liveProviderNotice: (provider) => `KYC, AML, fiat-процессинг и финансовое исполнение выполняет ${provider}. OrbitX выступает только как фронтенд-оркестратор.`,
-    pendingQuoteHint: 'Когда quote endpoint провайдера будет настроен, OrbitX покажет точные комиссии.',
+    liveProviderNotice: (provider) => `KYC, AML, fiat-процессинг и финансовое исполнение выполняет ${provider}. QVEX выступает только как фронтенд-оркестратор.`,
+    pendingQuoteHint: 'Когда quote endpoint провайдера будет настроен, QVEX покажет точные комиссии.',
     providerDepends: 'Финансовый поток зависит от внешнего провайдера.',
     continueDisabled: 'Завершите настройку провайдера, чтобы открыть реальный поток.',
     buyLabel: 'Купить',
@@ -461,7 +461,7 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
             ? 'تحويل العملات الرقمية إلى عملات ورقية عبر تدفق off-ramp من المزود.'
             : 'الدفع بالعملات الرقمية متاح فقط إذا فعّل المزود هذا المنتج.',
     summaryTitle: 'راجع قبل المتابعة',
-    summarySubtitle: 'يعرض OrbitX السياق والرسوم وحالة المزود قبل التحويل.',
+    summarySubtitle: 'يعرض QVEX السياق والرسوم وحالة المزود قبل التحويل.',
     providerRecommended: 'المزود الموصى به',
     providerPendingQuote: 'السعر الفعلي بانتظار إعداد المزود',
     providerUnavailable: 'المزود غير متاح',
@@ -477,12 +477,12 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     resultTitle: (status) => (status === 'completed' ? 'اكتمل الطلب' : status === 'cancelled' ? 'تم إلغاء التدفق' : 'فشل الطلب'),
     resultBody: (status, provider) =>
       status === 'completed'
-        ? `أكد ${provider} الطلب وأعاد النتيجة النهائية إلى OrbitX.`
+        ? `أكد ${provider} الطلب وأعاد النتيجة النهائية إلى QVEX.`
         : status === 'cancelled'
           ? `تم إلغاء تدفق ${provider} قبل الاكتمال.`
           : `أعاد ${provider} نتيجة فاشلة أو غير مكتملة. راجع التفاصيل قبل إعادة المحاولة.`,
     askAstra: 'اسأل Astra',
-    partnerFee: 'رسوم شريك OrbitX',
+    partnerFee: 'رسوم شريك QVEX',
     providerFee: 'رسوم المزود',
     providerFeePending: 'سيتم تأكيدها داخل المزود',
     totalEstimated: 'الإجمالي التقديري',
@@ -493,16 +493,16 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     method: 'طريقة الدفع',
     revenueHint: 'حصة الإيراد التقديرية',
     configMissingTitle: 'إعداد المزود غير مكتمل',
-    configMissingBody: (provider) => `لا يزال ${provider} بحاجة إلى endpoint للتسعير أو جلسة widget قبل أن يتمكن OrbitX من إطلاق التدفق الحقيقي.`,
+    configMissingBody: (provider) => `لا يزال ${provider} بحاجة إلى endpoint للتسعير أو جلسة widget قبل أن يتمكن QVEX من إطلاق التدفق الحقيقي.`,
     statusLabel: 'الحالة',
     flowComplete: 'مكتمل',
     flowCancel: 'إلغاء التدفق',
     flowRetry: 'إعادة المحاولة',
-    activeCountryDisabled: 'هذا البلد غير مفعّل في إعداد OrbitX الحالي.',
+    activeCountryDisabled: 'هذا البلد غير مفعّل في إعداد QVEX الحالي.',
     unsupportedMode: 'هذا الوضع غير مفعّل بعد للمزود المحدد.',
     backToWallet: 'العودة إلى المحفظة',
-    liveProviderNotice: (provider) => `يقوم ${provider} مباشرةً بإدارة KYC وAML ومعالجة العملات الورقية والتنفيذ المالي. OrbitX ينسق التجربة فقط.`,
-    pendingQuoteHint: 'سيعرض OrbitX الرسوم الدقيقة بمجرد إعداد endpoint التسعير الخاص بالمزود.',
+    liveProviderNotice: (provider) => `يقوم ${provider} مباشرةً بإدارة KYC وAML ومعالجة العملات الورقية والتنفيذ المالي. QVEX ينسق التجربة فقط.`,
+    pendingQuoteHint: 'سيعرض QVEX الرسوم الدقيقة بمجرد إعداد endpoint التسعير الخاص بالمزود.',
     providerDepends: 'يعتمد التدفق المالي على المزود الخارجي.',
     continueDisabled: 'أكمل إعداد المزود لفتح التدفق الحقيقي.',
     buyLabel: 'شراء',
@@ -523,7 +523,7 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
             ? 'Konversi kripto ke fiat melalui alur off-ramp penyedia.'
             : 'Bayar dengan kripto hanya bila penyedia mengaktifkan produk tersebut.',
     summaryTitle: 'Tinjau sebelum lanjut',
-    summarySubtitle: 'OrbitX menampilkan konteks, biaya, dan status penyedia sebelum pengalihan.',
+    summarySubtitle: 'QVEX menampilkan konteks, biaya, dan status penyedia sebelum pengalihan.',
     providerRecommended: 'Penyedia yang direkomendasikan',
     providerPendingQuote: 'Kutipan live menunggu konfigurasi penyedia',
     providerUnavailable: 'Penyedia tidak tersedia',
@@ -539,12 +539,12 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     resultTitle: (status) => (status === 'completed' ? 'Order selesai' : status === 'cancelled' ? 'Alur dibatalkan' : 'Order gagal'),
     resultBody: (status, provider) =>
       status === 'completed'
-        ? `${provider} mengonfirmasi order dan mengembalikan hasil akhir ke OrbitX.`
+        ? `${provider} mengonfirmasi order dan mengembalikan hasil akhir ke QVEX.`
         : status === 'cancelled'
           ? `Alur ${provider} dibatalkan sebelum selesai.`
           : `${provider} mengembalikan hasil gagal atau tidak lengkap. Tinjau detailnya sebelum mencoba lagi.`,
     askAstra: 'Tanya Astra',
-    partnerFee: 'Partner fee OrbitX',
+    partnerFee: 'Partner fee QVEX',
     providerFee: 'Biaya penyedia',
     providerFeePending: 'Akan dikonfirmasi di dalam penyedia',
     totalEstimated: 'Total estimasi',
@@ -555,16 +555,16 @@ const RAMP_COPY: Record<RampCopyLanguage, RampCopy> = {
     method: 'Metode pembayaran',
     revenueHint: 'Estimasi revenue share',
     configMissingTitle: 'Pengaturan penyedia belum selesai',
-    configMissingBody: (provider) => `${provider} masih membutuhkan endpoint quote atau widget-session sebelum OrbitX bisa menjalankan alur live.`,
+    configMissingBody: (provider) => `${provider} masih membutuhkan endpoint quote atau widget-session sebelum QVEX bisa menjalankan alur live.`,
     statusLabel: 'Status',
     flowComplete: 'Selesai',
     flowCancel: 'Batalkan alur',
     flowRetry: 'Coba lagi',
-    activeCountryDisabled: 'Negara ini belum diaktifkan pada konfigurasi OrbitX saat ini.',
+    activeCountryDisabled: 'Negara ini belum diaktifkan pada konfigurasi QVEX saat ini.',
     unsupportedMode: 'Mode ini belum diaktifkan untuk penyedia yang dipilih.',
     backToWallet: 'Kembali ke wallet',
-    liveProviderNotice: (provider) => `KYC, AML, pemrosesan fiat, dan eksekusi keuangan ditangani langsung oleh ${provider}. OrbitX hanya mengorkestrasi pengalaman.`,
-    pendingQuoteHint: 'OrbitX akan menampilkan biaya akurat begitu endpoint quote penyedia dikonfigurasi.',
+    liveProviderNotice: (provider) => `KYC, AML, pemrosesan fiat, dan eksekusi keuangan ditangani langsung oleh ${provider}. QVEX hanya mengorkestrasi pengalaman.`,
+    pendingQuoteHint: 'QVEX akan menampilkan biaya akurat begitu endpoint quote penyedia dikonfigurasi.',
     providerDepends: 'Alur keuangan bergantung pada penyedia eksternal.',
     continueDisabled: 'Selesaikan pengaturan penyedia untuk membuka alur live.',
     buyLabel: 'Beli',

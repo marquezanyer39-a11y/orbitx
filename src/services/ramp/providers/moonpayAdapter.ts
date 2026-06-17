@@ -1,7 +1,5 @@
 import { buildRampRedirectUrl } from '../rampConfig';
 import type {
-  RampConfig,
-  RampFlowRequest,
   RampPresentationMode,
   RampProviderAdapter,
   RampProviderAvailability,
@@ -46,7 +44,7 @@ export const moonpayAdapter: RampProviderAdapter = {
       return {
         available: false,
         reasonCode: 'mode_disabled',
-        reasonLabel: 'This mode is disabled in the current OrbitX configuration.',
+        reasonLabel: 'This mode is disabled in the current QVEX configuration.',
         presentationMode: getPresentationMode(),
       };
     }
@@ -55,7 +53,7 @@ export const moonpayAdapter: RampProviderAdapter = {
       return {
         available: false,
         reasonCode: 'provider_setup_pending',
-        reasonLabel: 'MoonPay still needs a backend widget-session endpoint in OrbitX.',
+        reasonLabel: 'MoonPay still needs a backend widget-session endpoint in QVEX.',
         presentationMode: getPresentationMode(),
       };
     }

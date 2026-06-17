@@ -70,7 +70,7 @@ export function detectDeviceCountryCode() {
 }
 
 export function buildRampRedirectUrl(providerId: RampProviderId) {
-  const scheme = Constants.expoConfig?.scheme ?? 'orbitx';
+  const scheme = Constants.expoConfig?.scheme ?? 'qvex';
   return `${scheme}://ramp/result?provider=${providerId}`;
 }
 
@@ -104,7 +104,7 @@ export function getRampConfig(): RampConfig {
       referrerDomain:
         readEnv('EXPO_PUBLIC_TRANSAK_REFERRER_DOMAIN') ||
         Constants.expoConfig?.slug ||
-        'orbitx.app',
+        'qvex.app',
     },
     moonpay: {
       apiKey: readEnv('EXPO_PUBLIC_MOONPAY_API_KEY'),

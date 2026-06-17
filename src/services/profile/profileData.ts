@@ -27,8 +27,8 @@ export function buildProfileIdentity(profile: UserProfile, session: SessionState
   const fallbackName =
     profile.email?.split('@')[0]?.replace(/[._-]/g, ' ').trim() || 'Anyer';
   const displayName =
-    profile.name && profile.name !== 'OrbitX User' ? profile.name : fallbackName;
-  const email = profile.email || session.recoveryEmail || 'anyer@orbitx.app';
+    profile.name && profile.name !== 'QVEX User' ? profile.name : fallbackName;
+  const email = profile.email || session.recoveryEmail || 'anyer@qvex.app';
 
   return {
     displayName,

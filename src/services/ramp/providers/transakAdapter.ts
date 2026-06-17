@@ -65,7 +65,7 @@ async function postJson<TRequest, TResponse>(url: string, payload: TRequest): Pr
 
 function ensureModeSupported(request: RampFlowRequest) {
   if (request.mode === 'pay') {
-    throw new Error('Pay is not enabled with Transak in this OrbitX configuration.');
+    throw new Error('Pay is not enabled with Transak in this QVEX configuration.');
   }
 }
 
@@ -75,7 +75,7 @@ function ensureCountryEnabled(request: RampFlowRequest, config: RampConfig) {
   }
 
   if (!request.countryCode || !config.enabledCountries.includes(request.countryCode.toUpperCase())) {
-    throw new Error('Country is not enabled in the current OrbitX ramp configuration.');
+    throw new Error('Country is not enabled in the current QVEX ramp configuration.');
   }
 }
 
@@ -85,7 +85,7 @@ function ensureFiatEnabled(request: RampFlowRequest, config: RampConfig) {
   }
 
   if (!config.enabledFiatCurrencies.includes(request.fiatCurrency.toUpperCase())) {
-    throw new Error('Fiat currency is not enabled in the current OrbitX ramp configuration.');
+    throw new Error('Fiat currency is not enabled in the current QVEX ramp configuration.');
   }
 }
 
@@ -98,7 +98,7 @@ export const transakAdapter: RampProviderAdapter = {
       return {
         available: false,
         reasonCode: 'mode_disabled',
-        reasonLabel: 'This mode is disabled in the current OrbitX configuration.',
+        reasonLabel: 'This mode is disabled in the current QVEX configuration.',
         presentationMode: getPresentationMode(),
       };
     }
@@ -107,7 +107,7 @@ export const transakAdapter: RampProviderAdapter = {
       return {
         available: false,
         reasonCode: 'mode_unavailable',
-        reasonLabel: 'Transak pay flow is not enabled yet in OrbitX.',
+        reasonLabel: 'Transak pay flow is not enabled yet in QVEX.',
         presentationMode: getPresentationMode(),
       };
     }
@@ -116,7 +116,7 @@ export const transakAdapter: RampProviderAdapter = {
       return {
         available: false,
         reasonCode: 'country_disabled',
-        reasonLabel: 'Country is disabled in the current OrbitX configuration.',
+        reasonLabel: 'Country is disabled in the current QVEX configuration.',
         presentationMode: getPresentationMode(),
       };
     }
@@ -125,7 +125,7 @@ export const transakAdapter: RampProviderAdapter = {
       return {
         available: false,
         reasonCode: 'fiat_disabled',
-        reasonLabel: 'Fiat currency is disabled in the current OrbitX configuration.',
+        reasonLabel: 'Fiat currency is disabled in the current QVEX configuration.',
         presentationMode: getPresentationMode(),
       };
     }
