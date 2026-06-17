@@ -38,7 +38,7 @@ export async function createTwoFactorSetup(params: {
   const secret = generateSecret();
   const accountLabel = normalizeAccountLabel(params.email);
   const otpauthUrl = generateURI({
-    issuer: 'OrbitX',
+    issuer: 'QVEX',
     label: accountLabel,
     secret,
   });

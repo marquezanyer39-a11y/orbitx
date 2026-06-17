@@ -100,7 +100,7 @@ export function TwoFactorSetupSheet({
                 >
                   <Text style={[styles.infoTitle, { color: colors.text }]}>Elige tu app</Text>
                   <Text style={[styles.infoBody, { color: colors.textMuted }]}>
-                    Puedes usar Google Authenticator o Authy. OrbitX guardara la configuracion
+                    Puedes usar Google Authenticator o Authy. QVEX guardara la configuracion
                     localmente y quedara lista para la integracion de servidor.
                   </Text>
                 </View>
