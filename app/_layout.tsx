@@ -36,24 +36,32 @@ import {
 import { looksLikeOrbitAuthCallbackUrl, subscribeToOrbitAuth } from '../utils/orbitAuth';
 
 export default function RootLayout() {
+  if (QVEX_STABLE_APK_MODE) {
+    return <StableLayout />;
+  }
+
+  return <FullLayout />;
+}
+
+function StableLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false }} />
+        <ToastHost />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+function FullLayout() {
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
   });
-
-  if (QVEX_STABLE_APK_MODE) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaProvider>
-          <StatusBar style="light" />
-          <Stack screenOptions={{ headerShown: false }} />
-          <ToastHost />
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
-    );
-  }
 
   const authHasHydrated = useAuthStore((state) => state.hasHydrated);
   const authHasBootstrapped = useAuthStore((state) => state.hasBootstrapped);
