@@ -1,513 +1,531 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { FONT, ORBITX_COLORS, RADII, withOpacity } from '../../constants/theme';
+import { FEATURE_STATUS } from '../../src/constants/featureStatus';
 import {
-  ACTIVE_LAUNCH_CHAINS,
-  ORBIT_CHAIN_CONFIG,
-  buildExplorerAddressUrl,
-  buildExplorerTxUrl,
-  getLaunchChainConfig,
-} from '../../constants/networks';
-import { FONT, RADII, SPACING, withOpacity } from '../../constants/theme';
-import { useAppTheme } from '../../hooks/useAppTheme';
-import {
-  createExternalDexListing,
-  createOrbitxProtectedListing,
-} from '../../services/listing/orbitxListing';
-import {
-  buildAstraImagePromptSuggestions,
-  generateAstraImage,
-  getAstraImageAvailability,
-  type AstraGeneratedImage,
-} from '../../src/services/astra/astraImageStudio';
-import { useAstraStore } from '../../src/store/astraStore';
-import {
-  deployRealMemecoin,
-  estimateRealMemecoinDeployment,
-  supportsRealMemecoinCreation,
-} from '../../services/tokens/evmMemecoin';
-import {
-  estimateRealLiquidityCreation,
-  supportsRealLiquidityCreation,
-  type LiquidityPairKind,
-} from '../../services/liquidity/evmLiquidity';
-import { useWalletStore } from '../../src/store/walletStore';
-import { useOrbitStore } from '../../store/useOrbitStore';
-import type {
-  DexLaunchNetwork,
-  LaunchChain,
-} from '../../types';
-import { formatCurrency } from '../../utils/format';
-import { maskAddress } from '../../utils/wallet';
-import { GlassCard } from '../common/GlassCard';
-import { PageHeader } from '../common/PageHeader';
-import { PrimaryButton } from '../common/PrimaryButton';
-import { Screen } from '../common/Screen';
-import { SectionHeader } from '../common/SectionHeader';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { TokenAvatar } from '../common/TokenAvatar';
-import { OrbitInput } from '../forms/OrbitInput';
-import { ExternalWalletConnectSheet } from '../wallet/ExternalWalletConnectSheet';
-import { WalletSetupFlow } from '../wallet/WalletSetupFlow';
-import { TokenLaunchModal, type TokenLaunchDecision } from './TokenLaunchModal';
-
-type WizardStep = 'wallet' | 'network' | 'config' | 'costs' | 'signature' | 'result';
-type WalletSource = 'orbitx' | 'external';
-type LaunchIntent = 'orbitx' | 'dex';
-type DeployStatus = 'idle' | 'estimating' | 'awaiting_signature' | 'deploying' | 'confirmed' | 'failed';
-type ListingStage =
-  | 'idle'
-  | 'external_listing'
-  | 'orbitx_checks'
-  | 'orbitx_liquidity'
-  | 'orbitx_validation'
-  | 'orbitx_lock'
-  | 'completed'
-  | 'failed';
+  useCreateTokenDraftStore,
+  type CreateTokenDraft,
+  type TokenNetwork,
+  type TokenType,
+} from '../../src/store/createTokenDraftStore';
 
 interface CreateTokenWizardProps {
   standalone?: boolean;
 }
 
-interface DeploymentEstimateState {
-  nativeCostEstimate: number;
-  usdCostEstimate: number;
-  deployerAddress: string;
-  gasLimit: string;
-}
+type DraftField = Omit<CreateTokenDraft, 'liquidityConfig' | 'airdropConfig' | 'publicationConfig'>;
 
-interface DeploymentResultState extends DeploymentEstimateState {
-  contractAddress: string;
-  transactionHash: string;
-  network: 'ethereum' | 'base' | 'bnb';
-}
+const COLORS = {
+  ...ORBITX_COLORS,
+  text: ORBITX_COLORS.textPrimary,
+  textSecondary: ORBITX_COLORS.textSecondary,
+  textMuted: ORBITX_COLORS.textMuted,
+  greenBright: ORBITX_COLORS.green,
+};
 
-const steps: Array<{ key: WizardStep; label: string }> = [
-  { key: 'wallet', label: 'Wallet' },
-  { key: 'network', label: 'Red' },
-  { key: 'config', label: 'Token' },
-  { key: 'costs', label: 'Coste' },
-  { key: 'signature', label: 'Firma' },
-  { key: 'result', label: 'Resultado' },
+const TOKEN_TYPES: Array<{
+  key: TokenType;
+  title: string;
+  subtitle: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}> = [
+  {
+    key: 'standard',
+    title: 'Token estándar',
+    subtitle: 'Proyectos, utilidad',
+    icon: 'cube-outline',
+  },
+  {
+    key: 'memecoin',
+    title: 'Memecoin',
+    subtitle: 'Viral, comunidad',
+    icon: 'rocket-outline',
+  },
 ];
 
-function getOrbitxSourceAddress(
-  chain: LaunchChain,
-  receiveAddresses: {
-    ethereum: string;
-    base: string;
-    bnb: string;
-    solana: string;
+const NETWORKS: Array<{
+  key: TokenNetwork;
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  decimals: string;
+}> = [
+  { key: 'ethereum', title: 'Ethereum', icon: 'diamond-outline', color: '#3BA7FF', decimals: '18' },
+  { key: 'bnb', title: 'BNB Chain', icon: 'logo-bitcoin', color: '#F3BA2F', decimals: '18' },
+  { key: 'solana', title: 'Solana', icon: 'git-network-outline', color: '#14F195', decimals: '9' },
+  { key: 'polygon', title: 'Polygon', icon: 'analytics-outline', color: COLORS.purpleSoft, decimals: '18' },
+  { key: 'base', title: 'Base', icon: 'layers-outline', color: '#3BA7FF', decimals: '18' },
+];
+
+const ADVANCED_OPTIONS: Array<{
+  key: 'lockLiquidity' | 'prepareAirdrop' | 'prepareListing';
+  title: string;
+  subtitle: string;
+  helper: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}> = [
+  {
+    key: 'lockLiquidity',
+    title: 'Bloquear liquidez',
+    subtitle: 'Recomendado para generar confianza.',
+    helper: 'Después de los datos base, podrás definir monto, par, DEX y tiempo de bloqueo.',
+    icon: 'lock-closed-outline',
   },
-) {
-  if (chain === 'bnb') return receiveAddresses.bnb;
-  if (chain === 'ethereum') return receiveAddresses.ethereum;
-  if (chain === 'solana') return receiveAddresses.solana;
-  return receiveAddresses.base;
+  {
+    key: 'prepareAirdrop',
+    title: 'Preparar airdrop',
+    subtitle: 'Distribución comunitaria.',
+    helper: 'Después podrás definir cantidad, requisitos y participantes del airdrop.',
+    icon: 'gift-outline',
+  },
+  {
+    key: 'prepareListing',
+    title: 'Publicación QVEX',
+    subtitle: 'Solicita visibilidad dentro de QVEX.',
+    helper: 'Después podrás revisar requisitos para solicitar visibilidad en QVEX.',
+    icon: 'list-outline',
+  },
+];
+
+const COSTS: Record<TokenNetwork, { gas: string; fee: string; total: string }> = {
+  ethereum: { gas: '0.006 ETH', fee: '0.020 ETH', total: '0.026 ETH' },
+  bnb: { gas: '0.010 BNB', fee: '0.080 BNB', total: '0.090 BNB' },
+  solana: { gas: '0.024 SOL', fee: '0.100 SOL', total: '0.124 SOL' },
+  polygon: { gas: '0.600 MATIC', fee: '12.000 MATIC', total: '12.600 MATIC' },
+  base: { gas: '0.001 ETH', fee: '0.010 ETH', total: '0.011 ETH' },
+};
+
+function isPositiveNumber(value: string) {
+  const normalized = value.replace(/,/g, '').trim();
+  const numberValue = Number(normalized);
+
+  return Number.isFinite(numberValue) && numberValue > 0;
 }
 
-function hasCompleteReceiveAddresses(addresses: {
-  ethereum: string;
-  base: string;
-  bnb: string;
-  solana: string;
+function Header() {
+  return (
+    <View style={styles.header}>
+      <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.headerIcon, pressed && styles.pressed]}>
+        <Ionicons name="arrow-back" size={23} color={COLORS.purpleSoft} />
+      </Pressable>
+
+      <View style={styles.headerCopy}>
+        <Text style={styles.headerTitle}>Crear token</Text>
+        <Text style={styles.headerSubtitle}>Lanza tu proyecto en minutos</Text>
+      </View>
+
+      <Pressable style={({ pressed }) => [styles.headerIcon, pressed && styles.pressed]}>
+        <Ionicons name="help-circle-outline" size={22} color={COLORS.purpleSoft} />
+      </Pressable>
+    </View>
+  );
+}
+
+function StepIndicator() {
+  const steps = ['Datos del token', 'Liquidez', 'Airdrop', 'Publicación', 'Revisión final'];
+
+  return (
+    <View style={styles.stepBlock}>
+      <View style={styles.stepTopRow}>
+        <Text style={styles.stepLabel}>Paso 1 de 5</Text>
+        <Text style={styles.stepTitle}>Datos del token</Text>
+      </View>
+      <View style={styles.progressTrack}>
+        <View style={styles.progressFill} />
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stepChips}>
+        {steps.map((step, index) => (
+          <View key={step} style={[styles.stepChip, index === 0 && styles.stepChipActive]}>
+            <Text style={[styles.stepChipText, index === 0 && styles.stepChipTextActive]}>{step}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+function IntroCard() {
+  return (
+    <LinearGradient
+      colors={[COLORS.surface, COLORS.surfaceSoft]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.introCard}
+    >
+      <View style={styles.introGlow} pointerEvents="none" />
+      <View style={styles.chipRow}>
+        <View style={[styles.tinyChip, { borderColor: withOpacity(COLORS.greenBright, 0.3) }]}>
+          <Text style={[styles.tinyChipText, { color: COLORS.greenBright }]}>Web3</Text>
+        </View>
+        <View style={styles.tinyChip}>
+          <Text style={styles.tinyChipText}>Sin código</Text>
+        </View>
+      </View>
+      <Text style={styles.introTitle}>Crea tu token en QVEX</Text>
+      <Text style={styles.introBody}>
+        Configura los datos base de tu token. Luego podrás revisar liquidez, airdrop y publicación antes de confirmar.
+      </Text>
+      <Text style={styles.introHint}>Flujo guiado para crear tokens de forma simple y controlada.</Text>
+      <View style={styles.demoInlineNotice}>
+        <Ionicons name="shield-checkmark-outline" size={14} color={COLORS.warning} />
+        <Text style={styles.demoInlineText}>{FEATURE_STATUS.createToken.notice}</Text>
+      </View>
+    </LinearGradient>
+  );
+}
+
+function SectionTitle({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <View style={styles.sectionTitleRow}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {hint ? <Text style={styles.sectionHint}>{hint}</Text> : null}
+    </View>
+  );
+}
+
+function TypeSelector({
+  value,
+  onChange,
+}: {
+  value: TokenType;
+  onChange: (value: TokenType) => void;
 }) {
-  return Boolean(addresses.ethereum && addresses.base && addresses.bnb && addresses.solana);
+  return (
+    <View style={styles.typeGrid}>
+      {TOKEN_TYPES.map((item) => {
+        const active = item.key === value;
+
+        return (
+          <Pressable
+            key={item.key}
+            onPress={() => onChange(item.key)}
+            style={({ pressed }) => [
+              styles.typeCard,
+              active && styles.typeCardActive,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Ionicons name={item.icon} size={24} color={active ? COLORS.text : COLORS.textMuted} />
+            <Text style={[styles.typeTitle, active && styles.typeTitleActive]}>{item.title}</Text>
+            <Text style={[styles.typeSubtitle, active && styles.typeSubtitleActive]}>{item.subtitle}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
 }
 
-function getNativeTokenId(chain: LaunchChain) {
-  return chain === 'bnb' ? 'bnb' : 'eth';
+function NetworkSelector({
+  value,
+  onChange,
+}: {
+  value: TokenNetwork;
+  onChange: (value: TokenNetwork) => void;
+}) {
+  return (
+    <View style={styles.section}>
+      <SectionTitle title="Red blockchain" hint="Las tarifas pueden variar según la red." />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.networkRow}>
+        {NETWORKS.map((network) => {
+          const active = network.key === value;
+
+          return (
+            <Pressable
+              key={network.key}
+              onPress={() => onChange(network.key)}
+              style={({ pressed }) => [
+                styles.networkChip,
+                active && styles.networkChipActive,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={[styles.networkIcon, { backgroundColor: withOpacity(network.color, 0.14) }]}>
+                <Ionicons name={network.icon} size={17} color={network.color} />
+              </View>
+              <Text style={[styles.networkText, active && styles.networkTextActive]}>{network.title}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
 }
 
-function getNetworkLabel(chain: LaunchChain) {
-  if (chain === 'bnb') return 'BNB Chain';
-  if (chain === 'base') return 'Base';
-  if (chain === 'ethereum') return 'Ethereum';
-  if (chain === 'solana') return 'Solana';
-  return 'TRON';
+function Field({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  keyboardType = 'default',
+  multiline = false,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  keyboardType?: 'default' | 'numeric';
+  multiline?: boolean;
+  error?: string;
+}) {
+  return (
+    <View style={styles.fieldWrap}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={withOpacity(COLORS.textSecondary, 0.48)}
+        keyboardType={keyboardType}
+        multiline={multiline}
+        style={[styles.input, multiline && styles.inputMultiline, error && styles.inputError]}
+      />
+      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
+    </View>
+  );
+}
+
+function LogoUpload({
+  logoUri,
+  onUpload,
+}: {
+  logoUri: string | null;
+  onUpload: () => void;
+}) {
+  return (
+    <View style={styles.logoCard}>
+      <View style={styles.logoPreview}>
+        {logoUri ? (
+          <Image source={{ uri: logoUri }} style={styles.logoImage} />
+        ) : (
+          <Ionicons name="image-outline" size={26} color={COLORS.textMuted} />
+        )}
+      </View>
+      <View style={styles.logoCopy}>
+        <Text style={styles.logoTitle}>Logo del token</Text>
+        <Text style={styles.logoBody}>PNG, JPG o GIF. Recomendado 256x256 px.</Text>
+        <Pressable onPress={onUpload} style={({ pressed }) => [styles.logoButton, pressed && styles.pressed]}>
+          <Text style={styles.logoButtonText}>Subir imagen</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function SwitchControl({ active }: { active: boolean }) {
+  return (
+    <View style={[styles.switchTrack, active && styles.switchTrackActive]}>
+      <View style={[styles.switchKnob, active && styles.switchKnobActive]} />
+    </View>
+  );
+}
+
+function AdvancedOptions({
+  values,
+  onToggle,
+}: {
+  values: DraftField['options'];
+  onToggle: (key: keyof Omit<DraftField['options'], 'audit'>) => void;
+}) {
+  return (
+    <View style={styles.section}>
+      <SectionTitle title="Opciones avanzadas" hint="Pasos futuros" />
+      <View style={styles.advancedList}>
+        {ADVANCED_OPTIONS.map((item) => {
+          const active = values[item.key];
+
+          return (
+            <View key={item.key} style={[styles.advancedCard, active && styles.advancedCardActive]}>
+              <Pressable
+                onPress={() => onToggle(item.key)}
+                style={({ pressed }) => [styles.advancedHeader, pressed && styles.pressed]}
+              >
+                <View style={styles.advancedLeft}>
+                  <View style={styles.advancedIcon}>
+                    <Ionicons name={item.icon} size={18} color={active ? COLORS.purpleSoft : COLORS.textMuted} />
+                  </View>
+                  <View style={styles.advancedCopy}>
+                    <Text style={styles.advancedTitle}>{item.title}</Text>
+                    <Text style={styles.advancedSubtitle}>{item.subtitle}</Text>
+                    <Text style={styles.futureLabel}>Se configura después</Text>
+                  </View>
+                </View>
+                <SwitchControl active={active} />
+              </Pressable>
+
+              {active ? (
+                <View style={styles.advancedHelper}>
+                  <Text style={styles.advancedHelperText}>{item.helper}</Text>
+                </View>
+              ) : null}
+            </View>
+          );
+        })}
+
+        <View style={[styles.advancedCard, styles.disabledCard]}>
+          <View style={styles.advancedHeader}>
+            <View style={styles.advancedLeft}>
+              <View style={styles.advancedIcon}>
+                <Ionicons name="shield-checkmark-outline" size={18} color={COLORS.textMuted} />
+              </View>
+              <View style={styles.advancedCopy}>
+                <Text style={styles.advancedTitleMuted}>Auditoría</Text>
+                <Text style={styles.advancedSubtitle}>Verificación externa del contrato.</Text>
+                <Text style={styles.disabledLabel}>Próximamente</Text>
+              </View>
+            </View>
+            <Ionicons name="lock-closed-outline" size={18} color={COLORS.textMuted} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function CostEstimate({ network }: { network: TokenNetwork }) {
+  const cost = COSTS[network];
+
+  return (
+    <View style={styles.costCard}>
+      <Text style={styles.costEyebrow}>Estimación de costos</Text>
+      <View style={styles.costRows}>
+        <CostRow label="Tarifa de gas estimada" value={cost.gas} />
+        <CostRow label="Comisión QVEX" value={cost.fee} />
+        <View style={styles.costDivider} />
+        <CostRow label="Total aproximado" value={cost.total} strong />
+      </View>
+      <View style={styles.warningRow}>
+        <Ionicons name="alert-circle-outline" size={15} color={COLORS.warning} />
+        <Text style={styles.warningText}>Los costos pueden variar según la red y congestión.</Text>
+      </View>
+    </View>
+  );
+}
+
+function CostRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <View style={styles.costRow}>
+      <Text style={[styles.costLabel, strong && styles.costLabelStrong]}>{label}</Text>
+      <Text style={[styles.costValue, strong && styles.costValueStrong]}>{value}</Text>
+    </View>
+  );
+}
+
+function ContinueBlock({
+  disabled,
+  message,
+  onContinue,
+}: {
+  disabled: boolean;
+  message: string;
+  onContinue: () => void;
+}) {
+  return (
+    <View style={styles.continueBlock}>
+      {message ? (
+        <View style={[styles.feedbackCard, disabled ? styles.feedbackError : styles.feedbackReady]}>
+          <Ionicons
+            name={disabled ? 'alert-circle-outline' : 'checkmark-circle-outline'}
+            size={17}
+            color={disabled ? COLORS.warning : COLORS.greenBright}
+          />
+          <Text style={styles.feedbackText}>{message}</Text>
+        </View>
+      ) : null}
+      <Pressable onPress={onContinue} style={({ pressed }) => [styles.ctaButton, pressed && styles.pressed]}>
+        <LinearGradient colors={[COLORS.purple, COLORS.purpleSoft]} style={styles.ctaGradient}>
+          <Text style={styles.ctaText}>Continuar</Text>
+        </LinearGradient>
+      </Pressable>
+      <Text style={styles.ctaHint}>
+        Podrás revisar liquidez, airdrop, publicación y costos antes de confirmar.
+      </Text>
+    </View>
+  );
 }
 
 export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps) {
-  const { colors } = useAppTheme();
-  const appLanguage = useOrbitStore((state) => state.settings.language);
-  const profile = useOrbitStore((state) => state.profile);
-  const tokens = useOrbitStore((state) => state.tokens);
-  const walletFuture = useOrbitStore((state) => state.walletFuture);
-  const primaryWalletReady = useWalletStore((state) => state.isWalletReady);
-  const primaryReceiveAddresses = useWalletStore((state) => state.receiveAddresses);
-  const createToken = useOrbitStore((state) => state.createToken);
-  const markTokenReadyToList = useOrbitStore((state) => state.markTokenReadyToList);
-  const updateTokenRecord = useOrbitStore((state) => state.updateTokenRecord);
-  const launchToken = useOrbitStore((state) => state.launchToken);
-  const showToast = useOrbitStore((state) => state.showToast);
-  const rememberAstraContext = useAstraStore((state) => state.rememberContext);
-
-  const [step, setStep] = useState<WizardStep>('wallet');
-  const [chain, setChain] = useState<LaunchChain>('base');
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const isSmallPhone = width < 380;
+  const setBaseDraft = useCreateTokenDraftStore((state) => state.setBaseDraft);
+  const [tokenType, setTokenType] = useState<TokenType>('standard');
+  const [network, setNetwork] = useState<TokenNetwork>('solana');
   const [name, setName] = useState('');
   const [symbol, setSymbol] = useState('');
+  const [decimals, setDecimals] = useState('9');
+  const [supply, setSupply] = useState('');
   const [description, setDescription] = useState('');
-  const [supply, setSupply] = useState('1000000');
-  const [decimals, setDecimals] = useState('18');
-  const [logo, setLogo] = useState<string | null>(null);
-  const [imageSourceMode, setImageSourceMode] = useState<'upload' | 'astra'>('upload');
-  const [astraImagePrompt, setAstraImagePrompt] = useState('');
-  const [astraImageStatus, setAstraImageStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [astraImageError, setAstraImageError] = useState('');
-  const [generatedImages, setGeneratedImages] = useState<AstraGeneratedImage[]>([]);
-  const [astraAvailabilityState, setAstraAvailabilityState] = useState<
-    'checking' | 'available' | 'unavailable' | 'unknown'
-  >('checking');
-  const [astraAvailabilityMessage, setAstraAvailabilityMessage] = useState(
-    'Verificando la disponibilidad de Astra + Gemini Nano Banana...',
-  );
-  const [walletSource, setWalletSource] = useState<WalletSource>('orbitx');
-  const [connectorVisible, setConnectorVisible] = useState(false);
-  const [walletSetupVisible, setWalletSetupVisible] = useState(false);
-  const [walletSetupMode, setWalletSetupMode] = useState<'create' | 'seed' | 'import'>('create');
-  const [launchModalVisible, setLaunchModalVisible] = useState(false);
-  const [launchIntent, setLaunchIntent] = useState<LaunchIntent>('orbitx');
-  const [pairKind, setPairKind] = useState<LiquidityPairKind>('native');
-  const [tokenLiquidityAmount, setTokenLiquidityAmount] = useState('100000');
-  const [dexLaunchNetwork, setDexLaunchNetwork] = useState<DexLaunchNetwork>('base');
-  const [dexLaunchLiquidity, setDexLaunchLiquidity] = useState('2500');
-  const [launchSummary, setLaunchSummary] = useState<{
-    mode: 'orbitx' | 'dex';
-    label: string;
-    liquidityPoolUsd: number;
-    estimatedFeeUsd: number;
-    poolAddress: string;
-  } | null>(null);
-  const [estimate, setEstimate] = useState<DeploymentEstimateState | null>(null);
-  const [liquidityFeeUsd, setLiquidityFeeUsd] = useState(0);
-  const [estimateMessage, setEstimateMessage] = useState('');
-  const [isEstimating, setIsEstimating] = useState(false);
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [deployStatus, setDeployStatus] = useState<DeployStatus>('idle');
-  const [deployError, setDeployError] = useState('');
-  const [listingStage, setListingStage] = useState<ListingStage>('idle');
-  const [listingError, setListingError] = useState('');
-  const [deploymentResult, setDeploymentResult] = useState<DeploymentResultState | null>(null);
-  const [resultTokenId, setResultTokenId] = useState<string | null>(null);
+  const [logoUri, setLogoUri] = useState<string | null>(null);
+  const [lockLiquidity, setLockLiquidity] = useState(true);
+  const [prepareAirdrop, setPrepareAirdrop] = useState(false);
+  const [prepareListing, setPrepareListing] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [feedback, setFeedback] = useState('');
 
-  const orbitWalletFutureReady =
-    hasCompleteReceiveAddresses(walletFuture.receiveAddresses) && !walletFuture.simulated;
-  const orbitxReceiveAddresses = hasCompleteReceiveAddresses(primaryReceiveAddresses)
-    ? primaryReceiveAddresses
-    : walletFuture.receiveAddresses;
-  const walletReady = primaryWalletReady || orbitWalletFutureReady;
-  const externalConnected = Boolean(
-    walletFuture.externalWallet.provider && walletFuture.externalWallet.address,
-  );
-  const currentStepIndex = steps.findIndex((item) => item.key === step);
-  const previewSymbol = symbol.trim().toUpperCase() || 'MEME';
-  const previewName = name.trim() || 'Orbit Meme';
-  const supplyNumber = Number(supply);
-  const decimalsNumber = Number(decimals);
-  const chainConfig = getLaunchChainConfig(chain);
-  const canCreateRealOnChain = supportsRealMemecoinCreation(chain);
-  const supportedCreationChains = useMemo(
-    () => ACTIVE_LAUNCH_CHAINS.filter((network) => supportsRealMemecoinCreation(network.launchChain)),
-    [],
-  );
-  const resultToken = useMemo(
-    () => tokens.find((token) => token.id === resultTokenId) ?? null,
-    [resultTokenId, tokens],
-  );
-  const createdTokens = useMemo(
-    () =>
-      tokens
-        .filter((token) => token.isUserCreated && token.creator === profile.handle)
-        .slice(0, 5),
-    [profile.handle, tokens],
-  );
-  const sourceAddress =
-    walletSource === 'orbitx'
-      ? getOrbitxSourceAddress(chain, orbitxReceiveAddresses)
-      : walletFuture.externalWallet.address;
-  const astraPromptSuggestions = useMemo(
-    () =>
-      buildAstraImagePromptSuggestions({
-        language: appLanguage,
-        tokenName: previewName,
-        tokenSymbol: previewSymbol,
-        description,
-      }),
-    [appLanguage, description, previewName, previewSymbol],
-  );
-  const astraCreateTokenContext = useMemo(
+  useEffect(() => {
+    const targetDecimals = NETWORKS.find((item) => item.key === network)?.decimals ?? '18';
+    setDecimals((current) => (current.trim() ? current : targetDecimals));
+  }, [network]);
+
+  const draft = useMemo<DraftField>(
     () => ({
-      surface: 'create_token' as const,
-      path: '/create-token',
-      language: appLanguage,
-      screenName: appLanguage === 'en' ? 'Create token' : 'Crear token',
-      summary: walletReady
-        ? `Create token wizard in step ${steps[currentStepIndex]?.label ?? step} on ${getNetworkLabel(chain)}.`
-        : 'Create token wizard is waiting for a ready wallet before launch.',
-      currentTask: `create_token_${step}`,
-      selectedEntity: {
-        type: 'token_draft',
-        name: previewName,
-        symbol: previewSymbol,
-        network: chain,
-        provider: walletSource,
+      tokenType,
+      network,
+      name,
+      symbol,
+      decimals,
+      supply,
+      description,
+      logoUri,
+      options: {
+        lockLiquidity,
+        prepareAirdrop,
+        prepareListing,
+        audit: false,
       },
-      uiState: {
-        createTokenStage: step,
-        imageSourceMode,
-        astraImageStatus,
-        astraAvailability: astraAvailabilityState,
-        generatedImagesCount: generatedImages.length,
-        walletSource,
-        walletReady,
-        externalConnected,
-        canCreateRealOnChain,
-        estimateReady: Boolean(estimate),
-        deployStatus,
-        listingStage,
-      },
-      labels: {
-        stepLabel: steps[currentStepIndex]?.label,
-        networkLabel: getNetworkLabel(chain),
-        walletSourceLabel: walletSource,
-        astraAvailabilityLabel: astraAvailabilityState,
-        imageModeLabel: imageSourceMode,
-      },
-      walletReady,
-      externalWalletConnected: externalConnected,
     }),
-    [
-      appLanguage,
-      astraAvailabilityState,
-      astraImageStatus,
-      canCreateRealOnChain,
-      chain,
-      currentStepIndex,
-      deployStatus,
-      estimate,
-      externalConnected,
-      generatedImages.length,
-      imageSourceMode,
-      listingStage,
-      previewName,
-      previewSymbol,
-      step,
-      walletReady,
-      walletSource,
-    ],
+    [decimals, description, lockLiquidity, logoUri, name, network, prepareAirdrop, prepareListing, supply, symbol, tokenType],
   );
 
-  useEffect(() => {
-    rememberAstraContext(astraCreateTokenContext);
-  }, [astraCreateTokenContext, rememberAstraContext]);
+  const errors = useMemo(() => {
+    const nextErrors: Partial<Record<'name' | 'symbol' | 'decimals' | 'supply', string>> = {};
 
-  useEffect(() => {
-    if (chain === 'ethereum') {
-      setDexLaunchNetwork('ethereum');
-      return;
+    if (!name.trim()) nextErrors.name = 'El nombre es requerido.';
+    if (!symbol.trim()) nextErrors.symbol = 'El símbolo es requerido.';
+    if (!decimals.trim() || !Number.isInteger(Number(decimals)) || Number(decimals) < 0) {
+      nextErrors.decimals = 'Usa un número entero válido.';
     }
-    if (chain === 'base') {
-      setDexLaunchNetwork('base');
-      return;
-    }
-    if (chain === 'bnb') {
-      setDexLaunchNetwork('bnb');
-      return;
-    }
-    setDexLaunchNetwork('solana');
-  }, [chain]);
-
-  useEffect(() => {
-    const nextSupply = Number(supply);
-    if (!Number.isFinite(nextSupply) || nextSupply <= 0) {
-      return;
+    if (!supply.trim() || !isPositiveNumber(supply)) {
+      nextErrors.supply = 'El supply debe ser un número positivo.';
     }
 
-    const suggested = Math.max(Math.floor(nextSupply * 0.1), 1);
-    setTokenLiquidityAmount(String(suggested));
-  }, [supply]);
+    return nextErrors;
+  }, [decimals, name, supply, symbol]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const hasValidConfig =
-      name.trim().length > 0 &&
-      previewSymbol.length >= 2 &&
-      Number.isFinite(supplyNumber) &&
-      supplyNumber > 0 &&
-      Number.isInteger(decimalsNumber) &&
-      decimalsNumber > 0;
+  const hasErrors = Object.keys(errors).length > 0;
 
-    if (!hasValidConfig) {
-      setEstimate(null);
-      setEstimateMessage('Completa nombre, simbolo, decimales y supply para calcular el deploy.');
-      setIsEstimating(false);
-      return () => undefined;
-    }
+  const handleNetworkChange = (nextNetwork: TokenNetwork) => {
+    setNetwork(nextNetwork);
+    setDecimals(NETWORKS.find((item) => item.key === nextNetwork)?.decimals ?? '18');
+  };
 
-    if (!canCreateRealOnChain) {
-      setEstimate(null);
-      setEstimateMessage('La creacion real queda activa primero en Ethereum, Base y BNB Chain.');
-      setIsEstimating(false);
-      return () => undefined;
-    }
-
-    if (walletSource !== 'orbitx') {
-      setEstimate(null);
-      setEstimateMessage('La firma real con wallet externa queda preparada para la siguiente fase.');
-      setIsEstimating(false);
-      return () => undefined;
-    }
-
-    if (!walletReady) {
-      setEstimate(null);
-      setEstimateMessage('Activa primero tu wallet OrbitX para estimar el deploy real.');
-      setIsEstimating(false);
-      return () => undefined;
-    }
-
-    setIsEstimating(true);
-    setDeployStatus('estimating');
-    setEstimateMessage('');
-
-    void (async () => {
-      try {
-        const nativeTokenId = getNativeTokenId(chain);
-        const nativeTokenPrice = tokens.find((token) => token.id === nativeTokenId)?.price ?? 0;
-        const nextEstimate = await estimateRealMemecoinDeployment(
-          chain,
-          { name: previewName, symbol: previewSymbol, supply, decimals: decimalsNumber },
-          nativeTokenPrice,
-        );
-
-        if (cancelled) return;
-        setEstimate(nextEstimate);
-        setDeployStatus('idle');
-      } catch (error) {
-        if (cancelled) return;
-        setEstimate(null);
-        setDeployStatus('failed');
-        setEstimateMessage(
-          error instanceof Error ? error.message : 'No pudimos calcular el coste real del deploy.',
-        );
-      } finally {
-        if (!cancelled) {
-          setIsEstimating(false);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    canCreateRealOnChain,
-    chain,
-    decimalsNumber,
-    name,
-    previewName,
-    previewSymbol,
-    supply,
-    supplyNumber,
-    tokens,
-    walletReady,
-    walletSource,
-  ]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (
-      !deploymentResult ||
-      !resultToken ||
-      !resultToken.contractAddress ||
-      !resultToken.tokenSupply ||
-      !supportsRealLiquidityCreation(resultToken.chain ?? chain)
-    ) {
-      setLiquidityFeeUsd(0);
-      return () => undefined;
-    }
-
-    const tokenAmount = Number(tokenLiquidityAmount);
-    const quoteAmount = Number(dexLaunchLiquidity);
-    if (!Number.isFinite(tokenAmount) || tokenAmount <= 0 || !Number.isFinite(quoteAmount) || quoteAmount <= 0) {
-      setLiquidityFeeUsd(0);
-      return () => undefined;
-    }
-
-    void (async () => {
-      try {
-        const contractAddress = resultToken.contractAddress;
-        if (!contractAddress) {
-          return;
-        }
-        const nativeTokenId = getNativeTokenId(resultToken.chain ?? chain);
-        const nativeTokenPrice = tokens.find((token) => token.id === nativeTokenId)?.price ?? 0;
-        const liquidityEstimate = await estimateRealLiquidityCreation({
-          chain: resultToken.chain ?? chain,
-          tokenAddress: contractAddress,
-          pair: pairKind,
-          tokenAmount: tokenLiquidityAmount,
-          quoteAmount: dexLaunchLiquidity,
-          nativeTokenPriceUsd: nativeTokenPrice,
-        });
-
-        if (!cancelled) {
-          setLiquidityFeeUsd(liquidityEstimate.estimatedFeeUsd);
-        }
-      } catch {
-        if (!cancelled) {
-          setLiquidityFeeUsd(0);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [chain, deploymentResult, dexLaunchLiquidity, pairKind, resultToken, tokenLiquidityAmount, tokens]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (imageSourceMode !== 'astra') {
-      return () => undefined;
-    }
-
-    setAstraAvailabilityState('checking');
-    setAstraAvailabilityMessage('Verificando la disponibilidad de Astra + Gemini Nano Banana...');
-
-    void (async () => {
-      const availability = await getAstraImageAvailability(appLanguage);
-      if (cancelled) {
-        return;
-      }
-
-      setAstraAvailabilityState(
-        availability.state === 'available'
-          ? 'available'
-          : availability.state === 'unavailable'
-            ? 'unavailable'
-            : 'unknown',
-      );
-      setAstraAvailabilityMessage(availability.message);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [appLanguage, imageSourceMode]);
-
-  async function handlePickLogo() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      showToast('Necesitamos permiso para elegir la imagen.', 'error');
-      return;
-    }
-
+  const handleLogoUpload = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -516,1593 +534,762 @@ export function CreateTokenWizard({ standalone = false }: CreateTokenWizardProps
     });
 
     if (!result.canceled) {
-      setLogo(result.assets[0]?.uri ?? null);
+      setLogoUri(result.assets[0]?.uri ?? null);
+      setFeedback('Logo agregado al borrador local.');
     }
-  }
+  };
 
-  function handleApplyAstraPrompt(prompt: string) {
-    setImageSourceMode('astra');
-    setAstraImagePrompt(prompt);
-    setAstraImageError('');
-  }
+  const handleContinue = () => {
+    setSubmitted(true);
 
-  function handleSelectGeneratedImage(image: AstraGeneratedImage) {
-    setLogo(image.imageUrl);
-    setImageSourceMode('astra');
-    showToast('Imagen de Astra seleccionada como base del token.', 'success');
-  }
-
-  async function handleGenerateAstraImage() {
-    if (astraAvailabilityState === 'unavailable') {
-      const message =
-        astraAvailabilityMessage ||
-        'La generacion visual con Astra no esta disponible en este entorno.';
-      setAstraImageStatus('error');
-      setAstraImageError(message);
-      showToast(message, 'info');
+    if (hasErrors) {
+      setFeedback('Completa nombre, símbolo, decimales y supply para continuar.');
       return;
     }
 
-    const prompt = astraImagePrompt.trim();
-    if (!prompt) {
-      showToast('Define primero un prompt visual para Astra.', 'error');
+    setBaseDraft(draft);
+    const nextStep = lockLiquidity
+      ? 'liquidez'
+      : prepareAirdrop
+        ? 'airdrop'
+        : prepareListing
+          ? 'publicación QVEX'
+          : 'revisión final';
+    setFeedback(`Borrador guardado localmente. El siguiente paso será ${nextStep}.`);
+
+    if (lockLiquidity) {
+      router.push('/create-token-liquidity' as never);
       return;
     }
 
-    setImageSourceMode('astra');
-    setAstraImageStatus('loading');
-    setAstraImageError('');
-
-    try {
-      const result = await generateAstraImage({
-        prompt,
-        language: appLanguage,
-        tokenName: previewName,
-        tokenSymbol: previewSymbol,
-        description,
-      });
-
-      setGeneratedImages(result.images);
-      setAstraImageStatus('ready');
-      if (result.images[0]) {
-        setLogo(result.images[0].imageUrl);
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'No pudimos generar la imagen con Astra.';
-      setGeneratedImages([]);
-      setAstraImageStatus('error');
-      setAstraImageError(message);
-      showToast(message, 'info');
-    }
-  }
-
-  function openWalletSetup(mode: 'create' | 'seed' | 'import') {
-    setWalletSetupMode(mode);
-    setWalletSetupVisible(true);
-  }
-
-  function handleWalletReady() {
-    setWalletSetupVisible(false);
-    setWalletSource('orbitx');
-    if (step === 'wallet') {
-      setStep('network');
-      showToast('Wallet OrbitX lista. Continuamos con la red del token.', 'success');
-    }
-  }
-
-  function moveToNextStep() {
-    if (step === 'wallet') {
-      if (walletSource === 'external') {
-        setWalletSource('orbitx');
-        showToast(
-          'La creacion real de memecoins funciona ahora con OrbitX Wallet. Continuamos con tu wallet interna.',
-          'info',
-        );
-
-        if (!walletReady) {
-          openWalletSetup('create');
-          return;
-        }
-      }
-
-      if (!walletReady) {
-        openWalletSetup('create');
-        return;
-      }
-    }
-
-    if (step === 'config') {
-      if (
-        !name.trim() ||
-        previewSymbol.length < 2 ||
-        !Number.isFinite(supplyNumber) ||
-        supplyNumber <= 0 ||
-        !Number.isInteger(decimalsNumber) ||
-        decimalsNumber <= 0
-      ) {
-        showToast('Completa nombre, simbolo, decimales y supply.', 'error');
-        return;
-      }
-
-      if (
-        tokens.some(
-          (token) =>
-            token.symbol.toLowerCase() === previewSymbol.toLowerCase() ||
-            token.name.toLowerCase() === name.trim().toLowerCase(),
-        )
-      ) {
-        showToast('Ese nombre o simbolo ya existe.', 'error');
-        return;
-      }
-    }
-
-    if (step === 'costs' && !estimate && canCreateRealOnChain) {
-      showToast(estimateMessage || 'Espera la estimacion real antes de continuar.', 'error');
+    if (prepareAirdrop) {
+      router.push('/create-token-airdrop' as never);
       return;
     }
 
-    const nextStep = steps[currentStepIndex + 1]?.key;
-    if (nextStep) {
-      setStep(nextStep);
-    }
-  }
-
-  async function handleCreateToken() {
-    if (!canCreateRealOnChain) {
-      showToast('La creacion real queda activa primero en Ethereum, Base y BNB Chain.', 'error');
+    if (prepareListing) {
+      router.push('/create-token-publication' as never);
       return;
     }
 
-    if (walletSource !== 'orbitx') {
-      showToast('La firma real con wallet externa queda preparada para la siguiente fase.', 'error');
-      return;
-    }
-
-    if (!walletReady) {
-      openWalletSetup('create');
-      return;
-    }
-
-    if (!estimate) {
-      showToast(estimateMessage || 'Necesitamos una estimacion real antes de desplegar.', 'error');
-      return;
-    }
-
-    setDeployError('');
-    setDeployStatus('awaiting_signature');
-    setIsDeploying(true);
-
-    try {
-      const nativeTokenId = getNativeTokenId(chain);
-      const nativeTokenPrice = tokens.find((token) => token.id === nativeTokenId)?.price ?? 0;
-      setDeployStatus('deploying');
-      const nextDeployment = await deployRealMemecoin(
-        chain,
-        { name: previewName, symbol: previewSymbol, supply, decimals: decimalsNumber },
-        nativeTokenPrice,
-      );
-
-      const registration = createToken({
-        name: previewName,
-        symbol: previewSymbol,
-        decimals: decimalsNumber,
-        logo,
-        description,
-        supply,
-        chain,
-        launchVenue: 'orbitx',
-        contractAddress: nextDeployment.contractAddress,
-        deploymentTxHash: nextDeployment.transactionHash,
-        deployerAddress: nextDeployment.deployerAddress,
-      });
-
-      if (!registration.ok) {
-        showToast('El token se desplego on-chain, pero no pudimos registrarlo dentro de OrbitX.', 'error');
-      }
-
-      if (registration.ok && registration.tokenId) {
-        markTokenReadyToList(registration.tokenId);
-      }
-
-      setDeploymentResult(nextDeployment);
-      setResultTokenId(registration.tokenId ?? null);
-      setLaunchSummary(null);
-      setDeployStatus('confirmed');
-      setStep('result');
-
-      if (registration.ok && registration.tokenId) {
-        setLaunchIntent('orbitx');
-        setLaunchModalVisible(true);
-      }
-    } catch (error) {
-      setDeployStatus('failed');
-      setDeployError(
-        error instanceof Error ? error.message : 'No pudimos desplegar el token real en blockchain.',
-      );
-      showToast(
-        error instanceof Error ? error.message : 'No pudimos desplegar el token real en blockchain.',
-        'error',
-      );
-    } finally {
-      setIsDeploying(false);
-    }
-  }
-
-  async function handleConfirmLaunch(decision: TokenLaunchDecision) {
-    if (!resultTokenId || !resultToken?.contractAddress || !resultToken.tokenSupply || !resultToken.chain) {
-      return;
-    }
-
-    if (!supportsRealLiquidityCreation(resultToken.chain)) {
-      showToast('La liquidez real queda activa primero en Ethereum y BNB Chain.', 'error');
-      return;
-    }
-
-    if (!decision.tokenLiquidityAmount || !decision.quoteLiquidityAmount) {
-      showToast('Define un monto real para token y quote.', 'error');
-      return;
-    }
-
-    let protectedStage: ListingStage = 'idle';
-    protectedStage = decision.listingType === 'external' ? 'external_listing' : 'orbitx_checks';
-    setListingError('');
-    setListingStage(protectedStage);
-
-    try {
-      const nativeTokenId = getNativeTokenId(resultToken.chain);
-      const nativeTokenPrice = tokens.find((token) => token.id === nativeTokenId)?.price ?? 0;
-
-      let payload;
-
-      if (decision.listingType === 'external') {
-        payload = await createExternalDexListing({
-          token: resultToken,
-          pairKind: decision.pairKind,
-          tokenAmount: String(decision.tokenLiquidityAmount),
-          quoteAmount: String(decision.quoteLiquidityAmount),
-          nativeTokenPriceUsd: nativeTokenPrice,
-        });
-      } else {
-        updateTokenRecord(resultTokenId, {
-          listingType: 'orbitx_protected',
-          listingStatus: 'orbitx_listing_pending_checks',
-        });
-
-        payload = await createOrbitxProtectedListing({
-          token: resultToken,
-          pairKind: decision.pairKind,
-          tokenAmount: String(decision.tokenLiquidityAmount),
-          quoteAmount: String(decision.quoteLiquidityAmount),
-          nativeTokenPriceUsd: nativeTokenPrice,
-          lockDurationDays: decision.lockDurationDays,
-          onStageChange: (stage) => {
-            protectedStage =
-              stage === 'checks'
-                ? 'orbitx_checks'
-                : stage === 'liquidity'
-                  ? 'orbitx_liquidity'
-                  : stage === 'validation'
-                    ? 'orbitx_validation'
-                    : 'orbitx_lock';
-            setListingStage(protectedStage);
-
-            if (stage === 'checks') {
-              updateTokenRecord(resultTokenId, {
-                listingType: 'orbitx_protected',
-                listingStatus: 'orbitx_listing_pending_checks',
-              });
-            }
-
-            if (stage === 'liquidity') {
-              updateTokenRecord(resultTokenId, {
-                listingType: 'orbitx_protected',
-                listingStatus: 'orbitx_listing_pending_liquidity',
-              });
-            }
-
-            if (stage === 'lock') {
-              updateTokenRecord(resultTokenId, {
-                listingType: 'orbitx_protected',
-                listingStatus: 'orbitx_listing_pending_lock',
-              });
-            }
-          },
-          onSafetyReport: (report) => {
-            updateTokenRecord(resultTokenId, {
-              listingType: 'orbitx_protected',
-              contractSafety: report,
-              listingStatus:
-                report.status === 'passed'
-                  ? 'orbitx_listing_pending_liquidity'
-                  : 'orbitx_listing_checks_failed',
-            });
-          },
-          onValidationReport: (report) => {
-            updateTokenRecord(resultTokenId, {
-              listingType: 'orbitx_protected',
-              preListingValidation: report,
-              listingStatus:
-                report.status === 'passed'
-                  ? 'orbitx_listing_pending_lock'
-                  : 'orbitx_listing_checks_failed',
-            });
-          },
-          onLiquidityCreated: (liquidity) => {
-            updateTokenRecord(resultTokenId, {
-              listingType: 'orbitx_protected',
-              listingStatus: 'orbitx_listing_pending_lock',
-              poolAddress: liquidity.pairAddress,
-              poolReference: liquidity.pairAddress,
-              quoteTokenId: liquidity.quoteTokenId,
-              quoteAddress: liquidity.quoteAddress,
-              quoteDecimals: liquidity.quoteDecimals,
-              tokenDecimals: liquidity.tokenDecimals,
-              liquidityPoolUsd: liquidity.liquidityPoolUsd,
-              liquidityTxHash: liquidity.transactionHash,
-              chainId: liquidity.chain === 'ethereum' ? 1 : liquidity.chain === 'bnb' ? 56 : 8453,
-              price: liquidity.priceUsd,
-              marketCap: liquidity.marketCapUsd,
-              liquidity: {
-                listingType: 'orbitx_protected',
-                network: resultToken.chain!,
-                dexVenue: resultToken.chain === 'bnb' ? 'pancakeswap' : 'uniswap',
-                poolAddress: liquidity.pairAddress,
-                creatorWallet: liquidity.creatorAddress,
-                tokenAddress: resultToken.contractAddress!,
-                pairKind: decision.pairKind,
-                quoteTokenId: liquidity.quoteTokenId,
-                quoteAddress: liquidity.quoteAddress,
-                quoteDecimals: liquidity.quoteDecimals,
-                tokenDecimals: liquidity.tokenDecimals,
-                tokenAmount: String(decision.tokenLiquidityAmount),
-                quoteAmount: String(decision.quoteLiquidityAmount),
-                liquidityAmountUsd: liquidity.liquidityPoolUsd,
-                lpTokenAmount: liquidity.lpTokenAmount,
-                createdAt: new Date().toISOString(),
-                txHash: liquidity.transactionHash,
-              },
-            });
-          },
-        });
-      }
-
-      const result = launchToken(resultTokenId, payload);
-
-      if (!result.ok || !result.poolAddress) {
-        return;
-      }
-
-      setLaunchSummary({
-        mode: payload.mode,
-        label:
-          payload.listingType === 'orbitx_protected'
-            ? 'OrbitX Protected'
-            : `${payload.dexVenue ?? 'DEX'} external`.trim(),
-        liquidityPoolUsd: payload.liquidityPoolUsd,
-        estimatedFeeUsd: payload.estimatedFeeUsd,
-        poolAddress: result.poolAddress,
-      });
-      setListingStage('completed');
-      setLaunchModalVisible(false);
-      showToast(
-        payload.listingType === 'orbitx_protected'
-          ? `${resultToken.symbol} ya cumple el flujo protegido de OrbitX`
-          : `${resultToken.symbol} ya tiene pool real activo`,
-        'success',
-      );
-    } catch (error) {
-      const normalizedError =
-        error instanceof Error ? error.message : 'No pudimos completar el listado real.';
-      setListingStage('failed');
-      setListingError(normalizedError);
-
-      if (decision.listingType === 'orbitx_protected') {
-        const currentProtectedStage = String(protectedStage);
-
-        if (currentProtectedStage === 'orbitx_checks' || currentProtectedStage === 'orbitx_validation') {
-          updateTokenRecord(resultTokenId, {
-            listingType: 'orbitx_protected',
-            listingStatus: 'orbitx_listing_checks_failed',
-          });
-        }
-
-        if (currentProtectedStage === 'orbitx_liquidity') {
-          updateTokenRecord(resultTokenId, {
-            listingType: 'orbitx_protected',
-            listingStatus: 'orbitx_listing_pending_liquidity',
-          });
-        }
-
-        if (currentProtectedStage === 'orbitx_lock') {
-          updateTokenRecord(resultTokenId, {
-            listingType: 'orbitx_protected',
-            listingStatus: 'orbitx_listing_pending_lock',
-          });
-        }
-      }
-
-      showToast(
-        normalizedError,
-        'error',
-      );
-    }
-  }
-
-  function resetWizard() {
-    setStep('wallet');
-    setChain('base');
-    setName('');
-    setSymbol('');
-    setDescription('');
-    setSupply('1000000');
-    setDecimals('18');
-    setLogo(null);
-    setImageSourceMode('upload');
-    setAstraImagePrompt('');
-    setAstraImageStatus('idle');
-    setAstraImageError('');
-    setGeneratedImages([]);
-    setAstraAvailabilityState('checking');
-    setAstraAvailabilityMessage('Verificando la disponibilidad de Astra + Gemini Nano Banana...');
-    setWalletSource('orbitx');
-    setEstimate(null);
-    setEstimateMessage('');
-    setDeployStatus('idle');
-    setDeployError('');
-    setListingStage('idle');
-    setListingError('');
-    setDeploymentResult(null);
-    setLaunchSummary(null);
-    setLaunchModalVisible(false);
-    setResultTokenId(null);
-    setPairKind('native');
-    setTokenLiquidityAmount('100000');
-    setDexLaunchLiquidity('2500');
-    setDexLaunchNetwork('base');
-    setLaunchIntent('orbitx');
-  }
-
-  function handleResultAction(action: 'orbitx' | 'dex' | 'save') {
-    if (action === 'save') {
-      showToast('Token guardado en Mis Tokens y Web3 Wallet.', 'success');
-      return;
-    }
-
-    setLaunchIntent(action);
-    setLaunchModalVisible(true);
-  }
-
-  function renderWalletStep() {
-    return (
-      <GlassCard>
-        <SectionHeader title="Selecciona tu wallet" subtitle="OrbitX Wallet es la ruta principal." />
-
-        <View style={styles.choiceList}>
-          <Pressable
-            onPress={() => setWalletSource('orbitx')}
-            style={[
-              styles.choiceCard,
-              {
-                backgroundColor: colors.fieldBackground,
-                borderColor: walletSource === 'orbitx' ? colors.primary : colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.choiceTitle, { color: colors.text }]}>Wallet interna de OrbitX</Text>
-            <Text style={[styles.choiceBody, { color: colors.textMuted }]}>
-              {walletReady
-                ? 'Tu OrbitX Wallet ya esta lista para firmar y continuar con el deploy real sin salir de la app.'
-                : 'Crea tu billetera, guarda tu seed phrase y firma el deploy real sin salir de la app.'}
-            </Text>
-            <Text style={[styles.choiceHint, { color: walletReady ? colors.profit : colors.textSoft }]}>
-              {walletReady
-                ? `Lista - ${maskAddress(getOrbitxSourceAddress(chain, orbitxReceiveAddresses))}`
-                : 'Crear wallet -> ver seed phrase -> confirmar'}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setWalletSource('external')}
-            style={[
-              styles.choiceCard,
-              {
-                backgroundColor: colors.fieldBackground,
-                borderColor: walletSource === 'external' ? colors.primary : colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.choiceTitle, { color: colors.text }]}>Wallet externa</Text>
-            <Text style={[styles.choiceBody, { color: colors.textMuted }]}>
-              Puedes conectarla como referencia, pero el deploy real dentro de este wizard se hace hoy con OrbitX Wallet.
-            </Text>
-            <Text style={[styles.choiceHint, { color: externalConnected ? colors.profit : colors.textSoft }]}>
-              {externalConnected
-                ? `${maskAddress(walletFuture.externalWallet.address)} - Solo visual por ahora`
-                : 'Conectar wallet - Proximamente para deploy real'}
-            </Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.actionGrid}>
-          <PrimaryButton
-            label={walletReady ? 'Ver seed phrase' : 'Crear wallet OrbitX'}
-            onPress={() => openWalletSetup(walletReady ? 'seed' : 'create')}
-            style={styles.flexButton}
-          />
-          <PrimaryButton
-            label="Conectar wallet"
-            variant="secondary"
-            onPress={() => setConnectorVisible(true)}
-            style={styles.flexButton}
-          />
-        </View>
-      </GlassCard>
-    );
-  }
-
-  function renderNetworkStep() {
-    return (
-      <GlassCard>
-        <SectionHeader title="Elige la red" subtitle="La creacion real empieza en EVM." />
-
-        <SegmentedControl<LaunchChain>
-          options={supportedCreationChains.map((network) => ({
-            label: network.shortLabel,
-            value: network.launchChain,
-          }))}
-          value={chain}
-          onChange={setChain}
-        />
-
-        <View
-          style={[
-            styles.inlineCard,
-            { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.inlineTitle, { color: colors.text }]}>{chainConfig?.label ?? 'Red'}</Text>
-          <Text style={[styles.inlineBody, { color: colors.textMuted }]}>
-            {canCreateRealOnChain
-              ? 'Despliegue real activo con firma desde tu wallet OrbitX.'
-              : 'Esta red sigue visible, pero la creacion real queda en la siguiente fase.'}
-          </Text>
-          <Text style={[styles.inlineHint, { color: colors.textSoft }]}>
-            Router: {chainConfig?.tradeRouter ?? 'OrbitX'}
-          </Text>
-        </View>
-
-        <View style={styles.networkStatusList}>
-          {ORBIT_CHAIN_CONFIG.filter((network) => network.key !== 'bitcoin').map((network) => (
-            <View
-              key={network.key}
-              style={[
-                styles.networkRow,
-                { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-              ]}
-            >
-              <View style={styles.networkLeft}>
-                <Text style={[styles.choiceTitle, { color: colors.text }]}>{network.label}</Text>
-                <Text style={[styles.choiceBody, { color: colors.textMuted }]}>{network.helperText}</Text>
-              </View>
-              <Text
-                style={[
-                  styles.networkStatus,
-                  {
-                    color:
-                      network.launchChain && supportsRealMemecoinCreation(network.launchChain)
-                        ? colors.profit
-                        : colors.textMuted,
-                  },
-                ]}
-              >
-                {network.launchChain && supportsRealMemecoinCreation(network.launchChain) ? 'Real' : 'Prox.'}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </GlassCard>
-    );
-  }
-
-  function renderConfigStep() {
-    return (
-      <GlassCard>
-        <SectionHeader title="Configura tu token" subtitle="Nombre, simbolo, imagen y supply." />
-
-        <View style={styles.previewRow}>
-          {logo ? (
-            <Image source={{ uri: logo }} style={styles.previewImage} />
-          ) : (
-            <TokenAvatar label={previewSymbol} color={colors.primary} size={54} />
-          )}
-          <View style={styles.previewCopy}>
-            <Text style={[styles.previewName, { color: colors.text }]}>{previewName}</Text>
-            <Text style={[styles.previewMeta, { color: colors.textMuted }]}>
-              {previewSymbol} · {getNetworkLabel(chain)}
-            </Text>
-          </View>
-        </View>
-
-        <OrbitInput label="Nombre" value={name} onChangeText={setName} placeholder="Orbit Peony" />
-        <OrbitInput
-          label="Simbolo"
-          value={symbol}
-          onChangeText={setSymbol}
-          placeholder="PEONY"
-          autoCapitalize="characters"
-        />
-        <OrbitInput
-          label="Supply"
-          value={supply}
-          onChangeText={setSupply}
-          placeholder="1000000"
-          keyboardType="numeric"
-          autoCapitalize="none"
-        />
-        <OrbitInput
-          label="Decimales"
-          value={decimals}
-          onChangeText={setDecimals}
-          placeholder="18"
-          keyboardType="numeric"
-          autoCapitalize="none"
-        />
-        <View
-          style={[
-            styles.inlineCard,
-            { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.inlineTitle, { color: colors.text }]}>Plantilla segura</Text>
-          <Text style={[styles.inlineBody, { color: colors.textMuted }]}>
-            La plantilla oficial y verificable de OrbitX usa 18 decimales. Si cambias este valor,
-            el deploy protegido se bloquea.
-          </Text>
-        </View>
-        <OrbitInput
-          label="Descripcion"
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Describe tu memecoin."
-          multiline
-        />
-
-        <View
-          style={[
-            styles.inlineCard,
-            { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-          ]}
-        >
-          <View style={styles.inlineRow}>
-            <Text style={[styles.inlineTitle, { color: colors.text }]}>Imagen</Text>
-            <Ionicons name="image-outline" size={16} color={colors.textMuted} />
-          </View>
-          <Text style={[styles.inlineBody, { color: colors.textMuted }]}>
-            {logo
-              ? 'Puedes cambiar la imagen actual o generar una nueva con Astra sin salir del wizard.'
-              : 'Sube tu imagen manualmente o genera una con Astra para usarla como base del meme/token.'}
-          </Text>
-
-          <View style={styles.imageActionRow}>
-            <Pressable
-              onPress={() => {
-                setImageSourceMode('upload');
-                void handlePickLogo();
-              }}
-              style={[
-                styles.imageActionButton,
-                {
-                  backgroundColor:
-                    imageSourceMode === 'upload'
-                      ? withOpacity(colors.primary, 0.16)
-                      : withOpacity(colors.overlay, 0.18),
-                  borderColor:
-                    imageSourceMode === 'upload'
-                      ? withOpacity(colors.primary, 0.3)
-                      : colors.border,
-                },
-              ]}
-            >
-              <Ionicons name="cloud-upload-outline" size={16} color={colors.text} />
-              <Text style={[styles.imageActionLabel, { color: colors.text }]}>Subir foto</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                setImageSourceMode('astra');
-                if (!astraImagePrompt.trim() && astraPromptSuggestions[0]) {
-                  setAstraImagePrompt(astraPromptSuggestions[0].prompt);
-                }
-              }}
-              style={[
-                styles.imageActionButton,
-                {
-                  backgroundColor:
-                    imageSourceMode === 'astra'
-                      ? withOpacity(colors.primary, 0.16)
-                      : withOpacity(colors.overlay, 0.18),
-                  borderColor:
-                    imageSourceMode === 'astra'
-                      ? withOpacity(colors.primary, 0.3)
-                      : colors.border,
-                },
-              ]}
-            >
-              <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
-              <Text style={[styles.imageActionLabel, { color: colors.text }]}>Crear imagen con Astra</Text>
-            </Pressable>
-          </View>
-
-          {imageSourceMode === 'astra' ? (
-            <View style={styles.astraImageStudio}>
-      <Text style={[styles.inlineTitle, { color: colors.text }]}>Astra + Gemini Nano Banana</Text>
-                <Text style={[styles.inlineBody, { color: colors.textMuted }]}>
-        Astra te ayuda a construir el prompt visual. La generacion solo se activa cuando Gemini Nano Banana esta realmente disponible en este entorno.
-                </Text>
-
-              <View style={styles.promptSuggestionWrap}>
-                {astraPromptSuggestions.map((suggestion) => (
-                  <Pressable
-                    key={suggestion.id}
-                    onPress={() => handleApplyAstraPrompt(suggestion.prompt)}
-                    style={[
-                      styles.promptSuggestionChip,
-                      {
-                        backgroundColor: withOpacity(colors.primary, 0.1),
-                        borderColor: withOpacity(colors.primary, 0.24),
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.promptSuggestionLabel, { color: colors.text }]}>
-                      {suggestion.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              <OrbitInput
-                label="Prompt visual"
-                value={astraImagePrompt}
-                onChangeText={setAstraImagePrompt}
-                placeholder="Describe la imagen que quieres generar con Astra."
-                multiline
-              />
-
-                <PrimaryButton
-                  label={
-                    astraImageStatus === 'loading'
-                      ? 'Generando imagen...'
-                      : astraAvailabilityState === 'available'
-                        ? 'Generar imagen con Astra'
-                        : astraAvailabilityState === 'unavailable'
-                          ? 'No disponible en este entorno'
-                          : 'Intentar generar con Astra'
-                  }
-                  onPress={() => void handleGenerateAstraImage()}
-                  disabled={
-                    astraImageStatus === 'loading' || astraAvailabilityState === 'unavailable'
-                  }
-                />
-
-                <Text
-                  style={[
-                    styles.generatorStatus,
-                    {
-                      color:
-                        astraImageStatus === 'error'
-                          ? colors.loss
-                        : astraImageStatus === 'ready'
-                          ? colors.profit
-                          : astraAvailabilityState === 'unavailable'
-                            ? colors.textMuted
-                            : astraAvailabilityState === 'unknown'
-                              ? colors.textMuted
-                              : colors.textMuted,
-                    },
-                  ]}
-                >
-                  {astraImageStatus === 'loading'
-                    ? 'Astra esta generando tu imagen...'
-                    : astraImageStatus === 'ready'
-                      ? 'Imagen lista. Puedes elegir una como base del token.'
-                      : astraAvailabilityState === 'checking'
-                        ? 'Verificando si Astra + Gemini Nano Banana esta disponible...'
-                        : astraAvailabilityState === 'unknown'
-                          ? 'No pudimos confirmarlo ahora mismo, pero puedes intentar generar igualmente.'
-                        : astraImageStatus === 'error'
-                          ? astraImageError || 'No pudimos generar la imagen ahora mismo.'
-                          : astraAvailabilityState === 'available'
-                            ? 'Puedes usar uno de los prompts sugeridos o escribir el tuyo.'
-                            : astraAvailabilityMessage}
-                </Text>
-
-              {generatedImages.length ? (
-                <View style={styles.generatedGrid}>
-                  {generatedImages.map((image) => {
-                    const selected = logo === image.imageUrl;
-                    return (
-                      <Pressable
-                        key={image.id}
-                        onPress={() => handleSelectGeneratedImage(image)}
-                        style={[
-                          styles.generatedCard,
-                          {
-                            backgroundColor: withOpacity(colors.overlay, 0.2),
-                            borderColor: selected ? withOpacity(colors.primary, 0.4) : colors.border,
-                          },
-                        ]}
-                      >
-                        <Image source={{ uri: image.imageUrl }} style={styles.generatedImage} />
-                        <Text numberOfLines={2} style={[styles.generatedPrompt, { color: colors.textMuted }]}>
-                          {image.prompt}
-                        </Text>
-                        <Text style={[styles.generatedSelect, { color: selected ? colors.profit : colors.text }]}>
-                          {selected ? 'Seleccionada' : 'Usar esta imagen'}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ) : null}
-            </View>
-          ) : null}
-        </View>
-      </GlassCard>
-    );
-  }
-
-  function renderCostsStep() {
-    return (
-      <GlassCard>
-        <SectionHeader title="Coste real" subtitle="Estimacion antes de firmar." />
-
-        {isEstimating ? (
-          <Text style={[styles.mutedCopy, { color: colors.textMuted }]}>Calculando deploy real...</Text>
-        ) : estimate ? (
-          <View style={styles.summaryList}>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Red</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>{getNetworkLabel(chain)}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Gas limite</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>{estimate.gasLimit}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Supply</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>{supply}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Decimales</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>{decimals}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Coste estimado</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {estimate.nativeCostEstimate.toFixed(6)} {chain === 'bnb' ? 'BNB' : 'ETH'}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Aprox. USD</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {formatCurrency(estimate.usdCostEstimate)}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Payer</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {maskAddress(estimate.deployerAddress)}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <View
-            style={[
-              styles.inlineCard,
-              { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.inlineBody, { color: colors.textMuted }]}>
-              {estimateMessage || 'Todavia no tenemos una estimacion real para este deploy.'}
-            </Text>
-          </View>
-        )}
-      </GlassCard>
-    );
-  }
-
-  function renderSignatureStep() {
-    return (
-      <GlassCard>
-        <SectionHeader title="Firmar y crear" subtitle="Este paso despliega el token real." />
-
-        <View style={styles.summaryList}>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Wallet</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>
-              {walletSource === 'orbitx' ? 'OrbitX Wallet' : 'Wallet externa'}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Direccion</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>
-              {sourceAddress ? maskAddress(sourceAddress) : 'Pendiente'}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Token</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>
-              {previewName} ({previewSymbol})
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Supply</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>{supply}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Decimales</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>{decimals}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Red</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>{getNetworkLabel(chain)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Estado</Text>
-            <Text
-              style={[
-                styles.summaryValue,
-                {
-                  color:
-                    deployStatus === 'confirmed'
-                      ? colors.profit
-                      : deployStatus === 'failed'
-                        ? colors.loss
-                        : colors.text,
-                },
-              ]}
-            >
-              {deployStatus === 'awaiting_signature'
-                ? 'Esperando firma'
-                : deployStatus === 'deploying'
-                  ? 'Desplegando'
-                  : deployStatus === 'confirmed'
-                    ? 'Confirmado'
-                    : deployStatus === 'failed'
-                      ? 'Fallido'
-                      : 'Listo para firmar'}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Coste aprox.</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>
-              {estimate ? formatCurrency(estimate.usdCostEstimate) : 'Pendiente'}
-            </Text>
-          </View>
-        </View>
-
-        <View
-          style={[
-            styles.inlineCard,
-            {
-              backgroundColor: withOpacity(colors.loss, 0.08),
-              borderColor: withOpacity(colors.loss, 0.18),
-            },
-          ]}
-        >
-          <Text style={[styles.inlineTitle, { color: colors.loss }]}>Importante</Text>
-          <Text style={[styles.inlineBody, { color: colors.textSoft }]}>
-            Este paso crea el contrato en blockchain. No es una simulacion.
-          </Text>
-        </View>
-
-        {deployError ? (
-          <View
-            style={[
-              styles.inlineCard,
-              {
-                backgroundColor: withOpacity(colors.loss, 0.08),
-                borderColor: withOpacity(colors.loss, 0.18),
-              },
-            ]}
-          >
-            <Text style={[styles.inlineTitle, { color: colors.loss }]}>Error real</Text>
-            <Text style={[styles.inlineBody, { color: colors.textSoft }]}>{deployError}</Text>
-          </View>
-        ) : null}
-      </GlassCard>
-    );
-  }
-
-  function renderResultStep() {
-    const explorerContractUrl = deploymentResult
-      ? buildExplorerAddressUrl(deploymentResult.network, deploymentResult.contractAddress)
-      : null;
-    const explorerTxUrl = deploymentResult
-      ? buildExplorerTxUrl(deploymentResult.network, deploymentResult.transactionHash)
-      : null;
-
-    return (
-      <GlassCard>
-        <SectionHeader
-          title="Tu token ya existe on-chain"
-          subtitle="Direccion, red y siguiente fase dentro de OrbitX."
-        />
-
-        {deploymentResult ? (
-          <View style={styles.summaryList}>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Estado</Text>
-              <Text style={[styles.summaryValue, { color: colors.profit }]}>On-chain confirmado</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Red</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {getNetworkLabel(deploymentResult.network)}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Direccion</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {maskAddress(deploymentResult.contractAddress)}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Tx hash</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {maskAddress(deploymentResult.transactionHash)}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Deployer</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {maskAddress(deploymentResult.deployerAddress)}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <Text style={[styles.mutedCopy, { color: colors.textMuted }]}>
-            El deploy todavia no se ha completado.
-          </Text>
-        )}
-
-        {(explorerContractUrl || explorerTxUrl) ? (
-          <View style={styles.resultActionsGrid}>
-            {explorerContractUrl ? (
-              <PrimaryButton
-                label="Ver contrato"
-                variant="secondary"
-                onPress={() => void Linking.openURL(explorerContractUrl)}
-                style={styles.resultButton}
-              />
-            ) : null}
-            {explorerTxUrl ? (
-              <PrimaryButton
-                label="Ver tx"
-                variant="ghost"
-                onPress={() => void Linking.openURL(explorerTxUrl)}
-                style={styles.resultButton}
-              />
-            ) : null}
-          </View>
-        ) : null}
-
-        {launchSummary ? (
-          <View
-            style={[
-              styles.inlineCard,
-              { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.inlineTitle, { color: colors.text }]}>Siguiente fase preparada</Text>
-            <Text style={[styles.inlineBody, { color: colors.textMuted }]}>
-              {launchSummary.label} · Liquidez {formatCurrency(launchSummary.liquidityPoolUsd)} · Fee{' '}
-              {formatCurrency(launchSummary.estimatedFeeUsd)}
-            </Text>
-            <Text style={[styles.inlineHint, { color: colors.textSoft }]}>
-              Pool: {launchSummary.poolAddress}
-            </Text>
-          </View>
-        ) : (
-          <View
-            style={[
-              styles.inlineCard,
-              { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.inlineTitle, { color: colors.text }]}>Siguiente paso</Text>
-            <Text style={[styles.inlineBody, { color: colors.textMuted }]}>
-              El contrato ya existe en blockchain. Ahora puedes preparar liquidez y decidir como quieres listarlo dentro de OrbitX.
-            </Text>
-          </View>
-        )}
-
-        {listingError ? (
-          <View
-            style={[
-              styles.inlineCard,
-              {
-                backgroundColor: withOpacity(colors.loss, 0.08),
-                borderColor: withOpacity(colors.loss, 0.18),
-              },
-            ]}
-          >
-            <Text style={[styles.inlineTitle, { color: colors.loss }]}>Listing blocked</Text>
-            <Text style={[styles.inlineBody, { color: colors.textSoft }]}>{listingError}</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.resultActionsGrid}>
-          <PrimaryButton
-            label="Lanzar en OrbitX"
-            onPress={() => handleResultAction('orbitx')}
-            style={styles.resultButton}
-          />
-          <PrimaryButton
-            label="Lanzar en DEX"
-            variant="secondary"
-            onPress={() => handleResultAction('dex')}
-            style={styles.resultButton}
-          />
-          <PrimaryButton
-            label="Guardar"
-            variant="ghost"
-            onPress={() => handleResultAction('save')}
-            style={styles.resultButton}
-          />
-        </View>
-      </GlassCard>
-    );
-  }
-
-  function renderStepContent() {
-    switch (step) {
-      case 'wallet':
-        return renderWalletStep();
-      case 'network':
-        return renderNetworkStep();
-      case 'config':
-        return renderConfigStep();
-      case 'costs':
-        return renderCostsStep();
-      case 'signature':
-        return renderSignatureStep();
-      case 'result':
-        return renderResultStep();
-      default:
-        return null;
-    }
-  }
-
-  const primaryLabel =
-    step === 'wallet'
-      ? walletSource === 'external'
-        ? 'Usar OrbitX Wallet'
-        : walletReady
-          ? 'Continuar'
-          : 'Crear wallet y continuar'
-      : step === 'network'
-        ? 'Configurar token'
-        : step === 'config'
-          ? 'Revisar coste'
-          : step === 'costs'
-            ? 'Ir a firma'
-            : step === 'signature'
-              ? isDeploying
-                ? 'Creando token...'
-                : 'Firmar y crear'
-              : resultToken
-                ? 'Ver token'
-                : 'Crear otro';
-
-  function handlePrimaryPress() {
-    if (step === 'signature') {
-      void handleCreateToken();
-      return;
-    }
-
-    if (step === 'result') {
-      if (resultToken) {
-        router.push(`/token/${resultToken.id}`);
-        return;
-      }
-
-      resetWizard();
-      return;
-    }
-
-    moveToNextStep();
-  }
+    router.push('/create-token-review' as never);
+  };
 
   return (
-    <Screen
-      scrollable
-      contentContainerStyle={[styles.screenContent, standalone ? styles.screenStandalone : null]}
-    >
-      <PageHeader
-        title="Crear Memecoin"
-        subtitle="Deploy real primero en Ethereum, Base y BNB Chain."
-        rightSlot={
-          <View
-            style={[
-              styles.stepBadge,
-              { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.stepBadgeLabel, { color: colors.text }]}>
-              {currentStepIndex + 1}/{steps.length}
-            </Text>
-          </View>
-        }
-      />
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[
+          styles.content,
+          isSmallPhone && styles.contentSmall,
+          { paddingBottom: Math.max(insets.bottom, 10) + (standalone ? 34 : 120) },
+        ]}
+      >
+        <Header />
+        <StepIndicator />
+        <IntroCard />
 
-      <View style={styles.progressWrap}>
-        {steps.map((item, index) => {
-          const active = index <= currentStepIndex;
+        <View style={styles.section}>
+          <SectionTitle title="Tipo de token" />
+          <TypeSelector value={tokenType} onChange={setTokenType} />
+        </View>
 
-          return (
-            <View
-              key={item.key}
-              style={[
-                styles.progressChip,
-                {
-                  backgroundColor: active ? withOpacity(colors.primary, 0.12) : colors.fieldBackground,
-                  borderColor: active ? withOpacity(colors.primary, 0.3) : colors.border,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.progressChipLabel,
-                  { color: active ? colors.text : colors.textMuted },
-                ]}
-              >
-                {item.label}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
+        <NetworkSelector value={network} onChange={handleNetworkChange} />
 
-      {createdTokens.length ? (
-        <View
-          style={[
-            styles.createdStrip,
-            { backgroundColor: colors.fieldBackground, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.createdStripTitle, { color: colors.text }]}>Mis Tokens</Text>
-          <View style={styles.createdStripRow}>
-            {createdTokens.map((token) => (
-              <Pressable
-                key={token.id}
-                onPress={() => router.push(`/token/${token.id}`)}
-                style={[
-                  styles.createdChip,
-                  { backgroundColor: colors.backgroundAlt, borderColor: colors.border },
-                ]}
-              >
-                <TokenAvatar label={token.symbol} color={token.color} size={22} />
-                <Text style={[styles.createdChipLabel, { color: colors.text }]}>{token.symbol}</Text>
-              </Pressable>
-            ))}
+        <View style={styles.section}>
+          <SectionTitle title="Datos del token" />
+          <View style={styles.formCard}>
+            <Field
+              label="Nombre"
+              value={name}
+              onChangeText={setName}
+              placeholder="Ej: QVEX Utility"
+              error={submitted ? errors.name : undefined}
+            />
+            <Field
+              label="Símbolo"
+              value={symbol}
+              onChangeText={(value) => setSymbol(value.toUpperCase().replace(/\s/g, ''))}
+              placeholder="Ej: ORBX"
+              error={submitted ? errors.symbol : undefined}
+            />
+            <Field
+              label="Decimales"
+              value={decimals}
+              onChangeText={setDecimals}
+              placeholder={network === 'solana' ? '9' : '18'}
+              keyboardType="numeric"
+              error={submitted ? errors.decimals : undefined}
+            />
+            <Field
+              label="Supply total"
+              value={supply}
+              onChangeText={setSupply}
+              placeholder="1,000,000,000"
+              keyboardType="numeric"
+              error={submitted ? errors.supply : undefined}
+            />
+            <Field
+              label="Descripción corta"
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Describe brevemente el propósito de tu token..."
+              multiline
+            />
           </View>
         </View>
-      ) : null}
 
-      {renderStepContent()}
+        <LogoUpload logoUri={logoUri} onUpload={handleLogoUpload} />
 
-      <View style={styles.footer}>
-        {step !== 'wallet' ? (
-          <PrimaryButton
-            label="Atras"
-            variant="ghost"
-            onPress={() => setStep(steps[Math.max(currentStepIndex - 1, 0)]?.key ?? 'wallet')}
-            style={styles.flexButton}
-          />
-        ) : null}
+        <AdvancedOptions
+          values={{
+            lockLiquidity,
+            prepareAirdrop,
+            prepareListing,
+            audit: false,
+          }}
+          onToggle={(key) => {
+            if (key === 'lockLiquidity') setLockLiquidity((value) => !value);
+            if (key === 'prepareAirdrop') setPrepareAirdrop((value) => !value);
+            if (key === 'prepareListing') setPrepareListing((value) => !value);
+          }}
+        />
 
-        <PrimaryButton label={primaryLabel} onPress={handlePrimaryPress} style={styles.flexButton} />
-      </View>
+        <CostEstimate network={network} />
 
-      <WalletSetupFlow
-        visible={walletSetupVisible}
-        mode={walletSetupMode}
-        onClose={() => setWalletSetupVisible(false)}
-        onComplete={handleWalletReady}
-      />
+        <View style={styles.disclaimerCard}>
+          <Ionicons name="warning-outline" size={17} color={COLORS.warning} />
+          <Text style={styles.disclaimerText}>
+            Crear un token implica riesgos. Revisa todos los datos antes de confirmar.
+          </Text>
+        </View>
 
-      <ExternalWalletConnectSheet
-        visible={connectorVisible}
-        onClose={() => setConnectorVisible(false)}
-      />
-
-      <TokenLaunchModal
-        visible={launchModalVisible}
-        token={resultToken}
-        defaultLiquidityUsd={2500}
-        initialChoice={launchIntent}
-        estimatedOnchainFeeUsd={liquidityFeeUsd}
-        pairKind={pairKind}
-        onPairKindChange={setPairKind}
-        tokenAmountValue={tokenLiquidityAmount}
-        onTokenAmountChange={setTokenLiquidityAmount}
-        dexNetwork={dexLaunchNetwork}
-        onDexNetworkChange={setDexLaunchNetwork}
-        liquidityValue={dexLaunchLiquidity}
-        onLiquidityChange={setDexLaunchLiquidity}
-        onClose={() => setLaunchModalVisible(false)}
-        onConfirm={handleConfirmLaunch}
-      />
-    </Screen>
+        <ContinueBlock disabled={submitted && hasErrors} message={feedback} onContinue={handleContinue} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screenContent: {
-    gap: 14,
-    paddingBottom: 28,
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
-  screenStandalone: {
+  scroll: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  content: {
+    paddingHorizontal: 16,
     paddingTop: 8,
+    gap: 16,
   },
-  stepBadge: {
-    minWidth: 54,
-    height: 34,
-    borderRadius: RADII.pill,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
+  contentSmall: {
+    paddingHorizontal: 14,
+    gap: 14,
   },
-  stepBadgeLabel: {
-    fontFamily: FONT.semibold,
-    fontSize: 12,
+  pressed: {
+    opacity: 0.84,
+    transform: [{ scale: 0.99 }],
   },
-  progressWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  progressChip: {
-    minHeight: 28,
-    borderRadius: RADII.pill,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressChipLabel: {
-    fontFamily: FONT.medium,
-    fontSize: 10,
-  },
-  createdStrip: {
-    borderRadius: RADII.lg,
-    borderWidth: 1,
-    padding: 10,
-    gap: 8,
-  },
-  createdStripTitle: {
-    fontFamily: FONT.semibold,
-    fontSize: 12,
-  },
-  createdStripRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  createdChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderRadius: RADII.pill,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  createdChipLabel: {
-    fontFamily: FONT.medium,
-    fontSize: 11,
-  },
-  choiceList: {
-    gap: 8,
-  },
-  choiceCard: {
-    borderRadius: RADII.lg,
-    borderWidth: 1,
-    padding: 12,
-    gap: 4,
-  },
-  choiceTitle: {
-    fontFamily: FONT.semibold,
-    fontSize: 12,
-  },
-  choiceBody: {
-    fontFamily: FONT.regular,
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  choiceHint: {
-    fontFamily: FONT.medium,
-    fontSize: 10,
-  },
-  actionGrid: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  flexButton: {
-    flex: 1,
-  },
-  inlineCard: {
-    borderRadius: RADII.lg,
-    borderWidth: 1,
-    padding: 12,
-    gap: 6,
-  },
-  inlineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-  },
-  inlineTitle: {
-    fontFamily: FONT.semibold,
-    fontSize: 12,
-  },
-  inlineBody: {
-    fontFamily: FONT.regular,
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  inlineHint: {
-    fontFamily: FONT.medium,
-    fontSize: 10,
-  },
-  networkStatusList: {
-    gap: 8,
-  },
-  networkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-    borderRadius: RADII.lg,
-    borderWidth: 1,
-    padding: 10,
-  },
-  networkLeft: {
-    flex: 1,
-    gap: 2,
-  },
-  networkStatus: {
-    fontFamily: FONT.semibold,
-    fontSize: 10,
-  },
-  previewRow: {
+  header: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  previewImage: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: withOpacity(COLORS.surfaceElevated, 0.8),
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  previewCopy: {
+  headerCopy: {
     flex: 1,
-    gap: 2,
+    minWidth: 0,
   },
-  previewName: {
+  headerTitle: {
+    color: COLORS.text,
     fontFamily: FONT.bold,
-    fontSize: 16,
+    fontSize: 19,
+    lineHeight: 24,
+    textTransform: 'uppercase',
+    letterSpacing: 1.4,
   },
-  previewMeta: {
+  headerSubtitle: {
+    color: COLORS.textMuted,
     fontFamily: FONT.medium,
     fontSize: 11,
   },
-  imageActionRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 6,
+  stepBlock: {
+    gap: 9,
   },
-  imageActionButton: {
-    flex: 1,
-    minHeight: 42,
-    borderRadius: RADII.lg,
-    borderWidth: 1,
-    paddingHorizontal: 12,
+  stepTopRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    gap: 12,
   },
-  imageActionLabel: {
-    fontFamily: FONT.semibold,
-    fontSize: 11,
-  },
-  astraImageStudio: {
-    marginTop: 10,
-    gap: 10,
-  },
-  promptSuggestionWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  promptSuggestionChip: {
-    minHeight: 30,
-    borderRadius: RADII.pill,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  promptSuggestionLabel: {
-    fontFamily: FONT.medium,
-    fontSize: 11,
-  },
-  generatorStatus: {
-    fontFamily: FONT.medium,
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  generatedGrid: {
-    gap: 10,
-  },
-  generatedCard: {
-    borderRadius: RADII.lg,
-    borderWidth: 1,
-    padding: 10,
-    gap: 8,
-  },
-  generatedImage: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: 16,
-  },
-  generatedPrompt: {
-    fontFamily: FONT.regular,
-    fontSize: 10,
-    lineHeight: 14,
-  },
-  generatedSelect: {
-    fontFamily: FONT.semibold,
-    fontSize: 11,
-  },
-  mutedCopy: {
-    fontFamily: FONT.medium,
+  stepLabel: {
+    color: COLORS.purpleSoft,
+    fontFamily: FONT.bold,
     fontSize: 12,
   },
-  summaryList: {
+  stepTitle: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.semibold,
+    fontSize: 12,
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: COLORS.surfaceElevated,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    width: '20%',
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: COLORS.purpleSoft,
+  },
+  stepChips: {
+    gap: 8,
+    paddingRight: 16,
+  },
+  stepChip: {
+    minHeight: 28,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  stepChipActive: {
+    borderColor: withOpacity(COLORS.purpleSoft, 0.52),
+    backgroundColor: withOpacity(COLORS.purple, 0.18),
+  },
+  stepChipText: {
+    color: COLORS.textMuted,
+    fontFamily: FONT.medium,
+    fontSize: 10.5,
+  },
+  stepChipTextActive: {
+    color: COLORS.text,
+  },
+  introCard: {
+    width: '100%',
+    minHeight: 138,
+    borderRadius: 22,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
     gap: 8,
   },
-  summaryRow: {
+  introGlow: {
+    position: 'absolute',
+    right: -54,
+    top: -54,
+    width: 154,
+    height: 154,
+    borderRadius: 77,
+    backgroundColor: withOpacity(COLORS.purpleSoft, 0.16),
+  },
+  chipRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tinyChip: {
+    minHeight: 24,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  tinyChipText: {
+    color: COLORS.purpleSoft,
+    fontFamily: FONT.bold,
+    fontSize: 10,
+  },
+  introTitle: {
+    color: COLORS.text,
+    fontFamily: FONT.bold,
+    fontSize: 23,
+    lineHeight: 29,
+    marginTop: 4,
+  },
+  introBody: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 13.5,
+    lineHeight: 20,
+  },
+  introHint: {
+    color: COLORS.textMuted,
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  demoInlineNotice: {
+    minHeight: 38,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: withOpacity(COLORS.warning, 0.22),
+    backgroundColor: withOpacity(COLORS.warning, 0.07),
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  demoInlineText: {
+    flex: 1,
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 10.5,
+    lineHeight: 15,
+  },
+  section: {
+    width: '100%',
+    gap: 10,
+  },
+  sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: SPACING.sm,
+    gap: 12,
   },
-  summaryLabel: {
-    fontFamily: FONT.regular,
+  sectionTitle: {
+    color: COLORS.textMuted,
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  sectionHint: {
+    flex: 1,
+    color: COLORS.warning,
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    textAlign: 'right',
+  },
+  typeGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  typeCard: {
+    flex: 1,
+    minHeight: 94,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surfaceSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    gap: 5,
+  },
+  typeCardActive: {
+    backgroundColor: COLORS.purple,
+    borderColor: COLORS.purpleSoft,
+  },
+  typeTitle: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.bold,
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  typeTitleActive: {
+    color: COLORS.text,
+  },
+  typeSubtitle: {
+    color: COLORS.textMuted,
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    textAlign: 'center',
+  },
+  typeSubtitleActive: {
+    color: withOpacity(COLORS.text, 0.82),
+  },
+  networkRow: {
+    gap: 10,
+    paddingRight: 16,
+  },
+  networkChip: {
+    minHeight: 48,
+    borderRadius: 13,
+    paddingHorizontal: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  networkChipActive: {
+    borderColor: COLORS.purpleSoft,
+    backgroundColor: withOpacity(COLORS.purple, 0.18),
+  },
+  networkIcon: {
+    width: 27,
+    height: 27,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  networkText: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.bold,
+    fontSize: 13,
+  },
+  networkTextActive: {
+    color: COLORS.text,
+  },
+  formCard: {
+    width: '100%',
+    gap: 12,
+  },
+  fieldWrap: {
+    gap: 6,
+  },
+  fieldLabel: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    marginLeft: 2,
+  },
+  input: {
+    minHeight: 50,
+    borderRadius: 16,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: withOpacity('#FFFFFF', 0.08),
+    paddingHorizontal: 14,
+    color: COLORS.text,
+    fontFamily: FONT.medium,
+    fontSize: 14,
+  },
+  inputMultiline: {
+    minHeight: 84,
+    paddingTop: 13,
+    textAlignVertical: 'top',
+  },
+  inputError: {
+    borderColor: withOpacity(COLORS.warning, 0.78),
+  },
+  fieldError: {
+    color: COLORS.warning,
+    fontFamily: FONT.medium,
     fontSize: 11,
   },
-  summaryValue: {
+  logoCard: {
+    width: '100%',
+    minHeight: 108,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surfaceSoft,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 14,
+  },
+  logoPreview: {
+    width: 64,
+    height: 64,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: withOpacity('#FFFFFF', 0.18),
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  logoCopy: {
     flex: 1,
-    textAlign: 'right',
+    minWidth: 0,
+    gap: 4,
+  },
+  logoTitle: {
+    color: COLORS.text,
+    fontFamily: FONT.bold,
+    fontSize: 15,
+  },
+  logoBody: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  logoButton: {
+    alignSelf: 'flex-start',
+    minHeight: 28,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: withOpacity(COLORS.purple, 0.16),
+    borderWidth: 1,
+    borderColor: withOpacity(COLORS.purpleSoft, 0.28),
+  },
+  logoButtonText: {
+    color: COLORS.text,
+    fontFamily: FONT.bold,
+    fontSize: 11,
+  },
+  advancedList: {
+    gap: 9,
+  },
+  advancedCard: {
+    width: '100%',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surfaceSoft,
+    overflow: 'hidden',
+  },
+  advancedCardActive: {
+    borderColor: withOpacity(COLORS.purpleSoft, 0.72),
+  },
+  disabledCard: {
+    opacity: 0.56,
+  },
+  advancedHeader: {
+    minHeight: 70,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    padding: 12,
+  },
+  advancedLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    minWidth: 0,
+  },
+  advancedIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: withOpacity(COLORS.purple, 0.12),
+  },
+  advancedCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  advancedTitle: {
+    color: COLORS.text,
+    fontFamily: FONT.bold,
+    fontSize: 14,
+  },
+  advancedTitleMuted: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.bold,
+    fontSize: 14,
+  },
+  advancedSubtitle: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 11.5,
+  },
+  futureLabel: {
+    color: COLORS.greenBright,
+    fontFamily: FONT.bold,
+    fontSize: 9.5,
+    textTransform: 'uppercase',
+  },
+  disabledLabel: {
+    color: COLORS.textMuted,
+    fontFamily: FONT.bold,
+    fontSize: 9.5,
+    textTransform: 'uppercase',
+  },
+  advancedHelper: {
+    marginHorizontal: 12,
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: COLORS.surfaceElevated,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  advancedHelperText: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  switchTrack: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    padding: 3,
+    backgroundColor: COLORS.surfaceElevated,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  switchTrackActive: {
+    backgroundColor: withOpacity(COLORS.purple, 0.42),
+    borderColor: withOpacity(COLORS.purpleSoft, 0.7),
+  },
+  switchKnob: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.textMuted,
+  },
+  switchKnobActive: {
+    transform: [{ translateX: 18 }],
+    backgroundColor: COLORS.text,
+  },
+  costCard: {
+    width: '100%',
+    borderRadius: 18,
+    padding: 16,
+    gap: 12,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  costEyebrow: {
+    color: COLORS.textMuted,
+    fontFamily: FONT.bold,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  costRows: {
+    gap: 10,
+  },
+  costRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  costLabel: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 12,
+  },
+  costLabelStrong: {
+    color: COLORS.text,
+    fontFamily: FONT.bold,
+    fontSize: 15,
+  },
+  costValue: {
+    color: COLORS.text,
     fontFamily: FONT.semibold,
     fontSize: 12,
   },
-  resultActionsGrid: {
+  costValueStrong: {
+    color: '#D9C8FF',
+    fontFamily: FONT.bold,
+    fontSize: 16,
+  },
+  costDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  warningRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'flex-start',
     gap: 8,
   },
-  resultButton: {
-    minWidth: '48%',
+  warningText: {
+    flex: 1,
+    color: COLORS.warning,
+    fontFamily: FONT.medium,
+    fontSize: 11,
+    lineHeight: 15,
   },
-  footer: {
+  disclaimerCard: {
+    width: '100%',
+    borderRadius: 14,
+    padding: 12,
     flexDirection: 'row',
+    gap: 9,
+    backgroundColor: withOpacity(COLORS.warning, 0.08),
+    borderWidth: 1,
+    borderColor: withOpacity(COLORS.warning, 0.2),
+  },
+  disclaimerText: {
+    flex: 1,
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  continueBlock: {
+    width: '100%',
+    gap: 10,
+  },
+  feedbackCard: {
+    minHeight: 44,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 8,
+    borderWidth: 1,
+  },
+  feedbackError: {
+    backgroundColor: withOpacity(COLORS.warning, 0.08),
+    borderColor: withOpacity(COLORS.warning, 0.22),
+  },
+  feedbackReady: {
+    backgroundColor: withOpacity(COLORS.green, 0.08),
+    borderColor: withOpacity(COLORS.green, 0.22),
+  },
+  feedbackText: {
+    flex: 1,
+    color: COLORS.textSecondary,
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  ctaButton: {
+    width: '100%',
+    minHeight: 52,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  ctaGradient: {
+    minHeight: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaText: {
+    color: COLORS.text,
+    fontFamily: FONT.bold,
+    fontSize: 15,
+  },
+  ctaHint: {
+    color: COLORS.textMuted,
+    fontFamily: FONT.medium,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    paddingHorizontal: 18,
   },
 });

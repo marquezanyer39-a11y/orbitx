@@ -142,7 +142,7 @@ export function TokenLaunchModal({
                   Token created successfully
                 </Text>
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                  Choose between an external DEX route or OrbitX protected listing.
+                  Choose between an external DEX route or QVEX protected listing.
                 </Text>
               </View>
 
@@ -201,7 +201,7 @@ export function TokenLaunchModal({
                   List on external DEX
                 </Text>
                 <Text style={[styles.choiceBody, { color: colors.textMuted }]}>
-                  This token will be listed outside OrbitX&apos;s internal protection system.
+                  This token will be listed outside QVEX&apos;s internal protection system.
                 </Text>
               </Pressable>
 
@@ -216,7 +216,7 @@ export function TokenLaunchModal({
                 ]}
               >
                 <Text style={[styles.choiceTitle, { color: colors.text }]}>
-                  List on OrbitX protected market
+                  List on QVEX protected market
                 </Text>
                 <Text style={[styles.choiceBody, { color: colors.textMuted }]}>
                   Requires automated checks, real pre-listing validation, real liquidity creation,
@@ -239,7 +239,7 @@ export function TokenLaunchModal({
                   External listing warning
                 </Text>
                 <Text style={[styles.noticeBody, { color: colors.textSoft }]}>
-                  OrbitX will not mark this token as protected. Users will only see it as an
+                  QVEX will not mark this token as protected. Users will only see it as an
                   external listing.
                 </Text>
               </View>
@@ -254,10 +254,10 @@ export function TokenLaunchModal({
                 ]}
               >
                 <Text style={[styles.noticeTitle, { color: colors.primary }]}>
-                  OrbitX protected listing
+                  QVEX protected listing
                 </Text>
                 <Text style={[styles.noticeBody, { color: colors.textSoft }]}>
-                  OrbitX protected listings reduce risk and improve transparency, but do not
+                  QVEX protected listings reduce risk and improve transparency, but do not
                   eliminate all possible risk.
                 </Text>
               </View>
@@ -280,7 +280,7 @@ export function TokenLaunchModal({
                 />
                 <Text style={[styles.routerHint, { color: colors.textMuted }]}>
                   Venue: {dexConfig?.dexVenue ?? 'Supported DEX'} · Router:{' '}
-                  {dexConfig?.tradeRouter ?? 'OrbitX'}
+                  {dexConfig?.tradeRouter ?? 'QVEX'}
                 </Text>
               </View>
             ) : null}
@@ -394,7 +394,7 @@ export function TokenLaunchModal({
                 </Text>
                 <Text style={[styles.noticeBody, { color: colors.textSoft }]}>
                   Real liquidity and listing are active first on Ethereum and BNB Chain. This
-                  token stays visible, but OrbitX will not fake a listing flow on unsupported
+                  token stays visible, but QVEX will not fake a listing flow on unsupported
                   networks.
                 </Text>
               </View>
@@ -419,7 +419,7 @@ export function TokenLaunchModal({
                   onChange={setLockDurationDays}
                 />
                 <Text style={[styles.routerHint, { color: colors.textMuted }]}>
-                  No lock means no OrbitX protected listing.
+                  No lock means no QVEX protected listing.
                 </Text>
               </View>
             ) : null}
@@ -435,7 +435,7 @@ export function TokenLaunchModal({
             >
               <Text style={[styles.noticeTitle, { color: colors.loss }]}>Important</Text>
               <Text style={[styles.noticeBody, { color: colors.textSoft }]}>
-                This uses real money, real signatures, and real on-chain transactions. OrbitX will
+                This uses real money, real signatures, and real on-chain transactions. QVEX will
                 only show success after confirmation.
               </Text>
             </View>
