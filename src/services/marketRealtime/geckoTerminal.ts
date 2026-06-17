@@ -74,7 +74,7 @@ function buildHeaders() {
   };
 
   if (typeof document === 'undefined') {
-    headers['User-Agent'] = 'OrbitX/1.0 (+https://orbitx.app)';
+    headers['User-Agent'] = 'QVEX/1.0 (+https://qvex.app)';
   }
 
   return headers;

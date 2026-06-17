@@ -151,7 +151,7 @@ export function useLiveMarkets() {
     items,
     loading,
     error,
-    usingFallback: !homeMarkets.length,
+    usingFallback: homeMarkets.length < 4,
     refresh: () => void loadHomeMarkets(),
   };
 }

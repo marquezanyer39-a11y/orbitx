@@ -55,7 +55,7 @@ async function fetchJson<T>(path: string) {
   };
 
   if (typeof document === 'undefined') {
-    headers['User-Agent'] = 'OrbitX/1.0 (+https://orbitx.app)';
+    headers['User-Agent'] = 'QVEX/1.0 (+https://qvex.app)';
   }
 
   const response = await fetch(`${COINGECKO_BASE_URL}${path}`, {
