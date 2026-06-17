@@ -49,10 +49,10 @@ interface AuthStoreActions {
 export type AuthStore = AuthStoreState & AuthStoreActions;
 
 const initialProfile: UserProfile = {
-  orbitId: ensureOrbitUserId(undefined, { name: 'OrbitX User' }),
-  name: 'OrbitX User',
+  orbitId: ensureOrbitUserId(undefined, { name: 'QVEX User' }),
+  name: 'QVEX User',
   email: '',
-  handle: '@orbitxuser',
+  handle: '@qvexuser',
   avatar: 'OX',
   avatarUri: null,
   level: 'Pro Trader',
@@ -101,7 +101,7 @@ function handleFromIdentity(name: string, email: string) {
     name.trim().replace(/[^a-zA-Z0-9]/g, '').toLowerCase() ||
     email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
-  return `@${base.slice(0, 14) || 'orbitxuser'}`;
+  return `@${base.slice(0, 14) || 'qvexuser'}`;
 }
 
 function buildProfileFromSupabaseSession(
@@ -118,7 +118,7 @@ function buildProfileFromSupabaseSession(
     (sameAccount ? currentProfile.name : '') ||
     metadataName ||
     nextEmail.split('@')[0] ||
-    'OrbitX User';
+    'QVEX User';
   const nextHandle =
     (sameAccount ? currentProfile.handle : '') || handleFromIdentity(nextName, nextEmail);
   const nextOrbitId = ensureOrbitUserId(sameAccount ? currentProfile.orbitId : undefined, {

@@ -56,7 +56,7 @@ export async function enableBiometricsForOrbitX() {
 
   const LocalAuthentication = await getLocalAuthenticationModule();
   const result = await LocalAuthentication.authenticateAsync({
-    promptMessage: 'Activa biometria para OrbitX',
+    promptMessage: 'Activa biometria para QVEX',
     cancelLabel: 'Cancelar',
     disableDeviceFallback: false,
   });
@@ -85,7 +85,7 @@ export async function unlockOrbitXWithBiometrics() {
 
   const LocalAuthentication = await getLocalAuthenticationModule();
   const result = await LocalAuthentication.authenticateAsync({
-    promptMessage: 'Desbloquea OrbitX',
+    promptMessage: 'Desbloquea QVEX',
     cancelLabel: 'Cancelar',
     disableDeviceFallback: false,
   });
@@ -93,12 +93,12 @@ export async function unlockOrbitXWithBiometrics() {
   if (!result.success) {
     return {
       ok: false,
-      message: 'No se pudo desbloquear OrbitX con biometria.',
+      message: 'No se pudo desbloquear QVEX con biometria.',
     };
   }
 
   return {
     ok: true,
-    message: 'OrbitX desbloqueado',
+    message: 'QVEX desbloqueado',
   };
 }

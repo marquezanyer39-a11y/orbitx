@@ -16,7 +16,7 @@ const SURFACE_LABELS: Record<'en' | 'es', Record<AstraSurface, string>> = {
     pool: 'Monthly Pool',
     ramp: 'Ramp',
     error: 'Issue',
-    general: 'OrbitX',
+    general: 'QVEX',
     market: 'Markets',
     social: 'Social',
     create_token: 'Create token',
@@ -32,7 +32,7 @@ const SURFACE_LABELS: Record<'en' | 'es', Record<AstraSurface, string>> = {
     pool: 'Pool mensual',
     ramp: 'Ramp',
     error: 'Problema',
-    general: 'OrbitX',
+    general: 'QVEX',
     market: 'Mercados',
     social: 'Social',
     create_token: 'Crear token',
@@ -143,14 +143,14 @@ export function buildAstraBootstrapResponse(
       case 'security':
         return t(
           language,
-          'Estoy en Seguridad contigo. Puedo ayudarte a revisar protecciones, sesiones activas y el siguiente paso seguro dentro de OrbitX.',
-          'I am in Security with you. I can help you review protections, active sessions and the next safe step inside OrbitX.',
+          'Estoy en Seguridad contigo. Puedo ayudarte a revisar protecciones, sesiones activas y el siguiente paso seguro dentro de QVEX.',
+          'I am in Security with you. I can help you review protections, active sessions and the next safe step inside QVEX.',
         );
       default:
         return t(
           language,
-          `Estoy en ${screenLabel} contigo. Dime que quieres hacer y te guio al siguiente paso real dentro de OrbitX.`,
-          `I am in ${screenLabel} with you. Tell me what you want to do and I will guide you to the next real step inside OrbitX.`,
+          `Estoy en ${screenLabel} contigo. Dime que quieres hacer y te guio al siguiente paso real dentro de QVEX.`,
+          `I am in ${screenLabel} with you. Tell me what you want to do and I will guide you to the next real step inside QVEX.`,
         );
     }
   })();
@@ -288,8 +288,8 @@ export function buildAstraUnavailableResponse(options: {
   const shortText = isClientBackendMissing
     ? t(
         language,
-        'Esta version de OrbitX no tiene Astra activa por completo.',
-        'This OrbitX build does not have Astra fully enabled yet.',
+        'Esta version de QVEX no tiene Astra activa por completo.',
+        'This QVEX build does not have Astra fully enabled yet.',
       )
     : isServerConfigIssue
       ? t(
@@ -305,8 +305,8 @@ export function buildAstraUnavailableResponse(options: {
   const longText = isClientBackendMissing
     ? t(
         language,
-        'Esta version de OrbitX no tiene Astra activa por completo. Instala la build mas reciente o revisa la URL publica del backend.',
-        'This OrbitX build does not have Astra fully enabled yet. Install the latest build or review the public backend URL.',
+        'Esta version de QVEX no tiene Astra activa por completo. Instala la build mas reciente o revisa la URL publica del backend.',
+        'This QVEX build does not have Astra fully enabled yet. Install the latest build or review the public backend URL.',
       )
     : isServerConfigIssue
       ? t(

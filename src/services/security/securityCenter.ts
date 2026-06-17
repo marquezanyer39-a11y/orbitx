@@ -29,11 +29,11 @@ export function buildCurrentSessionIdentity(session: SessionState): SecuritySess
         ? 'Android'
         : platform === 'web'
           ? 'Web'
-          : 'OrbitX';
+          : 'QVEX';
 
   return {
     id: `${platform}-current`,
-    deviceLabel: `${deviceLabel} · OrbitX`,
+    deviceLabel: `${deviceLabel} · QVEX`,
     locationLabel: timezoneLabel(),
     providerLabel: session.provider === 'supabase' ? 'Correo seguro' : 'Acceso local',
     createdAt: new Date().toISOString(),
