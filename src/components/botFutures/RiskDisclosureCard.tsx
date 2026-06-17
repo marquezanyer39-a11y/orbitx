@@ -28,7 +28,7 @@ export function RiskDisclosureCard({ title, body, emphasis = false }: Props) {
       </Text>
       <Text style={[styles.body, { color: colors.textSoft }]}>{body}</Text>
       <Text style={[styles.note, { color: emphasis ? colors.warning : colors.textMuted }]}>
-        OrbitX y Astra brindan analisis, senales y asistencia operativa. La responsabilidad final
+        QVEX y Astra brindan analisis, senales y asistencia operativa. La responsabilidad final
         de entrada, salida y gestion del riesgo pertenece al usuario.
       </Text>
     </View>

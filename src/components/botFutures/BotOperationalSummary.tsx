@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FONT, RADII, withOpacity } from '../../../constants/theme';
+import { FONT, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 
 interface SummaryItem {

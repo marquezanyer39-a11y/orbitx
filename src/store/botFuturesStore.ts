@@ -14,15 +14,10 @@ export type BotFuturesProtectionMode = 'dynamic' | 'strict';
 interface BotFuturesState {
   selectedExchange: BotFuturesExchangeId | null;
   selectedMode: BotFuturesModeId | null;
-  apiKey: string;
-  secretKey: string;
-  apiKeyMasked: string | null;
-  hasCredentials: boolean;
   connectionStatus: BotFuturesConnectionStatus;
   validationError: string | null;
   wizardStep: 1 | 2 | 3 | 4 | 5;
   guideCompleted: boolean;
-  keysValidated: boolean;
   botStatus: BotFuturesRuntimeStatus;
   pair: string;
   capitalAllocatedUsd: number;
@@ -41,12 +36,9 @@ interface BotFuturesState {
   lastSyncAt: string | null;
   setSelectedExchange: (exchange: BotFuturesExchangeId | null) => void;
   setSelectedMode: (mode: BotFuturesModeId) => void;
-  setApiKey: (value: string) => void;
-  setSecretKey: (value: string) => void;
   setConnectionStatus: (status: BotFuturesConnectionStatus, error?: string | null) => void;
   setWizardStep: (step: 1 | 2 | 3 | 4 | 5) => void;
   completeGuide: () => void;
-  completeValidation: (maskedKey?: string) => void;
   resetConnectionState: () => void;
   resetWizard: () => void;
   setBotStatus: (status: BotFuturesRuntimeStatus) => void;
@@ -81,22 +73,22 @@ export const BOT_FUTURES_EXCHANGE_DEFINITIONS: Record<
 > = {
   binance: {
     name: 'Binance Futures',
-    status: 'Disponible',
-    description: 'Principal exchange para futuros con alta liquidez.',
+    status: 'Backend seguro pendiente',
+    description: 'Flujo visual listo; la conexion real se habilitara desde backend QVEX.',
     shortName: 'BN',
     accent: 'gold',
   },
   okx: {
     name: 'OKX',
-    status: 'Disponible',
-    description: 'Trading avanzado de derivados y futuros.',
+    status: 'Backend seguro pendiente',
+    description: 'Proveedor preparado para futuro broker, sin credenciales dentro de la app.',
     shortName: 'OKX',
     accent: 'blue',
   },
   bybit: {
     name: 'Bybit',
-    status: 'Disponible',
-    description: 'Especialistas en trading de futuros perpetuos.',
+    status: 'Backend seguro pendiente',
+    description: 'Conexion futura mediante backend QVEX y permisos minimos.',
     shortName: 'BY',
     accent: 'slate',
   },
@@ -120,19 +112,19 @@ export const BOT_FUTURES_MODE_DEFINITIONS: Record<
 > = {
   simulated: {
     name: 'Simulado',
-    description: 'Prueba tus estrategias sin riesgo. Usando datos reales.',
+    description: 'Prueba tus estrategias sin riesgo y sin credenciales de exchange.',
     riskLabel: 'Nivel de Riesgo: Ninguno',
     accent: 'blue',
   },
   testnet: {
     name: 'Testnet',
-    description: 'Entorno de prueba con fondos simulados en una red de prueba.',
+    description: 'Entorno de ensayo pendiente de autorizacion segura desde backend.',
     riskLabel: 'Nivel de Riesgo: Muy Bajo',
     accent: 'slate',
   },
   real: {
     name: 'Real',
-    description: 'Opera con fondos reales en el mercado vivo. Requiere maxima precaucion.',
+    description: 'Reservado para una futura activacion con backend seguro y controles aprobados.',
     riskLabel: 'Nivel de Riesgo: Extremo',
     accent: 'danger',
   },
@@ -149,35 +141,22 @@ function getAutoConnectionStatus(
   return 'idle';
 }
 
-function maskApiKey(value: string) {
-  const normalized = value.trim();
-
-  if (normalized.length <= 8) {
-    return normalized || null;
-  }
-
-  return `${normalized.slice(0, 4)}••••${normalized.slice(-4)}`;
-}
-
 function normalizePair(value: string) {
   const normalized = value.trim().toUpperCase();
   return normalized.length > 0 ? normalized : 'SOL/USDT';
 }
 
+// Bot Futures nunca debe capturar API secrets ni firmar requests privadas en frontend.
+// La integracion futura debe usar backend QVEX u OAuth seguro con permisos minimos.
 export const useBotFuturesStore = create<BotFuturesState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       selectedExchange: null,
       selectedMode: null,
-      apiKey: '',
-      secretKey: '',
-      apiKeyMasked: null,
-      hasCredentials: false,
       connectionStatus: 'idle',
       validationError: null,
       wizardStep: 1,
       guideCompleted: false,
-      keysValidated: false,
       botStatus: 'paused',
       pair: 'SOL/USDT',
       capitalAllocatedUsd: 7,
@@ -195,107 +174,38 @@ export const useBotFuturesStore = create<BotFuturesState>()(
       activityCount: 0,
       lastSyncAt: null,
       setSelectedExchange: (exchange) =>
-        set((state) => {
-          const nextStatus = getAutoConnectionStatus(exchange, state.selectedMode);
-          const isSimulatedReady = nextStatus === 'connected' && state.selectedMode === 'simulated';
-          return {
-            selectedExchange: exchange,
-            connectionStatus: nextStatus,
-            validationError: null,
-            apiKey: '',
-            secretKey: '',
-            apiKeyMasked: null,
-            hasCredentials: false,
-            keysValidated: isSimulatedReady,
-            botStatus: exchange ? state.botStatus : 'paused',
-          };
-        }),
-      setSelectedMode: (mode) =>
-        set((state) => {
-          const nextStatus = getAutoConnectionStatus(state.selectedExchange, mode);
-          const isSimulatedReady = nextStatus === 'connected' && mode === 'simulated';
-          return {
-            selectedMode: mode,
-            connectionStatus: nextStatus,
-            validationError: null,
-            apiKey: isSimulatedReady ? '' : state.apiKey,
-            secretKey: isSimulatedReady ? '' : state.secretKey,
-            apiKeyMasked: isSimulatedReady ? null : state.apiKeyMasked,
-            hasCredentials: isSimulatedReady ? false : state.hasCredentials,
-            keysValidated: isSimulatedReady,
-          };
-        }),
-      setApiKey: (value) =>
-        set({
-          apiKey: value,
-          connectionStatus: 'idle',
-          validationError: null,
-          keysValidated: false,
-          apiKeyMasked: null,
-          hasCredentials: false,
-        }),
-      setSecretKey: (value) =>
-        set({
-          secretKey: value,
-          connectionStatus: 'idle',
-          validationError: null,
-          keysValidated: false,
-          apiKeyMasked: null,
-          hasCredentials: false,
-        }),
-      setConnectionStatus: (status, error = null) =>
         set((state) => ({
+          selectedExchange: exchange,
+          connectionStatus: getAutoConnectionStatus(exchange, state.selectedMode),
+          validationError: null,
+          botStatus: exchange ? state.botStatus : 'paused',
+        })),
+      setSelectedMode: (mode) =>
+        set((state) => ({
+          selectedMode: mode,
+          connectionStatus: getAutoConnectionStatus(state.selectedExchange, mode),
+          validationError: null,
+        })),
+      setConnectionStatus: (status, error = null) =>
+        set({
           connectionStatus: status,
           validationError: error,
-          keysValidated: status === 'connected',
-          hasCredentials:
-            status === 'connected' && state.selectedMode !== 'simulated',
-          apiKeyMasked:
-            status === 'connected' && state.selectedMode !== 'simulated'
-              ? maskApiKey(state.apiKey)
-              : state.selectedMode === 'simulated'
-                ? null
-                : state.apiKeyMasked,
-        })),
+        }),
       setWizardStep: (step) => set({ wizardStep: step }),
       completeGuide: () => set({ guideCompleted: true }),
-      completeValidation: (maskedKey) =>
-        set((state) => ({
-          connectionStatus: 'connected',
-          validationError: null,
-          keysValidated: true,
-          hasCredentials: state.selectedMode !== 'simulated',
-          apiKeyMasked:
-            state.selectedMode === 'simulated'
-              ? null
-              : maskedKey ?? maskApiKey(state.apiKey),
-        })),
       resetConnectionState: () =>
-        set((state) => {
-          const nextStatus = getAutoConnectionStatus(state.selectedExchange, state.selectedMode);
-          return {
-            apiKey: '',
-            secretKey: '',
-            apiKeyMasked: null,
-            hasCredentials: false,
-            connectionStatus: nextStatus,
-            validationError: null,
-            keysValidated: nextStatus === 'connected',
-          };
-        }),
+        set((state) => ({
+          connectionStatus: getAutoConnectionStatus(state.selectedExchange, state.selectedMode),
+          validationError: null,
+        })),
       resetWizard: () =>
         set({
           selectedExchange: null,
           selectedMode: null,
-          apiKey: '',
-          secretKey: '',
-          apiKeyMasked: null,
-          hasCredentials: false,
           connectionStatus: 'idle',
           validationError: null,
           wizardStep: 1,
           guideCompleted: false,
-          keysValidated: false,
         }),
       setBotStatus: (status) => set({ botStatus: status }),
       startBot: () => set({ botStatus: 'active' }),
@@ -314,21 +224,17 @@ export const useBotFuturesStore = create<BotFuturesState>()(
       patchTelemetry: (payload) => set(payload),
     }),
     {
-      name: 'orbitx-bot-futures-store-v1',
+      name: 'orbitx-bot-futures-store-v2',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         selectedExchange: state.selectedExchange,
         selectedMode: state.selectedMode,
-        apiKeyMasked: state.apiKeyMasked,
-        hasCredentials: state.hasCredentials,
         connectionStatus:
           state.connectionStatus === 'connected'
             ? 'connected'
             : getAutoConnectionStatus(state.selectedExchange, state.selectedMode),
         wizardStep: state.wizardStep,
         guideCompleted: state.guideCompleted,
-        keysValidated:
-          state.connectionStatus === 'connected' || state.selectedMode === 'simulated',
         botStatus: state.botStatus === 'active' ? 'active' : 'paused',
         pair: state.pair,
         capitalAllocatedUsd: state.capitalAllocatedUsd,

@@ -1,23 +1,13 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { FONT, RADII, withOpacity } from '../../../constants/theme';
 import { useAppTheme } from '../../../hooks/useAppTheme';
 
 interface Props {
-  apiKey: string;
-  secretKey: string;
   modeLabel: string;
-  onApiKeyChange: (value: string) => void;
-  onSecretKeyChange: (value: string) => void;
 }
 
-export function ApiKeysFormCard({
-  apiKey,
-  secretKey,
-  modeLabel,
-  onApiKeyChange,
-  onSecretKeyChange,
-}: Props) {
+export function ApiKeysFormCard({ modeLabel }: Props) {
   const { colors } = useAppTheme();
 
   return (
@@ -30,49 +20,27 @@ export function ApiKeysFormCard({
         },
       ]}
     >
-      <Text style={[styles.title, { color: colors.text }]}>Paso 4: Pega tus claves API</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Paso 4: Conexion segura pendiente</Text>
 
-      <View style={styles.fieldGroup}>
-        <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Clave API (API Key)</Text>
-        <TextInput
-          value={apiKey}
-          onChangeText={onApiKeyChange}
-          placeholder="API Key"
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-          style={[
-            styles.input,
-            {
-              color: colors.text,
-              backgroundColor: withOpacity(colors.backgroundAlt, 0.9),
-              borderColor: withOpacity(colors.borderStrong, 0.18),
-            },
-          ]}
-        />
-      </View>
+      <Text style={[styles.description, { color: colors.textMuted }]}>
+        La conexion de bots con exchanges estara disponible cuando QVEX habilite backend
+        seguro. Nunca ingreses API Secret directamente en la app.
+      </Text>
 
-      <View style={styles.fieldGroup}>
-        <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-          Clave Secreta (Secret Key)
+      <View
+        style={[
+          styles.securityBlock,
+          {
+            backgroundColor: withOpacity(colors.warning, 0.08),
+            borderColor: withOpacity(colors.warning, 0.22),
+          },
+        ]}
+      >
+        <Text style={[styles.securityTitle, { color: colors.text }]}>Requisitos de seguridad</Text>
+        <Text style={[styles.securityNote, { color: colors.textMuted }]}>
+          La autorizacion futura debe pasar por backend QVEX con permisos minimos y sin firmar
+          requests privadas desde la app.
         </Text>
-        <TextInput
-          value={secretKey}
-          onChangeText={onSecretKeyChange}
-          placeholder="Secret Key"
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-          secureTextEntry
-          style={[
-            styles.input,
-            {
-              color: colors.text,
-              backgroundColor: withOpacity(colors.backgroundAlt, 0.9),
-              borderColor: withOpacity(colors.borderStrong, 0.18),
-            },
-          ]}
-        />
       </View>
 
       <View
@@ -106,18 +74,27 @@ const styles = StyleSheet.create({
   fieldGroup: {
     gap: 8,
   },
-  fieldLabel: {
-    fontFamily: FONT.medium,
-    fontSize: 12,
-    lineHeight: 15,
+  description: {
+    fontFamily: FONT.regular,
+    fontSize: 13,
+    lineHeight: 20,
   },
-  input: {
-    minHeight: 48,
-    borderRadius: 14,
+  securityBlock: {
+    borderRadius: RADII.md,
     borderWidth: 1,
     paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 6,
+  },
+  securityTitle: {
+    fontFamily: FONT.semibold,
+    fontSize: 13,
+    lineHeight: 16,
+  },
+  securityNote: {
     fontFamily: FONT.regular,
-    fontSize: 14,
+    fontSize: 12,
+    lineHeight: 18,
   },
   modePill: {
     alignSelf: 'flex-start',

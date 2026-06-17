@@ -11,18 +11,18 @@ interface Props {
 
 function getStatusCopy(status: BotFuturesConnectionStatus) {
   if (status === 'connected') {
-    return 'Conectado';
+    return 'Listo';
   }
 
   if (status === 'validating') {
-    return 'Validando';
+    return 'Revisando';
   }
 
   if (status === 'error') {
     return 'Error';
   }
 
-  return 'No validado';
+  return 'Bloqueado';
 }
 
 export function ConnectionStatusCard({ status, error }: Props) {
@@ -72,10 +72,10 @@ export function ConnectionStatusCard({ status, error }: Props) {
         {error
           ? error
           : status === 'connected'
-            ? 'Las claves quedaron validadas visualmente y ya puedes continuar.'
+            ? 'El flujo visual esta listo, pero la autorizacion real depende de backend seguro.'
             : status === 'validating'
-              ? 'Revisando formato y consistencia local antes de continuar.'
-              : 'Debes validar las claves antes de continuar.'}
+              ? 'Revisando el estado de disponibilidad antes de habilitar el siguiente paso.'
+              : 'QVEX no recibe API secrets en frontend mientras el backend seguro siga pendiente.'}
       </Text>
     </View>
   );
