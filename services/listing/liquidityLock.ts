@@ -23,7 +23,7 @@ export const ORBITX_LOCK_DURATION_OPTIONS = [
 
 function assertSupportedLockChain(chain: LaunchChain): asserts chain is SupportedLockChain {
   if (chain !== 'ethereum' && chain !== 'bnb') {
-    throw new Error('OrbitX protected liquidity lock is active first on Ethereum and BNB Chain.');
+    throw new Error('QVEX protected liquidity lock is active first on Ethereum and BNB Chain.');
   }
 }
 
@@ -50,7 +50,7 @@ function getProvider(chain: SupportedLockChain) {
 async function getSigner(chain: SupportedLockChain) {
   const bundle = await getStoredWalletBundle();
   if (!bundle) {
-    throw new Error('Primero crea o importa tu wallet OrbitX.');
+    throw new Error('Primero crea o importa tu wallet QVEX.');
   }
 
   const provider = getProvider(chain);
@@ -77,7 +77,7 @@ export async function createRealLiquidityLock(params: {
   const currentLpBalance = await pairToken.balanceOf(signer.address);
 
   if (currentLpBalance.lt(lockedAmount)) {
-    throw new Error('The LP token balance is lower than the amount that OrbitX needs to lock.');
+    throw new Error('The LP token balance is lower than the amount that QVEX needs to lock.');
   }
 
   const transferTx = await pairToken.transfer(locker.address, lockedAmount);

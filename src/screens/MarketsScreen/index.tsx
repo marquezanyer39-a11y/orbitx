@@ -212,11 +212,6 @@ export default function MarketsScreen() {
   );
 
   function openMarketsAstraLocal() {
-    if (sensitiveRoutesBlocked) {
-      router.push('/demo/astra');
-      return;
-    }
-
     void openAstraWithQuestion(
       {
         surface: 'market',

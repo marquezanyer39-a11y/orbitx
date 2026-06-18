@@ -10,6 +10,8 @@ import { CausalGraphBuilder } from './CausalGraph';
 import { ScenarioParser } from './ScenarioParser';
 import { ScenarioBuilder, DEFAULT_MARKET_CONTEXT, MarketContext } from '../scenarios/ScenarioBuilder';
 import type { SimContext } from '../agents/BaseAgent';
+import { adjustConfidence } from '../learning/learningEngine';
+import type { AgentLearningMap } from '../learning/learning.types';
 
 const ENGINE_VERSION = '1.0.0-educational-local';
 
@@ -34,6 +36,11 @@ export interface SimulationOptions {
   market?: MarketContext;
 }
 
+export interface RunRuntimeOptions {
+  /** Estado de aprendizaje local opcional; calibra la confianza de los agentes. */
+  learningState?: AgentLearningMap;
+}
+
 export class SimulationEngine {
   private market: MarketContext;
 
@@ -46,7 +53,7 @@ export class SimulationEngine {
     };
   }
 
-  run(userQuery: string): SimulationResult {
+  run(userQuery: string, runtime: RunRuntimeOptions = {}): SimulationResult {
     const query = ScenarioParser.parse(userQuery);
     const enrichedQuery: ParsedQuery = {
       ...query,
@@ -60,9 +67,14 @@ export class SimulationEngine {
       fearGreedIndex: this.market.fearGreedIndex,
       marketTrend: this.market.marketTrend,
     };
+    const learningState = runtime.learningState;
     const agentSnapshots: AgentSnapshot[] = agents.map((agent) => {
       const output = agent.reason(simContext);
-      return agent.snapshot(output);
+      // Aprendizaje local: la confianza se calibra segun feedback acumulado.
+      const calibratedConfidence = learningState
+        ? adjustConfidence(output.confidence, learningState[agent.role])
+        : output.confidence;
+      return agent.snapshot({ ...output, confidence: calibratedConfidence });
     });
 
     const causalGraph = CausalGraphBuilder.build(query.intent, enrichedQuery);

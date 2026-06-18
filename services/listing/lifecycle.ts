@@ -60,11 +60,11 @@ export function getLifecycleStatusLabel(status: TokenLifecycleStatus) {
   if (status === 'created') return 'Creado';
   if (status === 'ready_to_list') return 'Listo para listar';
   if (status === 'external_listing_selected') return 'Listado externo seleccionado';
-  if (status === 'orbitx_listing_pending_checks') return 'Pendiente de checks OrbitX';
-  if (status === 'orbitx_listing_checks_failed') return 'Checks OrbitX fallidos';
+  if (status === 'orbitx_listing_pending_checks') return 'Pendiente de checks QVEX';
+  if (status === 'orbitx_listing_checks_failed') return 'Checks QVEX fallidos';
   if (status === 'orbitx_listing_pending_liquidity') return 'Pendiente de liquidez';
   if (status === 'orbitx_listing_pending_lock') return 'Pendiente de bloqueo';
-  if (status === 'orbitx_listed') return 'Listado en OrbitX';
+  if (status === 'orbitx_listed') return 'Listado en QVEX';
   if (status === 'lock_expired') return 'Bloqueo vencido';
   if (status === 'high_risk') return 'Riesgo alto';
   return 'Creado';

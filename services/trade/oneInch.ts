@@ -76,7 +76,7 @@ function getActiveEvmRoute(tokenId: string, network: WalletNetwork) {
 async function getWalletAddress() {
   const bundle = await getStoredWalletBundle();
   if (!bundle) {
-    throw new Error('Primero crea o importa tu wallet OrbitX.');
+    throw new Error('Primero crea o importa tu wallet QVEX.');
   }
 
   return {
@@ -208,7 +208,7 @@ export async function executeOneInchSwap(
 
   const bundle = await getStoredWalletBundle();
   if (!bundle) {
-    throw new Error('Primero crea o importa tu wallet OrbitX.');
+    throw new Error('Primero crea o importa tu wallet QVEX.');
   }
 
   const provider = await getProvider(route.network);

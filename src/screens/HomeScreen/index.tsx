@@ -203,11 +203,6 @@ export default function HomeScreen() {
   const visibleQuickActions = quickActions;
 
   function openHomeAstraLocal() {
-    if (sensitiveRoutesBlocked) {
-      router.push('/demo/astra');
-      return;
-    }
-
     void openAstraWithQuestion(homeContext, homeAstraInsight.question);
   }
 
@@ -242,12 +237,10 @@ export default function HomeScreen() {
           isSmallPhone={isSmallPhone}
           onToggleVisibility={() => setBalanceHidden((value) => !value)}
           onViewAnalysis={() =>
-            sensitiveRoutesBlocked
-              ? router.push('/demo/astra')
-              : void openAstraWithQuestion(
-                  homeContext,
-                  'Analiza mi balance y el mercado de hoy en una lectura breve.',
-                )
+            void openAstraWithQuestion(
+              homeContext,
+              'Analiza mi balance y el mercado de hoy en una lectura breve.',
+            )
           }
         />
 
@@ -285,12 +278,10 @@ export default function HomeScreen() {
           insight={astraInsight}
           isSmallPhone={isSmallPhone}
           onPress={() =>
-            sensitiveRoutesBlocked
-              ? router.push('/demo/astra')
-              : void openAstra({
-                  ...homeContext,
-                  currentTask: 'market_radar',
-                })
+            void openAstra({
+              ...homeContext,
+              currentTask: 'market_radar',
+            })
           }
         />
 

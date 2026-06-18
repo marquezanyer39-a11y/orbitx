@@ -44,7 +44,7 @@ export function getRealTradeSupport(
     return {
       ready: false,
       route: null,
-      reason: 'Este token todavia no tiene una ruta real de trading dentro de OrbitX.',
+      reason: 'Este token todavia no tiene una ruta real de trading dentro de QVEX.',
     };
   }
 

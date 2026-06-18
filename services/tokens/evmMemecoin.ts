@@ -63,7 +63,7 @@ function validateDraft(draft: RealMemecoinDraft) {
   }
 
   if (!Number.isInteger(decimals) || decimals !== 18) {
-    throw new Error('La plantilla segura actual de OrbitX usa 18 decimales.');
+    throw new Error('La plantilla segura actual de QVEX usa 18 decimales.');
   }
 
   return { name, symbol, supply, decimals };
@@ -72,7 +72,7 @@ function validateDraft(draft: RealMemecoinDraft) {
 async function getSigner(chain: EvmLaunchChain) {
   const bundle = await getStoredWalletBundle();
   if (!bundle) {
-    throw new Error('Primero crea o importa tu wallet OrbitX.');
+    throw new Error('Primero crea o importa tu wallet QVEX.');
   }
 
   const provider = getProvider(chain);

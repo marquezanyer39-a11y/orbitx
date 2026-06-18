@@ -285,28 +285,28 @@ export default function PersonalizationScreen() {
                       <View style={[styles.motionPreviewGlow, { backgroundColor: withOpacity(theme.colors[0], 0.22) }]} />
                       {theme.motion === 'battle' ? (
                         <View style={styles.battleMarkWrap}>
-                          <View style={[styles.bullHornLeft, { borderTopColor: '#16F0A0', left: 20 }]} />
-                          <View style={[styles.bullHornRight, { borderTopColor: '#16F0A0', right: 44 }]} />
-                          <View style={[styles.bullHead, { borderColor: withOpacity('#16F0A0', 0.82), left: 18 }]} />
-                          <View style={[styles.bearHead, { borderColor: withOpacity('#FF3D57', 0.82), marginTop: 0, position: 'absolute', right: 18, top: 22 }]} />
-                          <View style={[styles.bearEarLeft, { borderColor: withOpacity('#FF3D57', 0.82), left: undefined, right: 46, top: 18 }]} />
-                          <View style={[styles.bearEarRight, { borderColor: withOpacity('#FF3D57', 0.82), right: 20, top: 18 }]} />
-                          <View style={[styles.battleSpark, { backgroundColor: withOpacity('#16F0A0', 0.52) }]} />
-                          <View style={[styles.battleSparkCore, { backgroundColor: withOpacity('#FF3D57', 0.88) }]} />
+                          <View style={[styles.bullHornLeft, { borderTopColor: colors.profit, left: 20 }]} />
+                          <View style={[styles.bullHornRight, { borderTopColor: colors.profit, right: 44 }]} />
+                          <View style={[styles.bullHead, { borderColor: withOpacity(colors.profit, 0.82), left: 18 }]} />
+                          <View style={[styles.bearHead, { borderColor: withOpacity(colors.loss, 0.82), marginTop: 0, position: 'absolute', right: 18, top: 22 }]} />
+                          <View style={[styles.bearEarLeft, { borderColor: withOpacity(colors.loss, 0.82), left: undefined, right: 46, top: 18 }]} />
+                          <View style={[styles.bearEarRight, { borderColor: withOpacity(colors.loss, 0.82), right: 20, top: 18 }]} />
+                          <View style={[styles.battleSpark, { backgroundColor: withOpacity(colors.profit, 0.52) }]} />
+                          <View style={[styles.battleSparkCore, { backgroundColor: withOpacity(colors.loss, 0.88) }]} />
                         </View>
                       ) : theme.motion === 'bear' ? (
                         <View style={styles.bearMarkWrap}>
-                          <View style={[styles.bearHead, { borderColor: withOpacity('#FF3D57', 0.82) }]} />
-                          <View style={[styles.bearEarLeft, { borderColor: withOpacity('#FF3D57', 0.82) }]} />
-                          <View style={[styles.bearEarRight, { borderColor: withOpacity('#FF3D57', 0.82) }]} />
+                          <View style={[styles.bearHead, { borderColor: withOpacity(colors.loss, 0.82) }]} />
+                          <View style={[styles.bearEarLeft, { borderColor: withOpacity(colors.loss, 0.82) }]} />
+                          <View style={[styles.bearEarRight, { borderColor: withOpacity(colors.loss, 0.82) }]} />
                         </View>
                       ) : (
                         <View style={styles.bullMarkWrap}>
-                          <View style={[styles.bullHornLeft, { borderTopColor: '#16F0A0' }]} />
-                          <View style={[styles.bullHornRight, { borderTopColor: '#16F0A0' }]} />
-                          <View style={[styles.bullHead, { borderColor: withOpacity('#16F0A0', 0.82) }]} />
-                          <View style={[styles.bullEyeLeft, { backgroundColor: '#16F0A0' }]} />
-                          <View style={[styles.bullEyeRight, { backgroundColor: '#16F0A0' }]} />
+                          <View style={[styles.bullHornLeft, { borderTopColor: colors.profit }]} />
+                          <View style={[styles.bullHornRight, { borderTopColor: colors.profit }]} />
+                          <View style={[styles.bullHead, { borderColor: withOpacity(colors.profit, 0.82) }]} />
+                          <View style={[styles.bullEyeLeft, { backgroundColor: colors.profit }]} />
+                          <View style={[styles.bullEyeRight, { backgroundColor: colors.profit }]} />
                         </View>
                       )}
                     </LinearGradient>

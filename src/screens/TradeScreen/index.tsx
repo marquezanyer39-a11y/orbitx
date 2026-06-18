@@ -291,11 +291,6 @@ export default function TradeScreen() {
   const activePairId = pair.id;
 
   function openAstraForTrade() {
-    if (safeModeActive) {
-      router.push('/demo/astra');
-      return;
-    }
-
     openAstra({
       ...(astraTradeContext ?? {}),
       surfaceTitle: pickLanguageText(

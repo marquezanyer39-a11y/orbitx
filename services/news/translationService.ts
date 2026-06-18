@@ -11,7 +11,7 @@ const memoryCache = new Map<string, string>();
 const inflightCache = new Map<string, Promise<string>>();
 
 const PROTECTED_TERMS = [
-  'OrbitX',
+  'QVEX',
   'Bitcoin',
   'Ethereum',
   'Solana',

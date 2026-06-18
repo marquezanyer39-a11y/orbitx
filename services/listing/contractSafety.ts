@@ -16,7 +16,7 @@ const providerCache = new Map<SupportedProtectedChain, ethers.providers.StaticJs
 
 function normalizeReason(message: string) {
   if (message.includes('unsupported')) {
-    return 'OrbitX protected listing is active first on Ethereum and BNB Chain.';
+    return 'QVEX protected listing is active first on Ethereum and BNB Chain.';
   }
 
   return message;
@@ -93,7 +93,7 @@ export async function runContractSafetyChecks(
 
     if (!templateMatched) {
       reasons.push(
-        'The deployed runtime code does not match the official OrbitX safe template, so OrbitX cannot approve a protected listing.',
+        'The deployed runtime code does not match the official QVEX safe template, so QVEX cannot approve a protected listing.',
       );
     }
 
@@ -102,7 +102,7 @@ export async function runContractSafetyChecks(
     }
 
     if (Number(decimals) !== 18) {
-      reasons.push('The current OrbitX protected template only supports 18 decimals.');
+      reasons.push('The current QVEX protected template only supports 18 decimals.');
     }
 
     return {

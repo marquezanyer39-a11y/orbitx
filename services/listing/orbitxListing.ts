@@ -131,7 +131,7 @@ export async function createOrbitxProtectedListing(params: {
   if (contractSafety.status !== 'passed') {
     const reason =
       contractSafety.reasons[0] ||
-      'OrbitX could not approve the contract checks for protected listing.';
+      'QVEX could not approve the contract checks for protected listing.';
     throw new Error(reason);
   }
 
@@ -185,7 +185,7 @@ export async function createOrbitxProtectedListing(params: {
   if (preListingValidation.status !== 'passed') {
     const reason =
       preListingValidation.reasons[0] ||
-      'OrbitX could not validate real buy/sell routing for protected listing.';
+      'QVEX could not validate real buy/sell routing for protected listing.';
     throw new Error(reason);
   }
 

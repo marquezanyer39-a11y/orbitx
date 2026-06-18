@@ -403,11 +403,6 @@ export default function WalletScreen() {
   );
 
   function openWalletAstraLocal() {
-    if (safeModeActive) {
-      router.push('/demo/astra');
-      return;
-    }
-
     void openAstraWithQuestion(
       {
         surface: 'wallet',

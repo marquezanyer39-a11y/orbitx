@@ -6,6 +6,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FONT, withOpacity } from '../../../constants/theme';
+import { useAppTheme } from '../../../hooks/useAppTheme';
+import type { ThemeColors } from '../../core/theme/theme';
 import { ProfileHeader } from '../../components/social/profile/ProfileHeader';
 import { CreatorStats } from '../../components/social/profile/CreatorStats';
 import { AstraProfileInsight } from '../../components/social/profile/AstraProfileInsight';
@@ -23,6 +25,8 @@ type ProfileTabKey = 'posts' | 'streams' | 'clips' | 'trades' | 'ai' | 'likes';
 
 export default function SocialProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+  const styles = makeStyles(colors);
   const { creatorId } = useLocalSearchParams<{ creatorId?: string }>();
   const socialNavigator = useSocialNavigator();
   const showToast = useUiStore((state) => state.showToast);
@@ -54,7 +58,7 @@ export default function SocialProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="light" backgroundColor="#08090B" />
+      <StatusBar style={colors.statusBarStyle} backgroundColor={colors.background} />
 
       <ScrollView
         style={styles.scroll}
@@ -196,108 +200,109 @@ function formatMetric(value: number) {
   return `${value}`;
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#08090B',
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingBottom: 140,
-  },
-  section: {
-    paddingHorizontal: 24,
-    marginTop: 18,
-  },
-  earningsCard: {
-    borderRadius: 18,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(20,21,24,0.52)',
-    borderWidth: 1,
-    borderColor: withOpacity('#3C4A3C', 0.22),
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 14,
-  },
-  earningsTitle: {
-    color: '#7FFF93',
-    fontFamily: FONT.bold,
-    fontSize: 12,
-    letterSpacing: 1.1,
-  },
-  earningsDisclaimer: {
-    marginTop: -6,
-    color: '#FFD76A',
-    fontFamily: FONT.semibold,
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  earningsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 14,
-  },
-  earningsItem: {
-    width: '47%',
-    gap: 4,
-  },
-  earningsValue: {
-    color: '#FAFAFA',
-    fontFamily: FONT.bold,
-    fontSize: 18,
-  },
-  earningsLabel: {
-    color: '#A1A1AA',
-    fontFamily: FONT.medium,
-    fontSize: 11,
-  },
-  xConnectCard: {
-    minHeight: 92,
-    borderRadius: 18,
-    backgroundColor: withOpacity('#192219', 0.68),
-    borderWidth: 1,
-    borderColor: withOpacity('#3FE56C', 0.24),
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  xConnectTextWrap: {
-    flex: 1,
-    gap: 4,
-  },
-  xConnectLabel: {
-    color: '#7FFF93',
-    fontFamily: FONT.bold,
-    fontSize: 10,
-    letterSpacing: 1,
-  },
-  xConnectTitle: {
-    color: '#FAFAFA',
-    fontFamily: FONT.bold,
-    fontSize: 18,
-  },
-  xConnectBody: {
-    color: '#A1A1AA',
-    fontFamily: FONT.medium,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  xConnectAction: {
-    color: '#003912',
-    fontFamily: FONT.bold,
-    fontSize: 12,
-    overflow: 'hidden',
-    backgroundColor: '#3FE56C',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  pressed: {
-    opacity: 0.84,
-    transform: [{ scale: 0.985 }],
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flex: 1,
+    },
+    content: {
+      paddingBottom: 140,
+    },
+    section: {
+      paddingHorizontal: 24,
+      marginTop: 18,
+    },
+    earningsCard: {
+      borderRadius: 18,
+      overflow: 'hidden',
+      backgroundColor: withOpacity(colors.surfaceElevated, 0.52),
+      borderWidth: 1,
+      borderColor: withOpacity(colors.profit, 0.22),
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      gap: 14,
+    },
+    earningsTitle: {
+      color: colors.profit,
+      fontFamily: FONT.bold,
+      fontSize: 12,
+      letterSpacing: 1.1,
+    },
+    earningsDisclaimer: {
+      marginTop: -6,
+      color: colors.warning,
+      fontFamily: FONT.semibold,
+      fontSize: 11,
+      lineHeight: 16,
+    },
+    earningsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 14,
+    },
+    earningsItem: {
+      width: '47%',
+      gap: 4,
+    },
+    earningsValue: {
+      color: colors.text,
+      fontFamily: FONT.bold,
+      fontSize: 18,
+    },
+    earningsLabel: {
+      color: colors.textMuted,
+      fontFamily: FONT.medium,
+      fontSize: 11,
+    },
+    xConnectCard: {
+      minHeight: 92,
+      borderRadius: 18,
+      backgroundColor: withOpacity(colors.profit, 0.08),
+      borderWidth: 1,
+      borderColor: withOpacity(colors.profit, 0.24),
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    xConnectTextWrap: {
+      flex: 1,
+      gap: 4,
+    },
+    xConnectLabel: {
+      color: colors.profit,
+      fontFamily: FONT.bold,
+      fontSize: 10,
+      letterSpacing: 1,
+    },
+    xConnectTitle: {
+      color: colors.text,
+      fontFamily: FONT.bold,
+      fontSize: 18,
+    },
+    xConnectBody: {
+      color: colors.textMuted,
+      fontFamily: FONT.medium,
+      fontSize: 12,
+      lineHeight: 17,
+    },
+    xConnectAction: {
+      color: colors.background,
+      fontFamily: FONT.bold,
+      fontSize: 12,
+      overflow: 'hidden',
+      backgroundColor: colors.profit,
+      borderRadius: 999,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    pressed: {
+      opacity: 0.84,
+      transform: [{ scale: 0.985 }],
+    },
+  });

@@ -27,7 +27,7 @@ export async function runPreListingTradeValidation(
   if (!token.isUserCreated || !token.contractAddress || !token.chain || !isSupportedValidationChain(token.chain)) {
     return {
       ...baseReport,
-      reasons: ['OrbitX protected trade validation is active first on supported EVM networks.'],
+      reasons: ['QVEX protected trade validation is active first on supported EVM networks.'],
     };
   }
 
@@ -42,7 +42,7 @@ export async function runPreListingTradeValidation(
   if (!route) {
     return {
       ...baseReport,
-      reasons: ['OrbitX could not build a real routing path for this token yet.'],
+      reasons: ['QVEX could not build a real routing path for this token yet.'],
     };
   }
 
@@ -92,7 +92,7 @@ export async function runPreListingTradeValidation(
     }
 
     if ((estimatedSellFeePct ?? 0) >= 35) {
-      reasons.push('The estimated sell fee is too high for OrbitX protected listing.');
+      reasons.push('The estimated sell fee is too high for QVEX protected listing.');
     }
 
     if (priceImpactPct >= 25) {
@@ -115,7 +115,7 @@ export async function runPreListingTradeValidation(
       reasons: [
         error instanceof Error
           ? error.message
-          : 'OrbitX could not validate the buy/sell path with a real quote.',
+          : 'QVEX could not validate the buy/sell path with a real quote.',
       ],
     };
   }

@@ -413,11 +413,6 @@ export default function TradeChartScreen() {
       return;
     }
 
-    if (safeModeActive) {
-      router.push('/demo/astra');
-      return;
-    }
-
     openAstra({
       surface: 'trade',
       path: '/trade/chart',

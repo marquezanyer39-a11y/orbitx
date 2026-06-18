@@ -330,7 +330,7 @@ function buildCreatorPost(
 ) {
   return {
     id: `post-${Date.now()}`,
-    author: 'OrbitX Launchpad',
+    author: 'QVEX Launchpad',
     handle,
     avatar,
     content: `${name} (${symbol}) ya existe on-chain en ${getLaunchLabel(language, chain)} y queda listo para su siguiente fase de liquidez en ${getLaunchLabel(language, venue)}.`,
@@ -455,7 +455,7 @@ export const useOrbitStore = create<OrbitStore>()(
             buildActivity(
               'settings',
               'Language updated',
-              `OrbitX interface switched to ${getLanguageMetadata(nextLanguage).nativeLabel}.`,
+              `QVEX interface switched to ${getLanguageMetadata(nextLanguage).nativeLabel}.`,
             ),
           ),
           toast: {
@@ -478,7 +478,7 @@ export const useOrbitStore = create<OrbitStore>()(
             buildActivity(
               'settings',
               'Theme updated',
-              `OrbitX visual theme switched to ${mode}.`,
+              `QVEX visual theme switched to ${mode}.`,
             ),
           ),
           toast: {
@@ -629,7 +629,7 @@ export const useOrbitStore = create<OrbitStore>()(
             buildActivity(
               'settings',
               'Notifications updated',
-              `OrbitX notifications ${enabled ? 'enabled' : 'disabled'}.`,
+              `QVEX notifications ${enabled ? 'enabled' : 'disabled'}.`,
             ),
           ),
           toast: {
@@ -649,7 +649,7 @@ export const useOrbitStore = create<OrbitStore>()(
           },
           activity: prependActivity(
             state.activity,
-            buildActivity('settings', 'Usage mode updated', `OrbitX switched to ${mode} mode.`),
+            buildActivity('settings', 'Usage mode updated', `QVEX switched to ${mode} mode.`),
           ),
           toast: {
             id: `${Date.now()}`,
@@ -668,7 +668,7 @@ export const useOrbitStore = create<OrbitStore>()(
           },
           activity: prependActivity(
             state.activity,
-            buildActivity('settings', 'UI density updated', `OrbitX UI density switched to ${density}.`),
+            buildActivity('settings', 'UI density updated', `QVEX UI density switched to ${density}.`),
           ),
           toast: {
             id: `${Date.now()}`,
@@ -687,7 +687,7 @@ export const useOrbitStore = create<OrbitStore>()(
           },
           activity: prependActivity(
             state.activity,
-            buildActivity('settings', 'Privacy mode updated', `OrbitX privacy mode switched to ${mode}.`),
+            buildActivity('settings', 'Privacy mode updated', `QVEX privacy mode switched to ${mode}.`),
           ),
           toast: {
             id: `${Date.now()}`,
@@ -706,7 +706,7 @@ export const useOrbitStore = create<OrbitStore>()(
           },
           activity: prependActivity(
             state.activity,
-            buildActivity('settings', 'Layout mode updated', `OrbitX layout switched to ${mode}.`),
+            buildActivity('settings', 'Layout mode updated', `QVEX layout switched to ${mode}.`),
           ),
           toast: {
             id: `${Date.now()}`,
@@ -756,7 +756,7 @@ export const useOrbitStore = create<OrbitStore>()(
           },
           activity: prependActivity(
             currentState.activity,
-            buildActivity('settings', 'Profile updated', `OrbitX username switched to @${normalized}.`),
+            buildActivity('settings', 'Profile updated', `QVEX username switched to @${normalized}.`),
           ),
           toast: {
             id: `${Date.now()}`,
@@ -813,7 +813,7 @@ export const useOrbitStore = create<OrbitStore>()(
             },
             activity: prependActivity(
               currentState.activity,
-              buildActivity('settings', 'Biometrics updated', 'Biometrics disabled for OrbitX.'),
+              buildActivity('settings', 'Biometrics updated', 'Biometrics disabled for QVEX.'),
             ),
             toast: {
               id: `${Date.now()}`,
@@ -838,7 +838,7 @@ export const useOrbitStore = create<OrbitStore>()(
           },
           activity: prependActivity(
             currentState.activity,
-            buildActivity('settings', 'Biometrics updated', 'Biometrics enabled for OrbitX.'),
+            buildActivity('settings', 'Biometrics updated', 'Biometrics enabled for QVEX.'),
           ),
           toast: {
             id: `${Date.now()}`,
@@ -970,7 +970,7 @@ export const useOrbitStore = create<OrbitStore>()(
               buildActivity(
                 'settings',
                 `${label} conectado`,
-                `${label} quedo vinculado con su direccion publica para usarlo como wallet secundaria en OrbitX.`,
+                `${label} quedo vinculado con su direccion publica para usarlo como wallet secundaria en QVEX.`,
               ),
             ),
             toast: {
@@ -1012,7 +1012,7 @@ export const useOrbitStore = create<OrbitStore>()(
           },
           activity: prependActivity(
             state.activity,
-            buildActivity('settings', 'Wallet externa desconectada', 'La sesion externa se elimino de OrbitX.'),
+            buildActivity('settings', 'Wallet externa desconectada', 'La sesion externa se elimino de QVEX.'),
           ),
           toast: {
             id: `${Date.now()}`,
@@ -1456,17 +1456,17 @@ export const useOrbitStore = create<OrbitStore>()(
 
         if (payload.listingType === 'orbitx_protected') {
           if (payload.contractSafety?.status !== 'passed') {
-            state.showToast('El listado protegido de OrbitX necesita checks aprobados.', 'error');
+            state.showToast('El listado protegido de QVEX necesita checks aprobados.', 'error');
             return buildResult(false, 'Protected checks missing');
           }
 
           if (payload.preListingValidation?.status !== 'passed') {
-            state.showToast('El listado protegido de OrbitX necesita validacion real de compra y venta.', 'error');
+            state.showToast('El listado protegido de QVEX necesita validacion real de compra y venta.', 'error');
             return buildResult(false, 'Protected trade validation missing');
           }
 
           if (payload.liquidityLock?.status !== 'locked') {
-            state.showToast('El listado protegido de OrbitX requiere un bloqueo de liquidez confirmado.', 'error');
+            state.showToast('El listado protegido de QVEX requiere un bloqueo de liquidez confirmado.', 'error');
             return buildResult(false, 'Protected liquidity lock missing');
           }
         }
@@ -1557,7 +1557,7 @@ export const useOrbitStore = create<OrbitStore>()(
             id: `${Date.now()}`,
             message:
               payload.listingType === 'orbitx_protected'
-                ? `${token.symbol} listado en OrbitX`
+                ? `${token.symbol} listado en QVEX`
                 : `${token.symbol} listado en DEX`,
             tone: 'success',
           },

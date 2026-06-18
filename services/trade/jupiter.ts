@@ -62,7 +62,7 @@ export async function fetchJupiterQuote(
 
   const bundle = await getStoredWalletBundle();
   if (!bundle) {
-    throw new Error('Primero crea o importa tu wallet OrbitX.');
+    throw new Error('Primero crea o importa tu wallet QVEX.');
   }
 
   const inputMint = request.side === 'buy' ? route.quoteAddress : route.tokenAddress;
@@ -148,7 +148,7 @@ export async function executeJupiterSwap(
 ): Promise<TradeExecutionResult> {
   const bundle = await getStoredWalletBundle();
   if (!bundle) {
-    throw new Error('Primero crea o importa tu wallet OrbitX.');
+    throw new Error('Primero crea o importa tu wallet QVEX.');
   }
 
   const swapResponse = quote.execution.swapResponse as { swapTransaction?: string } | undefined;
