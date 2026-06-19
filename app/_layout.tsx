@@ -44,11 +44,49 @@ export default function RootLayout() {
 }
 
 function StableLayout() {
+  const authHasHydrated = useAuthStore((state) => state.hasHydrated);
+  const authHasBootstrapped = useAuthStore((state) => state.hasBootstrapped);
+  const restoreAuthSession = useAuthStore((state) => state.restoreAuthSession);
+  const [fallbackReady, setFallbackReady] = useState(false);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setFallbackReady(true);
+    }, 2500);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authHasHydrated || authHasBootstrapped) {
+      return;
+    }
+
+    void restoreAuthSession();
+  }, [authHasBootstrapped, authHasHydrated, restoreAuthSession]);
+
+  const sessionGateReady = (authHasHydrated && authHasBootstrapped) || fallbackReady;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }} />
+        {sessionGateReady ? (
+          <Stack screenOptions={{ headerShown: false }} />
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: '#080B10',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ActivityIndicator color="#00E5FF" size="large" />
+          </View>
+        )}
         <ToastHost />
       </SafeAreaProvider>
     </GestureHandlerRootView>

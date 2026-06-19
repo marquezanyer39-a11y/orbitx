@@ -1,37 +1,50 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AuthScreenShell } from '../components/auth/AuthScreenShell';
-import { GlassCard } from '../components/common/GlassCard';
-import { OrbitLogo } from '../components/common/OrbitLogo';
-import { PrimaryButton } from '../components/common/PrimaryButton';
-import { OrbitInput } from '../components/forms/OrbitInput';
-import { FONT, RADII, withOpacity } from '../constants/theme';
-import { useAppTheme } from '../hooks/useAppTheme';
+import { AUTH_COLORS, BrandLogoHeader, CinematicBackground } from '../components/auth/AuthShared';
+import { FONT, withOpacity } from '../constants/theme';
 import { useI18n } from '../hooks/useI18n';
 import { useAuthStore } from '../src/store/authStore';
 import { useUiStore } from '../src/store/uiStore';
 import { getOrbitAuthMeta } from '../utils/orbitAuth';
 
+const { bg, border, primary, textPrimary, textMuted } = AUTH_COLORS;
+
 export default function RegisterScreen() {
+  const insets = useSafeAreaInsets();
   const signUp = useAuthStore((state) => state.signUp);
   const resendConfirmationEmail = useAuthStore((state) => state.resendConfirmationEmail);
   const sessionStatus = useAuthStore((state) => state.session.status);
   const showToast = useUiStore((state) => state.showToast);
-  const { colors } = useAppTheme();
   const { t } = useI18n();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [resendingConfirmation, setResendingConfirmation] = useState(false);
   const [confirmationEmail, setConfirmationEmail] = useState('');
   const [inlineError, setInlineError] = useState('');
   const [successTarget, setSuccessTarget] = useState<string | null>(null);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const emailInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
+  const confirmPasswordInputRef = useRef<TextInput>(null);
   const authMeta = getOrbitAuthMeta();
 
   const completeAuthSuccess = useCallback(() => {
@@ -74,261 +87,436 @@ export default function RegisterScreen() {
     router.replace('/home');
   }, [confirmationEmail, sessionStatus, successTarget]);
 
-  return (
-    <AuthScreenShell
-      topSlot={
-        <View style={styles.topBar}>
-          <Pressable
-            onPress={() => router.back()}
-            style={[
-              styles.backButton,
-              {
-                backgroundColor: withOpacity(colors.fieldBackground, 0.92),
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Ionicons name="chevron-back" size={18} color={colors.text} />
-          </Pressable>
-        </View>
+  const runRegister = async () => {
+    setInlineError('');
+    if (password !== confirmPassword) {
+      const message = t('toast.invalidPasswordMatch');
+      setInlineError(message);
+      showToast(message, 'error');
+      return;
+    }
+
+    setSubmitting(true);
+    const result = await signUp(name, email, password);
+    setSubmitting(false);
+
+    if (result.ok) {
+      setInlineError('');
+      if (result.code === 'confirmation_required') {
+        setConfirmationEmail(email.trim().toLowerCase());
+        return;
       }
-    >
-      <View style={styles.content}>
-        <View style={styles.heroBlock}>
-          <View
-            style={[
-              styles.heroStage,
-              {
-                backgroundColor: withOpacity(colors.backgroundAlt, 0.56),
-                borderColor: withOpacity(colors.primary, 0.2),
-              },
+
+      setSuccessTarget('/home');
+      return;
+    }
+
+    setInlineError(result.message);
+  };
+
+  return (
+    <View style={styles.root}>
+      <CinematicBackground variant="form" />
+
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoider}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'android' ? 24 : 0}
+        >
+          <ScrollView
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="none"
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: Math.max(insets.bottom, 20) + 16 },
             ]}
           >
-            <View style={[styles.heroGlow, { backgroundColor: withOpacity(colors.primary, 0.16) }]} />
-            <OrbitLogo size={120} animated showWordmark={false} />
-          </View>
-          <Text style={[styles.heroEyebrow, { color: colors.textMuted }]}>Crear cuenta</Text>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Activa tu acceso QVEX</Text>
-          <Text style={[styles.heroSubtitle, { color: colors.textMuted }]}>
-            Crea tu cuenta con una entrada limpia, segura y lista para el mercado.
-          </Text>
-        </View>
+            {/* Top bar */}
+            <View style={styles.topBar}>
+              <Pressable
+                onPress={() => router.back()}
+                style={({ pressed }) => [styles.backButton, pressed && styles.btnPressed]}
+              >
+                <Ionicons name="chevron-back" size={18} color={textPrimary} />
+              </Pressable>
+            </View>
 
-        <GlassCard highlighted style={styles.formCard}>
-          {confirmationEmail ? (
-            <View
-              style={[
-                styles.noticeCard,
-                { backgroundColor: colors.profitSoft, borderColor: colors.profit },
-              ]}
-            >
-              <Text style={[styles.noticeTitle, { color: colors.text }]}>{t('auth.checkEmailTitle')}</Text>
-              <Text style={[styles.noticeText, { color: colors.textSoft }]}>
-                {t('auth.checkEmailBody')} {confirmationEmail}
-              </Text>
-              <PrimaryButton
-                label={resendingConfirmation ? 'Enviando...' : 'Reenviar confirmacion'}
-                variant="secondary"
-                disabled={resendingConfirmation || Boolean(successTarget)}
-                onPress={async () => {
-                  setResendingConfirmation(true);
-                  const result = await resendConfirmationEmail(confirmationEmail);
-                  setResendingConfirmation(false);
-                  if (!result.ok) {
-                    setInlineError(result.message);
-                  }
+            {/* Header logo (compact) */}
+            <View style={styles.header}>
+              <BrandLogoHeader compact />
+            </View>
+
+            {/* Form card */}
+            <View style={styles.formCard}>
+              <View style={styles.formHeadline}>
+                <Text style={styles.formTitle}>Crear cuenta</Text>
+                <Text style={styles.formSubtitle}>Activa tu acceso QVEX</Text>
+              </View>
+
+              {/* Confirmation notice */}
+              {confirmationEmail ? (
+                <View style={styles.noticeCard}>
+                  <Text style={styles.noticeTitle}>{t('auth.checkEmailTitle')}</Text>
+                  <Text style={styles.noticeBody}>
+                    {t('auth.checkEmailBody')} {confirmationEmail}
+                  </Text>
+                  <Pressable
+                    onPress={async () => {
+                      setResendingConfirmation(true);
+                      const result = await resendConfirmationEmail(confirmationEmail);
+                      setResendingConfirmation(false);
+                      if (!result.ok) {
+                        setInlineError(result.message);
+                      }
+                    }}
+                    disabled={resendingConfirmation || Boolean(successTarget)}
+                    style={styles.noticeCta}
+                  >
+                    <Text style={styles.noticeCtaText}>
+                      {resendingConfirmation ? 'Enviando...' : 'Reenviar confirmación'}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
+
+              {/* Error notice */}
+              {inlineError ? (
+                <View style={styles.errorCard}>
+                  <Text style={styles.errorText}>{inlineError}</Text>
+                </View>
+              ) : null}
+
+              {/* Name field */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>{t('common.name').toUpperCase()}</Text>
+                <View style={styles.inputShell}>
+                  <TextInput
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Ana Rivera"
+                    placeholderTextColor={withOpacity(textMuted, 0.5)}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    autoComplete="name"
+                    textContentType="name"
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    style={styles.input}
+                    onSubmitEditing={() => emailInputRef.current?.focus()}
+                  />
+                </View>
+              </View>
+
+              {/* Email field */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>CORREO ELECTRÓNICO</Text>
+                <View style={styles.inputShell}>
+                  <TextInput
+                    ref={emailInputRef}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="correo@ejemplo.com"
+                    placeholderTextColor={withOpacity(textMuted, 0.5)}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="email-address"
+                    autoComplete="email"
+                    textContentType="emailAddress"
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    style={styles.input}
+                    onSubmitEditing={() => passwordInputRef.current?.focus()}
+                  />
+                </View>
+              </View>
+
+              {/* Password field */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>CONTRASEÑA</Text>
+                <View style={styles.inputShell}>
+                  <TextInput
+                    ref={passwordInputRef}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Mínimo 6 caracteres"
+                    placeholderTextColor={withOpacity(textMuted, 0.5)}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    secureTextEntry={!showPassword}
+                    autoComplete="new-password"
+                    textContentType="newPassword"
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    style={[styles.input, styles.inputFlex]}
+                    onSubmitEditing={() => confirmPasswordInputRef.current?.focus()}
+                  />
+                  <Pressable
+                    onPress={() => setShowPassword((v) => !v)}
+                    hitSlop={10}
+                    accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  >
+                    <Ionicons
+                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={18}
+                      color={textMuted}
+                    />
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Confirm password field */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>{t('common.confirmPassword').toUpperCase()}</Text>
+                <View style={styles.inputShell}>
+                  <TextInput
+                    ref={confirmPasswordInputRef}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Repite tu contraseña"
+                    placeholderTextColor={withOpacity(textMuted, 0.5)}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    secureTextEntry={!showConfirmPassword}
+                    autoComplete="new-password"
+                    textContentType="newPassword"
+                    returnKeyType="done"
+                    style={[styles.input, styles.inputFlex]}
+                    onSubmitEditing={() => {
+                      if (!submitting && !successTarget) void runRegister();
+                    }}
+                  />
+                  <Pressable
+                    onPress={() => setShowConfirmPassword((v) => !v)}
+                    hitSlop={10}
+                    accessibilityLabel={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  >
+                    <Ionicons
+                      name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={18}
+                      color={textMuted}
+                    />
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Submit */}
+              <Pressable
+                onPress={() => {
+                  void runRegister();
                 }}
-              />
+                disabled={submitting || Boolean(successTarget)}
+                style={({ pressed }) => [
+                  styles.btnPrimary,
+                  (submitting || Boolean(successTarget)) && styles.btnDisabled,
+                  pressed && styles.btnPressed,
+                ]}
+                accessibilityRole="button"
+              >
+                <Text style={styles.btnPrimaryText}>
+                  {submitting ? 'Creando cuenta...' : t('common.register')}
+                </Text>
+              </Pressable>
+
+              {/* Login link */}
+              <View style={styles.signupRow}>
+                <Text style={styles.signupBody}>¿Ya tienes una cuenta? </Text>
+                <Pressable onPress={() => router.replace('/login')} disabled={Boolean(successTarget)}>
+                  <Text style={styles.signupLink}>{t('common.login')}</Text>
+                </Pressable>
+              </View>
+
+              <Text style={styles.meta}>
+                {authMeta.configured ? t('auth.providerLiveBody') : t('auth.providerLocalBody')}
+              </Text>
             </View>
-          ) : null}
-
-          {inlineError ? (
-            <View
-              style={[
-                styles.noticeCard,
-                { backgroundColor: colors.lossSoft, borderColor: colors.loss },
-              ]}
-            >
-              <Text style={[styles.noticeText, { color: colors.loss }]}>{inlineError}</Text>
-            </View>
-          ) : null}
-
-          <OrbitInput
-            label={t('common.name')}
-            value={name}
-            onChangeText={setName}
-            placeholder="Ana Rivera"
-            autoCapitalize="words"
-            autoComplete="name"
-            textContentType="name"
-          />
-          <OrbitInput
-            label={t('common.email')}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="correo@ejemplo.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-            textContentType="emailAddress"
-          />
-          <OrbitInput
-            label={t('common.password')}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Minimo 6 caracteres"
-            autoCapitalize="none"
-            secureTextEntry
-            autoComplete="new-password"
-            textContentType="newPassword"
-          />
-          <OrbitInput
-            label={t('common.confirmPassword')}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Repite tu contrasena"
-            autoCapitalize="none"
-            secureTextEntry
-            autoComplete="new-password"
-            textContentType="newPassword"
-          />
-
-          <PrimaryButton
-            label={submitting ? 'Creando cuenta...' : t('common.register')}
-            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-            disabled={submitting || Boolean(successTarget)}
-            onPress={async () => {
-              setInlineError('');
-              if (password !== confirmPassword) {
-                const message = t('toast.invalidPasswordMatch');
-                setInlineError(message);
-                showToast(message, 'error');
-                return;
-              }
-
-              setSubmitting(true);
-              const result = await signUp(name, email, password);
-              setSubmitting(false);
-              if (result.ok) {
-                setInlineError('');
-                if (result.code === 'confirmation_required') {
-                  setConfirmationEmail(email.trim().toLowerCase());
-                  return;
-                }
-
-                setSuccessTarget('/home');
-                return;
-              }
-
-              setInlineError(result.message);
-            }}
-          />
-
-          <PrimaryButton
-            label={t('common.login')}
-            variant="secondary"
-            style={styles.secondaryButton}
-            disabled={Boolean(successTarget)}
-            onPress={() => router.replace('/login')}
-          />
-
-          <Text style={[styles.meta, { color: colors.textMuted }]}>
-            {authMeta.configured
-              ? t('auth.providerLiveBody')
-              : t('auth.providerLocalBody')}
-          </Text>
-        </GlassCard>
-      </View>
-    </AuthScreenShell>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  root: {
+    flex: 1,
+    backgroundColor: bg,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  keyboardAvoider: {
+    flex: 1,
+  },
+  scrollContent: {
     flexGrow: 1,
-    justifyContent: 'space-between',
-    gap: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
-  },
-  heroBlock: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  heroStage: {
-    width: 246,
-    height: 220,
-    borderRadius: 999,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroGlow: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 999,
-  },
-  heroEyebrow: {
-    fontFamily: FONT.medium,
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 1.6,
-  },
-  heroTitle: {
-    fontFamily: FONT.bold,
-    fontSize: 25,
-    lineHeight: 30,
-    textAlign: 'center',
-  },
-  heroSubtitle: {
-    fontFamily: FONT.regular,
-    fontSize: 13,
-    lineHeight: 19,
-    textAlign: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 16,
   },
   topBar: {
     alignItems: 'flex-start',
   },
   backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: RADII.pill,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
+    borderColor: withOpacity(border, 0.8),
+    backgroundColor: 'rgba(13,18,32,0.7)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  header: {
+    alignItems: 'center',
+    paddingTop: 4,
+  },
   formCard: {
-    marginTop: 4,
+    backgroundColor: 'rgba(13,18,32,0.78)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: withOpacity(border, 0.7),
+    padding: 20,
+    gap: 16,
+  },
+  formHeadline: {
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  formTitle: {
+    fontFamily: FONT.bold,
+    fontSize: 24,
+    color: textPrimary,
+    letterSpacing: -0.4,
+  },
+  formSubtitle: {
+    fontFamily: FONT.regular,
+    fontSize: 14,
+    color: textMuted,
   },
   noticeCard: {
-    borderRadius: RADII.md,
+    backgroundColor: withOpacity(primary, 0.07),
+    borderRadius: 12,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 4,
+    borderColor: withOpacity(primary, 0.2),
+    padding: 12,
+    gap: 6,
   },
   noticeTitle: {
     fontFamily: FONT.semibold,
     fontSize: 13,
+    color: textPrimary,
   },
-  noticeText: {
+  noticeBody: {
+    fontFamily: FONT.regular,
+    fontSize: 12,
+    color: textMuted,
+    lineHeight: 17,
+  },
+  noticeCta: {
+    alignSelf: 'flex-start',
+    marginTop: 2,
+  },
+  noticeCtaText: {
+    fontFamily: FONT.semibold,
+    fontSize: 12,
+    color: primary,
+  },
+  errorCard: {
+    backgroundColor: 'rgba(255,82,82,0.08)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,82,82,0.26)',
+    padding: 10,
+  },
+  errorText: {
     fontFamily: FONT.medium,
     fontSize: 12,
-    lineHeight: 18,
+    color: '#FF9898',
+    lineHeight: 17,
+  },
+  fieldGroup: {
+    gap: 6,
+  },
+  fieldLabel: {
+    fontFamily: FONT.medium,
+    fontSize: 10,
+    color: textMuted,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginLeft: 2,
+  },
+  inputShell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 56,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: withOpacity(border, 0.8),
+    backgroundColor: 'rgba(13,18,32,0.7)',
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  input: {
+    fontFamily: FONT.regular,
+    fontSize: 15,
+    color: textPrimary,
+    flex: 1,
+    paddingVertical: 0,
+  },
+  inputFlex: {
+    flex: 1,
+  },
+  btnPrimary: {
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
+    elevation: 8,
+    marginTop: 4,
+  },
+  btnDisabled: {
+    opacity: 0.6,
+  },
+  btnPressed: {
+    opacity: 0.84,
+    transform: [{ scale: 0.976 }],
+  },
+  btnPrimaryText: {
+    fontFamily: FONT.bold,
+    fontSize: 16,
+    color: bg,
+  },
+  signupRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  signupBody: {
+    fontFamily: FONT.regular,
+    fontSize: 14,
+    color: textMuted,
+  },
+  signupLink: {
+    fontFamily: FONT.semibold,
+    fontSize: 14,
+    color: primary,
   },
   meta: {
     fontFamily: FONT.regular,
     fontSize: 11,
     lineHeight: 17,
     textAlign: 'center',
-    marginTop: 4,
-  },
-  primaryButton: {
-    minHeight: 50,
-  },
-  secondaryButton: {
-    minHeight: 48,
+    color: textMuted,
+    marginTop: 2,
   },
 });
