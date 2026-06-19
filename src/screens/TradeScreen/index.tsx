@@ -469,13 +469,13 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   safeModeBannerTitle: {
-    color: '#F8FAFC',
+    color: '#F8FBFF',
     fontFamily: FONT.semibold,
     fontSize: 12,
     lineHeight: 16,
   },
   safeModeBannerBody: {
-    color: '#CBD5E1',
+    color: '#8A94A6',
     fontFamily: FONT.medium,
     fontSize: 11,
     lineHeight: 15,

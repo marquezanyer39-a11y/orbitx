@@ -296,7 +296,7 @@ export function createInitialOrbitState(): OrbitPersistedState {
     settings: {
       language: detectDeviceLanguage(),
       appearanceMode: 'orbit',
-      orbitAccentPreset: 'violet',
+      orbitAccentPreset: 'cyan',
       orbitTextPreset: 'default',
       orbitMotionEnabled: true,
       orbitMotionPreset: 'bull',

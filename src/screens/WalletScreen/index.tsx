@@ -33,7 +33,8 @@ const COLORS = {
   text: ORBITX_COLORS.textPrimary,
   textSecondary: ORBITX_COLORS.textSecondary,
   textMuted: ORBITX_COLORS.textMuted,
-  greenBright: ORBITX_COLORS.green,
+  green: '#00FFB2',
+  greenBright: '#00FFB2',
   blue: ORBITX_COLORS.web3Blue,
   amber: ORBITX_COLORS.warning,
 };
@@ -185,12 +186,12 @@ function DistributionLegend({
     <View style={styles.distributionBlock}>
       <Text style={styles.distributionTitle}>Distribución</Text>
       <View style={styles.distributionBar}>
-        <View style={[styles.distributionFill, { width: `${spotPercent}%`, backgroundColor: COLORS.purple }]} />
+        <View style={[styles.distributionFill, { width: `${spotPercent}%`, backgroundColor: COLORS.cyan }]} />
         <View style={[styles.distributionFill, { width: `${localPercent}%`, backgroundColor: COLORS.green }]} />
         <View style={[styles.distributionFill, { width: `${web3Percent}%`, backgroundColor: COLORS.blue }]} />
       </View>
       <View style={styles.legendRow}>
-        <LegendItem color={COLORS.purple} label={`Spot ${spotPercent.toFixed(1)}%`} />
+        <LegendItem color={COLORS.cyan} label={`Spot ${spotPercent.toFixed(1)}%`} />
         <LegendItem color={COLORS.green} label={`Cuenta Local ${localPercent.toFixed(1)}%`} />
         <LegendItem color={COLORS.blue} label={`Web3 ${web3Percent.toFixed(1)}%`} />
       </View>
@@ -217,7 +218,7 @@ function QuickActions({ onBlockedAction }: { onBlockedAction: () => void }) {
           style={({ pressed }) => [styles.quickAction, pressed && styles.pressed]}
         >
           <View style={styles.quickIconWrap}>
-            <Ionicons name={action.icon} size={22} color={COLORS.purple} />
+            <Ionicons name={action.icon} size={22} color={COLORS.cyan} />
           </View>
           <Text style={styles.quickLabel} numberOfLines={1}>{action.label}</Text>
         </Pressable>
@@ -478,7 +479,7 @@ export default function WalletScreen() {
           change={undefined}
           body={FEATURE_STATUS.trade.isDemoMode ? 'Órdenes simuladas, no fondos reales' : 'Trading y compra/venta'}
           icon="repeat-outline"
-          color={COLORS.purple}
+          color={COLORS.cyan}
           onPress={showBlockedAction}
         />
         <SummaryCard
@@ -603,7 +604,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 2,
     borderRadius: 2,
-    backgroundColor: withOpacity(COLORS.purpleSoft, 0.14),
+    backgroundColor: withOpacity(COLORS.cyan, 0.14),
     transform: [{ rotate: '-18deg' }],
   },
   heroHeader: {
@@ -681,8 +682,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     height: 6,
     borderRadius: 2,
-    backgroundColor: COLORS.purpleSoft,
-    shadowColor: COLORS.purpleSoft,
+    backgroundColor: COLORS.cyan,
+    shadowColor: COLORS.cyan,
     shadowOpacity: 0.16,
     shadowRadius: 8,
   },
@@ -690,7 +691,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     height: 2,
     borderRadius: 2,
-    backgroundColor: COLORS.purpleSoft,
+    backgroundColor: COLORS.cyan,
   },
   chartEndpoint: {
     position: 'absolute',
@@ -699,8 +700,8 @@ const styles = StyleSheet.create({
     width: 20,
     height: 2,
     borderRadius: 2,
-    backgroundColor: withOpacity(COLORS.purpleSoft, 0.78),
-    shadowColor: COLORS.purpleSoft,
+    backgroundColor: withOpacity(COLORS.cyan, 0.78),
+    shadowColor: COLORS.cyan,
     shadowOpacity: 0.18,
     shadowRadius: 6,
   },
@@ -857,7 +858,7 @@ const styles = StyleSheet.create({
     lineHeight: 27,
   },
   seeAllText: {
-    color: COLORS.purple,
+    color: COLORS.cyan,
     fontFamily: FONT.bold,
     fontSize: 14,
   },

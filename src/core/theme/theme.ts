@@ -189,6 +189,7 @@ export const ORBITX_COLORS = {
   purple: '#7B3FE4',
   purpleSoft: '#8B5CF6',
   green: '#00C853',
+  cyan: '#00E5FF',
   red: '#FF5252',
   warning: '#F59E0B',
   web3Blue: '#3BA7FF',
