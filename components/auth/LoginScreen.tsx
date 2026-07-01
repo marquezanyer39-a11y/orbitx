@@ -15,6 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 
 import { FONT, withOpacity } from '../../constants/theme';
+import { useI18n } from '../../hooks/useI18n';
 import { useAuthStore } from '../../src/store/authStore';
 import { useUiStore } from '../../src/store/uiStore';
 import {
@@ -33,6 +34,7 @@ export function LoginScreen() {
   const resendConfirmationEmail = useAuthStore((state) => state.resendConfirmationEmail);
   const sessionStatus = useAuthStore((state) => state.session.status);
   const showToast = useUiStore((state) => state.showToast);
+  const { t } = useI18n();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -105,7 +107,7 @@ export function LoginScreen() {
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={styles.keyboardAvoider}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
         <ScrollView
           bounces={false}
@@ -146,26 +148,26 @@ export function LoginScreen() {
           >
             {/* Section headline */}
             <View style={styles.formHeadline}>
-              <Text style={styles.formTitle}>Iniciar sesión</Text>
-              <Text style={styles.formSubtitle}>Accede a tu cuenta QVEX</Text>
+              <Text style={styles.formTitle}>{t('common.login')}</Text>
+              <Text style={styles.formSubtitle}>{t('auth.loginSubtitle')}</Text>
             </View>
 
             {/* Confirmation notice */}
             {confirmationEmail ? (
               <View style={styles.noticeCard}>
-                <Text style={styles.noticeTitle}>Confirma tu correo</Text>
+                <Text style={styles.noticeTitle}>{t('authFlow.confirmEmailTitle')}</Text>
                 <Text style={styles.noticeBody}>
-                  Revisa {confirmationEmail} y haz clic en el enlace de confirmación.
+                  {t('authFlow.confirmEmailBody', { email: confirmationEmail })}
                 </Text>
                 <Pressable
                   onPress={async () => {
                     const result = await resendConfirmationEmail(confirmationEmail);
                     if (!result.ok) setInlineError(result.message);
-                    else showToast('Correo de confirmación reenviado.', 'success');
+                    else showToast(t('authFlow.confirmationResent'), 'success');
                   }}
                   style={styles.noticeCta}
                 >
-                  <Text style={styles.noticeCtaText}>Reenviar confirmación</Text>
+                  <Text style={styles.noticeCtaText}>{t('authFlow.resendConfirmation')}</Text>
                 </Pressable>
               </View>
             ) : null}
@@ -179,7 +181,7 @@ export function LoginScreen() {
 
             {/* Email field */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>CORREO ELECTRÓNICO</Text>
+              <Text style={styles.fieldLabel}>{t('common.email').toUpperCase()}</Text>
               <View
                 style={[
                   styles.inputShell,
@@ -194,8 +196,9 @@ export function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType="email-address"
-                  autoComplete="email"
-                  textContentType="emailAddress"
+                  autoComplete="off"
+                  textContentType="none"
+                  importantForAutofill="no"
                   returnKeyType="next"
                   blurOnSubmit={false}
                   style={styles.input}
@@ -208,7 +211,7 @@ export function LoginScreen() {
 
             {/* Password field */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>CONTRASEÑA</Text>
+              <Text style={styles.fieldLabel}>{t('common.password').toUpperCase()}</Text>
               <View
                 style={[
                   styles.inputShell,
@@ -224,8 +227,9 @@ export function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   secureTextEntry={!showPassword}
-                  autoComplete="password"
-                  textContentType="password"
+                  autoComplete="off"
+                  textContentType="none"
+                  importantForAutofill="no"
                   returnKeyType="done"
                   blurOnSubmit={false}
                   style={[styles.input, styles.inputFlex]}
@@ -251,7 +255,7 @@ export function LoginScreen() {
                 onPress={() => router.push('/forgot-password')}
                 style={styles.forgotWrap}
               >
-                <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+                <Text style={styles.forgotText}>{t('authFlow.forgotPassword')}</Text>
               </Pressable>
             </View>
 
@@ -267,7 +271,7 @@ export function LoginScreen() {
               accessibilityRole="button"
             >
               <Text style={styles.btnPrimaryText}>
-                {submitting ? 'Ingresando...' : 'Iniciar sesión'}
+                {submitting ? t('authFlow.signingIn') : t('common.login')}
               </Text>
             </Pressable>
 
@@ -277,9 +281,9 @@ export function LoginScreen() {
 
             {/* Sign-up link */}
             <View style={styles.signupRow}>
-              <Text style={styles.signupBody}>¿No tienes una cuenta? </Text>
+              <Text style={styles.signupBody}>{t('authFlow.noAccount')}</Text>
               <Pressable onPress={() => router.push('/register')}>
-                <Text style={styles.signupLink}>Crear cuenta</Text>
+                <Text style={styles.signupLink}>{t('authFlow.createAccount')}</Text>
               </Pressable>
             </View>
           </Animated.View>
@@ -287,14 +291,18 @@ export function LoginScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <View style={styles.footerLinks}>
-              {(['Términos', 'Política de privacidad', 'Aviso de riesgo'] as const).map((label) => (
-                <Pressable key={label} onPress={() => showToast(`${label} disponible próximamente.`, 'info')}>
+              {([
+                t('authFlow.termsLink'),
+                t('authFlow.privacyLink'),
+                t('authFlow.riskLink'),
+              ]).map((label) => (
+                <Pressable key={label} onPress={() => showToast(t('authFlow.linkComingSoon', { label }), 'info')}>
                   <Text style={styles.footerLink}>{label}</Text>
                 </Pressable>
               ))}
             </View>
             <Text style={styles.footerCopyright}>
-              © {copyrightYear} QVEX. Todos los derechos reservados.
+              {t('authFlow.copyright', { year: copyrightYear })}
             </Text>
           </View>
         </ScrollView>

@@ -4,6 +4,7 @@ import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FONT } from '../../constants/theme';
+import { useI18n } from '../../hooks/useI18n';
 import {
   AUTH_COLORS,
   BrandLogoHeader,
@@ -14,6 +15,7 @@ import {
 
 export function WelcomeScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
 
   // Entrance slide-up-fade for 3 sections
   const logoAnim = useRef(new Animated.Value(0)).current;
@@ -49,17 +51,13 @@ export function WelcomeScreen() {
           {/* Logo */}
           <Animated.View style={[styles.logoWrap, mkEntrance(logoAnim)]}>
             <BrandLogoHeader />
-            <Text style={styles.featureBar}>SIMULADOR IA  |  ALERTAS  |  COMUNIDAD</Text>
+            <Text style={styles.featureBar}>{t('authFlow.featureBar')}</Text>
           </Animated.View>
 
           {/* Headline */}
           <Animated.View style={[styles.headlineSection, mkEntrance(headAnim)]}>
-            <Text style={styles.headline}>
-              Cripto, IA y comunidad en un solo ecosistema
-            </Text>
-            <Text style={styles.subtitle}>
-              Simula escenarios, recibe alertas inteligentes, explora tokens y conecta con la comunidad desde QVEX.
-            </Text>
+            <Text style={styles.headline}>{t('authFlow.headline')}</Text>
+            <Text style={styles.subtitle}>{t('authFlow.subtitle')}</Text>
           </Animated.View>
 
           {/* CTA + social + legal */}
@@ -69,7 +67,7 @@ export function WelcomeScreen() {
               style={({ pressed }) => [styles.btnPrimary, pressed && styles.btnPrimaryPressed]}
               accessibilityRole="button"
             >
-              <Text style={styles.btnPrimaryText}>Crear cuenta</Text>
+              <Text style={styles.btnPrimaryText}>{t('authFlow.createAccount')}</Text>
             </Pressable>
 
             <Pressable
@@ -77,17 +75,17 @@ export function WelcomeScreen() {
               style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
               accessibilityRole="button"
             >
-              <Text style={styles.btnSecondaryText}>Iniciar sesión</Text>
+              <Text style={styles.btnSecondaryText}>{t('common.login')}</Text>
             </Pressable>
 
             <SocialSeparator />
             <SocialButtonsRow variant="circle" />
 
             <Text style={styles.legalText}>
-              Al continuar aceptas los{' '}
-              <Text style={styles.legalLink}>Términos</Text>
-              {' '}y la{' '}
-              <Text style={styles.legalLink}>Política de Privacidad</Text>.
+              {t('authFlow.legalPrefix')}
+              <Text style={styles.legalLink}>{t('authFlow.termsLink')}</Text>
+              {t('authFlow.legalMid')}
+              <Text style={styles.legalLink}>{t('authFlow.privacyTitle')}</Text>.
             </Text>
           </Animated.View>
         </ScrollView>

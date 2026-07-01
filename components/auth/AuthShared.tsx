@@ -8,6 +8,7 @@ import { Animated, Image, Pressable, StyleSheet, Text, View } from 'react-native
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 
 import { FONT, withOpacity } from '../../constants/theme';
+import { useI18n } from '../../hooks/useI18n';
 import { useUiStore } from '../../src/store/uiStore';
 
 // ─── Design tokens (Kinetic Obsidian) ────────────────────────────────────────
@@ -145,6 +146,7 @@ interface BrandLogoHeaderProps {
 }
 
 export function BrandLogoHeader({ compact = false }: BrandLogoHeaderProps) {
+  const { t } = useI18n();
   return (
     <View style={styles.logoSection}>
       <View style={styles.brandRow}>
@@ -159,7 +161,7 @@ export function BrandLogoHeader({ compact = false }: BrandLogoHeaderProps) {
           QVEX
         </Text>
       </View>
-      <Text style={styles.eyebrow}>ECOSISTEMA DE CRIPTO E IA</Text>
+      <Text style={styles.eyebrow}>{t('authFlow.eyebrow')}</Text>
     </View>
   );
 }
@@ -201,8 +203,8 @@ interface SocialButtonsRowProps {
 
 export function SocialButtonsRow({ variant = 'circle' }: SocialButtonsRowProps) {
   const showToast = useUiStore((state) => state.showToast);
-  const onSocialPress = () =>
-    showToast('Usa correo y contraseña mientras activamos este acceso.', 'info');
+  const { t } = useI18n();
+  const onSocialPress = () => showToast(t('authFlow.socialSoon'), 'info');
 
   const isCircle = variant === 'circle';
   const btnStyle = isCircle ? styles.socialCircle : styles.socialRect;
@@ -232,10 +234,11 @@ export function SocialButtonsRow({ variant = 'circle' }: SocialButtonsRowProps) 
 
 // ─── Shared separator ─────────────────────────────────────────────────────────
 export function SocialSeparator() {
+  const { t } = useI18n();
   return (
     <View style={styles.separatorRow}>
       <View style={styles.separatorLine} />
-      <Text style={styles.separatorText}>O CONTINÚA CON</Text>
+      <Text style={styles.separatorText}>{t('authFlow.continueWith')}</Text>
       <View style={styles.separatorLine} />
     </View>
   );

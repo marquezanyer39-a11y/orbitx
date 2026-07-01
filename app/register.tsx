@@ -121,7 +121,7 @@ export default function RegisterScreen() {
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={styles.keyboardAvoider}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView
             bounces={false}
@@ -151,8 +151,8 @@ export default function RegisterScreen() {
             {/* Form card */}
             <View style={styles.formCard}>
               <View style={styles.formHeadline}>
-                <Text style={styles.formTitle}>Crear cuenta</Text>
-                <Text style={styles.formSubtitle}>Activa tu acceso QVEX</Text>
+                <Text style={styles.formTitle}>{t('authFlow.createAccount')}</Text>
+                <Text style={styles.formSubtitle}>{t('authFlow.activateTitle')}</Text>
               </View>
 
               {/* Confirmation notice */}
@@ -199,8 +199,9 @@ export default function RegisterScreen() {
                     placeholderTextColor={withOpacity(textMuted, 0.5)}
                     autoCapitalize="words"
                     autoCorrect={false}
-                    autoComplete="name"
-                    textContentType="name"
+                    autoComplete="off"
+                    textContentType="none"
+                    importantForAutofill="no"
                     returnKeyType="next"
                     blurOnSubmit={false}
                     style={styles.input}
@@ -211,7 +212,7 @@ export default function RegisterScreen() {
 
               {/* Email field */}
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>CORREO ELECTRÓNICO</Text>
+                <Text style={styles.fieldLabel}>{t('common.email').toUpperCase()}</Text>
                 <View style={styles.inputShell}>
                   <TextInput
                     ref={emailInputRef}
@@ -222,8 +223,9 @@ export default function RegisterScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     keyboardType="email-address"
-                    autoComplete="email"
-                    textContentType="emailAddress"
+                    autoComplete="off"
+                    textContentType="none"
+                    importantForAutofill="no"
                     returnKeyType="next"
                     blurOnSubmit={false}
                     style={styles.input}
@@ -234,19 +236,20 @@ export default function RegisterScreen() {
 
               {/* Password field */}
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>CONTRASEÑA</Text>
+                <Text style={styles.fieldLabel}>{t('common.password').toUpperCase()}</Text>
                 <View style={styles.inputShell}>
                   <TextInput
                     ref={passwordInputRef}
                     value={password}
                     onChangeText={setPassword}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={t('auth.passwordHint')}
                     placeholderTextColor={withOpacity(textMuted, 0.5)}
                     autoCapitalize="none"
                     autoCorrect={false}
                     secureTextEntry={!showPassword}
-                    autoComplete="new-password"
-                    textContentType="newPassword"
+                    autoComplete="off"
+                    textContentType="none"
+                    importantForAutofill="no"
                     returnKeyType="next"
                     blurOnSubmit={false}
                     style={[styles.input, styles.inputFlex]}
@@ -274,13 +277,14 @@ export default function RegisterScreen() {
                     ref={confirmPasswordInputRef}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
-                    placeholder="Repite tu contraseña"
+                    placeholder={t('authFlow.confirmPasswordPlaceholder')}
                     placeholderTextColor={withOpacity(textMuted, 0.5)}
                     autoCapitalize="none"
                     autoCorrect={false}
                     secureTextEntry={!showConfirmPassword}
-                    autoComplete="new-password"
-                    textContentType="newPassword"
+                    autoComplete="off"
+                    textContentType="none"
+                    importantForAutofill="no"
                     returnKeyType="done"
                     style={[styles.input, styles.inputFlex]}
                     onSubmitEditing={() => {
@@ -315,13 +319,13 @@ export default function RegisterScreen() {
                 accessibilityRole="button"
               >
                 <Text style={styles.btnPrimaryText}>
-                  {submitting ? 'Creando cuenta...' : t('common.register')}
+                  {submitting ? t('authFlow.creatingAccount') : t('common.register')}
                 </Text>
               </Pressable>
 
               {/* Login link */}
               <View style={styles.signupRow}>
-                <Text style={styles.signupBody}>¿Ya tienes una cuenta? </Text>
+                <Text style={styles.signupBody}>{t('authFlow.haveAccount')}</Text>
                 <Pressable onPress={() => router.replace('/login')} disabled={Boolean(successTarget)}>
                   <Text style={styles.signupLink}>{t('common.login')}</Text>
                 </Pressable>
