@@ -48,38 +48,43 @@ export function WelcomeScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo */}
-          <Animated.View style={[styles.logoWrap, mkEntrance(logoAnim)]}>
-            <BrandLogoHeader />
-            <Text style={styles.featureBar}>{t('authFlow.featureBar')}</Text>
-          </Animated.View>
+          {/* Branding & info block */}
+          <View style={styles.topBlock}>
+            <Animated.View style={[styles.logoWrap, mkEntrance(logoAnim)]}>
+              <BrandLogoHeader />
+              <Text style={styles.featureBar}>{t('authFlow.featureBar')}</Text>
+            </Animated.View>
 
-          {/* Headline */}
-          <Animated.View style={[styles.headlineSection, mkEntrance(headAnim)]}>
-            <Text style={styles.headline}>{t('authFlow.headline')}</Text>
-            <Text style={styles.subtitle}>{t('authFlow.subtitle')}</Text>
-          </Animated.View>
+            <Animated.View style={[styles.headlineSection, mkEntrance(headAnim)]}>
+              <Text style={styles.headline}>{t('authFlow.headline')}</Text>
+              <Text style={styles.subtitle}>{t('authFlow.subtitle')}</Text>
+            </Animated.View>
+          </View>
 
-          {/* CTA + social + legal */}
+          {/* Action section: buttons + social + legal */}
           <Animated.View style={[styles.ctaSection, mkEntrance(ctaAnim)]}>
-            <Pressable
-              onPress={() => router.push('/register')}
-              style={({ pressed }) => [styles.btnPrimary, pressed && styles.btnPrimaryPressed]}
-              accessibilityRole="button"
-            >
-              <Text style={styles.btnPrimaryText}>{t('authFlow.createAccount')}</Text>
-            </Pressable>
+            <View style={styles.buttonsGroup}>
+              <Pressable
+                onPress={() => router.push('/register')}
+                style={({ pressed }) => [styles.btnPrimary, pressed && styles.btnPrimaryPressed]}
+                accessibilityRole="button"
+              >
+                <Text style={styles.btnPrimaryText}>{t('authFlow.createAccount')}</Text>
+              </Pressable>
 
-            <Pressable
-              onPress={() => router.push('/login')}
-              style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
-              accessibilityRole="button"
-            >
-              <Text style={styles.btnSecondaryText}>{t('common.login')}</Text>
-            </Pressable>
+              <Pressable
+                onPress={() => router.push('/login')}
+                style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
+                accessibilityRole="button"
+              >
+                <Text style={styles.btnSecondaryText}>{t('common.login')}</Text>
+              </Pressable>
+            </View>
 
-            <SocialSeparator />
-            <SocialButtonsRow variant="circle" />
+            <View style={styles.socialGroup}>
+              <SocialSeparator />
+              <SocialButtonsRow variant="circle" />
+            </View>
 
             <Text style={styles.legalText}>
               {t('authFlow.legalPrefix')}
@@ -106,46 +111,63 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    gap: 28,
+    paddingHorizontal: 32,
+    paddingTop: 48,
     justifyContent: 'space-between',
+  },
+  topBlock: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    alignItems: 'center',
   },
   logoWrap: {
     alignItems: 'center',
-    gap: 10,
-    marginTop: 12,
+    gap: 16,
+    marginBottom: 48,
   },
   featureBar: {
     fontFamily: FONT.medium,
     fontSize: 10,
     color: textMuted,
-    letterSpacing: 2.6,
+    letterSpacing: 1,
     textTransform: 'uppercase',
-    opacity: 0.68,
+    opacity: 0.7,
   },
   headlineSection: {
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 4,
+    gap: 16,
+    marginBottom: 40,
   },
   headline: {
     fontFamily: FONT.bold,
-    fontSize: 26,
+    fontSize: 32,
     color: textPrimary,
-    letterSpacing: -0.5,
-    lineHeight: 34,
+    letterSpacing: -0.64,
+    lineHeight: 37,
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: FONT.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: textMuted,
-    lineHeight: 23,
+    lineHeight: 26,
     textAlign: 'center',
+    paddingHorizontal: 16,
+    opacity: 0.9,
   },
   ctaSection: {
-    gap: 12,
+    width: '100%',
+    maxWidth: 360,
+    alignSelf: 'center',
+    gap: 40,
+  },
+  buttonsGroup: {
+    gap: 16,
+  },
+  socialGroup: {
+    alignSelf: 'stretch',
+    gap: 24,
   },
   btnPrimary: {
     height: 58,
@@ -154,9 +176,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 25,
     elevation: 10,
   },
   btnPrimaryPressed: {
@@ -191,12 +213,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: textMuted,
     textAlign: 'center',
-    lineHeight: 19,
+    lineHeight: 20,
     letterSpacing: 0.2,
-    marginTop: 4,
   },
   legalLink: {
-    fontFamily: FONT.semibold,
+    fontFamily: FONT.bold,
     color: primary,
   },
 });

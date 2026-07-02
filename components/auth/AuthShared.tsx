@@ -22,12 +22,12 @@ export const AUTH_COLORS = {
 } as const;
 
 // ─── Star field — deterministic via golden-angle distribution ─────────────────
-const STAR_DATA = Array.from({ length: 90 }, (_, i) => ({
+const STAR_DATA = Array.from({ length: 32 }, (_, i) => ({
   left: (i * 137.508) % 100,
   top: (i * 97.3) % 100,
-  size: 1.2 + (i % 3) * 0.7,
+  size: 0.5 + (i % 3) * 1.0,
   group: i % 5,
-  baseOpacity: 0.12 + (i % 4) * 0.07,
+  baseOpacity: 0.1 + (i % 4) * 0.1,
 }));
 
 // ─── CinematicBackground ─────────────────────────────────────────────────────
@@ -64,10 +64,10 @@ export function CinematicBackground({ variant = 'hero' }: CinematicBackgroundPro
   // hero: heavier gradient so planet recedes, form: lighter so planet peeks through
   const gradientColors: [string, string, string, string] =
     variant === 'hero'
-      ? ['rgba(8,11,16,0.05)', 'rgba(8,11,16,0.72)', AUTH_COLORS.bg, AUTH_COLORS.bg]
+      ? ['rgba(8,11,16,0.1)', 'rgba(8,11,16,0.8)', AUTH_COLORS.bg, AUTH_COLORS.bg]
       : ['rgba(8,11,16,0.0)', 'rgba(8,11,16,0.38)', 'rgba(8,11,16,0.88)', AUTH_COLORS.bg];
   const gradientLocations: [number, number, number, number] =
-    variant === 'hero' ? [0, 0.36, 0.72, 1] : [0, 0.28, 0.62, 1];
+    variant === 'hero' ? [0, 0.5, 0.9, 1] : [0, 0.28, 0.62, 1];
 
   return (
     <>
@@ -118,11 +118,11 @@ export function CinematicBackground({ variant = 'hero' }: CinematicBackgroundPro
 
       {/* Ambient glow orbs */}
       <View
-        style={[styles.glowOrb, { top: '20%', left: -90, width: 260, height: 260 }]}
+        style={[styles.glowOrb, { top: '25%', left: -80, width: 400, height: 400 }]}
         pointerEvents="none"
       />
       <View
-        style={[styles.glowOrb, { bottom: '18%', right: -100, width: 300, height: 300 }]}
+        style={[styles.glowOrb, { bottom: '25%', right: -80, width: 500, height: 500 }]}
         pointerEvents="none"
       />
     </>
@@ -252,22 +252,22 @@ const styles = StyleSheet.create({
   planetImage: {
     width: '100%',
     height: '52%',
-    opacity: 0.58,
+    opacity: 0.4,
   },
   glowOrb: {
     position: 'absolute',
     borderRadius: 9999,
-    backgroundColor: withOpacity(AUTH_COLORS.primary, 0.04),
+    backgroundColor: withOpacity(AUTH_COLORS.primary, 0.05),
   },
   // BrandLogoHeader
   logoSection: {
     alignItems: 'center',
-    gap: 10,
+    gap: 16,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 16,
   },
   iconContainer: {
     width: 56,
@@ -281,9 +281,9 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     fontFamily: FONT.bold,
-    fontSize: 30,
+    fontSize: 44,
     color: AUTH_COLORS.textPrimary,
-    letterSpacing: -0.8,
+    letterSpacing: -1.1,
   },
   wordmarkCompact: {
     fontSize: 24,
@@ -293,15 +293,15 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: 11,
     color: AUTH_COLORS.primary,
-    letterSpacing: 4,
+    letterSpacing: 4.4,
     textTransform: 'uppercase',
-    opacity: 0.92,
+    opacity: 0.9,
   },
   // SocialButtonsRow
   socialCircleRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
+    gap: 24,
   },
   socialRectRow: {
     flexDirection: 'row',
@@ -311,9 +311,9 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'rgba(13,18,32,0.52)',
+    backgroundColor: 'rgba(13,18,32,0.4)',
     borderWidth: 1,
-    borderColor: withOpacity(AUTH_COLORS.border, 0.55),
+    borderColor: withOpacity(AUTH_COLORS.border, 0.5),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -345,8 +345,8 @@ const styles = StyleSheet.create({
   separatorText: {
     fontFamily: FONT.medium,
     fontSize: 9,
-    color: withOpacity(AUTH_COLORS.textMuted, 0.65),
-    letterSpacing: 3,
+    color: withOpacity(AUTH_COLORS.textMuted, 0.6),
+    letterSpacing: 1.8,
     textTransform: 'uppercase',
   },
 });
