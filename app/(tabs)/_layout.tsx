@@ -29,8 +29,14 @@ function StandardTabIcon({
       style={[
         styles.standardTabIconShell,
         {
-          backgroundColor: focused ? withOpacity(colors.profit, 0.15) : 'transparent',
+          backgroundColor: focused ? withOpacity(colors.profit, 0.1) : 'transparent',
           borderColor: 'transparent',
+        },
+        focused && {
+          shadowColor: colors.profit,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.22,
+          shadowRadius: 8,
         },
       ]}
     >
@@ -51,8 +57,14 @@ function TradeTabIcon({ focused }: { focused: boolean }) {
       style={[
         styles.tradeTabOuter,
         {
-          backgroundColor: focused ? withOpacity(colors.profit, 0.15) : 'transparent',
+          backgroundColor: focused ? withOpacity(colors.profit, 0.1) : 'transparent',
           borderColor: 'transparent',
+        },
+        focused && {
+          shadowColor: colors.profit,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.22,
+          shadowRadius: 8,
         },
       ]}
     >

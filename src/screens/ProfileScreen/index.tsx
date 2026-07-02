@@ -403,8 +403,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 8,
-    gap: 12,
+    paddingTop: 18,
+    gap: 14,
   },
   pressed: {
     opacity: 0.74,
@@ -449,13 +449,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BORDER,
     borderRadius: 18,
-    padding: 16,
+    padding: 18,
   },
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   avatar: {
     width: 54,
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: BORDER,
-    paddingTop: 14,
+    paddingTop: 16,
   },
   stat: {
     flex: 1,
@@ -559,8 +559,8 @@ const styles = StyleSheet.create({
     gap: 8,
     borderTopWidth: 1,
     borderTopColor: BORDER,
-    paddingTop: 12,
-    marginTop: 14,
+    paddingTop: 14,
+    marginTop: 16,
   },
   idValue: {
     fontFamily: FONT.medium,
@@ -608,9 +608,14 @@ const styles = StyleSheet.create({
     gap: 10,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: withOpacity(CYAN, 0.28),
+    borderColor: withOpacity(CYAN, 0.35),
     backgroundColor: 'rgba(0,229,255,0.06)',
-    padding: 12,
+    padding: 14,
+    shadowColor: CYAN,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 3,
   },
   rangoIcon: {
     width: 34,
@@ -702,13 +707,13 @@ const styles = StyleSheet.create({
   },
   // ── Section label ──
   sectionLabel: {
-    fontFamily: FONT.medium,
+    fontFamily: FONT.semibold,
     fontSize: 10,
-    color: TEXT_MUTED,
+    color: withOpacity(TEXT_PRIMARY, 0.72),
     letterSpacing: 2.2,
     textTransform: 'uppercase',
     paddingHorizontal: 2,
-    marginTop: 6,
+    marginTop: 8,
     marginBottom: -4,
   },
   // ── List card ──
