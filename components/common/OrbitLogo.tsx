@@ -112,7 +112,7 @@ export function OrbitLogo({
             },
           ]}
         >
-          ORBIT
+          QVEX
         </Text>
       </View>
 

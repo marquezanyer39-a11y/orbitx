@@ -233,8 +233,8 @@ const MODULES = {
   profile: {
     id: 'profile',
     title: 'Perfil',
-    focus: 'Datos del usuario, Orbit ID, accesos a preferencias y rutas personales.',
-    whatUserSees: ['Orbit ID', 'Preferencias', 'Accesos a seguridad, idioma y ajustes personales'],
+    focus: 'Datos del usuario, QVEX ID, accesos a preferencias y rutas personales.',
+    whatUserSees: ['QVEX ID', 'Preferencias', 'Accesos a seguridad, idioma y ajustes personales'],
     helpTopics: ['donde esta mi id', 'abrir perfil', 'cambiar ajustes'],
     capabilities: [
       { key: 'orbit_id', status: 'available' },

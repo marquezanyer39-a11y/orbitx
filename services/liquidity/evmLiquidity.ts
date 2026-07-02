@@ -122,7 +122,7 @@ function getProvider(chain: SupportedLiquidityChain) {
 async function getSigner(chain: SupportedLiquidityChain) {
   const bundle = await getStoredWalletBundle();
   if (!bundle) {
-    throw new Error('Primero crea o importa tu wallet OrbitX.');
+    throw new Error('Primero crea o importa tu wallet QVEX.');
   }
 
   const provider = getProvider(chain);

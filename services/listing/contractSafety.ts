@@ -119,7 +119,7 @@ export async function runContractSafetyChecks(
       ...baseReport,
       reasons: [
         normalizeReason(
-          error instanceof Error ? error.message : 'OrbitX could not validate this contract.',
+          error instanceof Error ? error.message : 'QVEX could not validate this contract.',
         ),
       ],
     };
