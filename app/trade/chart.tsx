@@ -46,16 +46,16 @@ import {
 } from '../../src/utils/tradeRealtimeUi';
 
 const COLORS = {
-  background: '#08090B',
-  surface: '#141518',
-  surfaceSoft: '#111318',
-  border: 'rgba(255,255,255,0.06)',
-  textPrimary: '#FAFAFA',
-  textSecondary: '#A1A1AA',
-  green: '#00C853',
-  red: '#FF5252',
-  purple: '#7B3FE4',
-  purpleSoft: '#8B5CF6',
+  background: '#080B10',
+  surface: '#0D1220',
+  surfaceSoft: '#0B101B',
+  border: '#22314A',
+  textPrimary: '#F8FBFF',
+  textSecondary: '#8A94A6',
+  green: '#00FFB2',
+  red: '#FF3B6B',
+  purple: '#00E5FF',
+  purpleSoft: '#00E5FF',
   ma5: '#FACC15',
   ma10: '#38BDF8',
   ma30: '#A855F7',
@@ -66,17 +66,16 @@ const CHART_COLORS: Partial<OrbitChartHtmlColors> = {
   backgroundAlt: COLORS.surfaceSoft,
   text: COLORS.textPrimary,
   textMuted: COLORS.textSecondary,
-  border: withOpacity('#FFFFFF', 0.05),
-  borderStrong: withOpacity('#FFFFFF', 0.08),
-  grid: withOpacity('#FFFFFF', 0.028),
-  gridStrong: withOpacity(COLORS.purpleSoft, 0.14),
+  border: withOpacity(COLORS.border, 0.6),
+  borderStrong: withOpacity(COLORS.border, 0.9),
+  grid: withOpacity(COLORS.border, 0.3),
+  gridStrong: withOpacity(COLORS.purpleSoft, 0.16),
   primary: COLORS.purpleSoft,
   profit: COLORS.green,
   loss: COLORS.red,
 };
 
-const PRIMARY_TIMEFRAMES: OrbitChartTimeframe[] = ['15m', '1h', '4h', '1D'];
-const EXTRA_TIMEFRAMES: OrbitChartTimeframe[] = ['1m', '5m'];
+const PRIMARY_TIMEFRAMES: OrbitChartTimeframe[] = ['1m', '5m', '15m', '1h', '4h', '1D'];
 
 type MainTab = 'chart' | 'wall' | 'coin' | 'ideas';
 type BottomTab = 'book' | 'history' | 'analysis';
@@ -301,7 +300,6 @@ export default function TradeChartScreen() {
   const [indicatorTab, setIndicatorTab] = useState<IndicatorTab>('MA');
   const [timeframe, setTimeframe] = useState<OrbitChartTimeframe>('15m');
   const [lineMode, setLineMode] = useState(false);
-  const [showExtraFrames, setShowExtraFrames] = useState(false);
   const [chartResetKey, setChartResetKey] = useState(0);
   const safeModeActive = QVEX_STABLE_APK_MODE;
 
@@ -358,6 +356,14 @@ export default function TradeChartScreen() {
   const ma5 = movingAverage(closeSeries, 5);
   const ma10 = movingAverage(closeSeries, 10);
   const ma30 = movingAverage(closeSeries, 30);
+  const lastCandle = chartHistory?.candles?.length
+    ? chartHistory.candles[chartHistory.candles.length - 1]
+    : null;
+  const lastCandleUp = lastCandle ? lastCandle.close >= lastCandle.open : true;
+  const lastCandleChange =
+    lastCandle && lastCandle.open > 0
+      ? ((lastCandle.close - lastCandle.open) / lastCandle.open) * 100
+      : null;
 
   const chartIndicators = useMemo<OrbitChartIndicator[]>(() => {
     const indicators: OrbitChartIndicator[] = ['MA'];
@@ -691,7 +697,6 @@ export default function TradeChartScreen() {
                   onPress={() => {
                     setLineMode(false);
                     setTimeframe(item);
-                    setShowExtraFrames(false);
                   }}
                   style={({ pressed }) => [
                     styles.timeframeChip,
@@ -706,18 +711,6 @@ export default function TradeChartScreen() {
               );
             })}
 
-            <Pressable
-              onPress={() => setShowExtraFrames((value) => !value)}
-              style={({ pressed }) => [
-                styles.timeframeChip,
-                showExtraFrames && styles.timeframeChipActive,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={[styles.timeframeChipText, showExtraFrames && styles.timeframeChipTextActive]}>
-                Más
-              </Text>
-            </Pressable>
           </View>
 
           <View style={styles.chartActionRow}>
@@ -736,30 +729,33 @@ export default function TradeChartScreen() {
           </View>
         </View>
 
-        {showExtraFrames ? (
-          <View style={styles.extraFramesRow}>
-            {EXTRA_TIMEFRAMES.map((item) => {
-              const active = timeframe === item && !lineMode;
-              return (
-                <Pressable
-                  key={item}
-                  onPress={() => {
-                    setLineMode(false);
-                    setTimeframe(item);
-                  }}
-                  style={({ pressed }) => [styles.extraFrameChip, pressed && styles.pressed]}
-                >
-                  <Text style={[styles.extraFrameText, active && styles.extraFrameTextActive]}>{item}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-
-        <View style={styles.maLegendRow}>
+        <View style={styles.chartLegend}>
+          {lastCandle ? (
+            <View style={styles.ohlcRow}>
+              <Text style={styles.ohlcLabel}>
+                O <Text style={[styles.ohlcValue, { color: lastCandleUp ? COLORS.green : COLORS.red }]}>{formatRightPrice(lastCandle.open)}</Text>
+              </Text>
+              <Text style={styles.ohlcLabel}>
+                H <Text style={[styles.ohlcValue, { color: lastCandleUp ? COLORS.green : COLORS.red }]}>{formatRightPrice(lastCandle.high)}</Text>
+              </Text>
+              <Text style={styles.ohlcLabel}>
+                L <Text style={[styles.ohlcValue, { color: lastCandleUp ? COLORS.green : COLORS.red }]}>{formatRightPrice(lastCandle.low)}</Text>
+              </Text>
+              <Text style={styles.ohlcLabel}>
+                C <Text style={[styles.ohlcValue, { color: lastCandleUp ? COLORS.green : COLORS.red }]}>{formatRightPrice(lastCandle.close)}</Text>
+              </Text>
+              {lastCandleChange !== null ? (
+                <Text style={[styles.ohlcValue, { color: lastCandleUp ? COLORS.green : COLORS.red }]}>
+                  {lastCandleChange >= 0 ? '+' : ''}{lastCandleChange.toFixed(2)}%
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+          <View style={styles.maLegendRow}>
           <Text style={[styles.maLegendText, { color: COLORS.ma5 }]}>MA5:{ma5 ? formatRightPrice(ma5) : '--'}</Text>
           <Text style={[styles.maLegendText, { color: COLORS.ma10 }]}>MA10:{ma10 ? formatRightPrice(ma10) : '--'}</Text>
           <Text style={[styles.maLegendText, { color: COLORS.ma30 }]}>MA30:{ma30 ? formatRightPrice(ma30) : '--'}</Text>
+          </View>
         </View>
 
         <View style={styles.chartSurface}>
@@ -1139,7 +1135,7 @@ const styles = StyleSheet.create({
   timeframeTabs: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 9,
     flexWrap: 'wrap',
     flex: 1,
   },
@@ -1174,28 +1170,25 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     borderColor: 'transparent',
   },
-  extraFramesRow: {
+  chartLegend: {
+    gap: 4,
+  },
+  ohlcRow: {
     flexDirection: 'row',
-    gap: 8,
-    paddingTop: 2,
-  },
-  extraFrameChip: {
-    minHeight: 28,
-    paddingHorizontal: 12,
-    borderRadius: RADII.pill,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: withOpacity(COLORS.surfaceSoft, 0.92),
-    borderWidth: 1,
-    borderColor: withOpacity(COLORS.border, 0.48),
+    gap: 10,
+    flexWrap: 'wrap',
   },
-  extraFrameText: {
-    color: COLORS.textSecondary,
+  ohlcLabel: {
     fontFamily: FONT.medium,
-    fontSize: 12,
+    fontSize: 10,
+    letterSpacing: 0.2,
+    color: COLORS.textSecondary,
   },
-  extraFrameTextActive: {
-    color: COLORS.textPrimary,
+  ohlcValue: {
+    fontFamily: FONT.semibold,
+    fontSize: 10,
+    letterSpacing: 0.2,
   },
   maLegendRow: {
     flexDirection: 'row',

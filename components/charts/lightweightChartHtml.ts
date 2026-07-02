@@ -63,7 +63,7 @@ export function buildLightweightChartHtml({
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: #0b0b0f;
+        background: #080B10;
         color: #ffffff;
         font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -78,7 +78,7 @@ export function buildLightweightChartHtml({
         height: 100%;
         min-height: 180px;
         isolation: isolate;
-        background: linear-gradient(180deg, #090a0d 0%, #08090b 100%);
+        background: linear-gradient(180deg, #0a0e14 0%, #080b10 100%);
       }
 
       #chart-shell::before {
@@ -87,8 +87,8 @@ export function buildLightweightChartHtml({
         inset: 0;
         pointer-events: none;
         background:
-          linear-gradient(106deg, transparent 0%, rgba(123, 63, 228, 0.055) 45%, transparent 72%),
-          linear-gradient(16deg, transparent 0%, rgba(56, 189, 248, 0.035) 40%, transparent 70%);
+          linear-gradient(106deg, transparent 0%, rgba(0, 229, 255, 0.04) 45%, transparent 72%),
+          linear-gradient(16deg, transparent 0%, rgba(0, 255, 178, 0.02) 40%, transparent 70%);
         z-index: 0;
       }
 
@@ -109,7 +109,7 @@ export function buildLightweightChartHtml({
         justify-content: center;
         padding: 18px;
         text-align: center;
-        color: #a3a1b2;
+        color: #8a94a6;
         font-size: 12px;
         line-height: 1.5;
         z-index: 2;
@@ -168,13 +168,13 @@ export function buildLightweightChartHtml({
         const total = container.clientHeight || 360;
         const mainHeight = payload.compact
           ? total
-          : Math.round(total * (payload.showVolume || indicators.length ? 0.74 : 0.86));
+          : Math.round(total * (payload.showVolume || indicators.length ? 0.72 : 0.86));
 
         panes[0]?.setHeight?.(mainHeight);
 
         let paneCursor = 1;
         if (payload.showVolume) {
-          panes[paneCursor]?.setHeight?.(Math.round(total * 0.12));
+          panes[paneCursor]?.setHeight?.(Math.round(total * 0.14));
           paneCursor += 1;
         }
 
