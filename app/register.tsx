@@ -122,6 +122,7 @@ export default function RegisterScreen() {
         <KeyboardAvoidingView
           style={styles.keyboardAvoider}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          enabled={Platform.OS === 'ios'}
         >
           <ScrollView
             bounces={false}

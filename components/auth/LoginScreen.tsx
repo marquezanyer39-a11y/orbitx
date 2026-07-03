@@ -108,6 +108,7 @@ export function LoginScreen() {
         <KeyboardAvoidingView
           style={styles.keyboardAvoider}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          enabled={Platform.OS === 'ios'}
         >
         <ScrollView
           bounces={false}
