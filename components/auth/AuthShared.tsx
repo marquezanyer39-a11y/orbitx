@@ -116,15 +116,7 @@ export function CinematicBackground({ variant = 'hero' }: CinematicBackgroundPro
         })}
       </View>
 
-      {/* Ambient glow orbs */}
-      <View
-        style={[styles.glowOrb, { top: '25%', left: -80, width: 400, height: 400 }]}
-        pointerEvents="none"
-      />
-      <View
-        style={[styles.glowOrb, { bottom: '25%', right: -80, width: 500, height: 500 }]}
-        pointerEvents="none"
-      />
+      {/* Ambient glow orbs removed as they render as ugly circles without blur */}
     </>
   );
 }
@@ -253,11 +245,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '52%',
     opacity: 0.4,
-  },
-  glowOrb: {
-    position: 'absolute',
-    borderRadius: 9999,
-    backgroundColor: withOpacity(AUTH_COLORS.primary, 0.05),
   },
   // BrandLogoHeader
   logoSection: {
