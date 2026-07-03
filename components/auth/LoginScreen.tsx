@@ -27,6 +27,7 @@ import {
 } from './AuthShared';
 
 const { bg, border, primary, textPrimary, textMuted } = AUTH_COLORS;
+const isIos = Platform.OS === 'ios';
 
 export function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -113,7 +114,7 @@ export function LoginScreen() {
         <ScrollView
           bounces={false}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
           keyboardDismissMode="none"
           contentContainerStyle={[
             styles.scrollContent,
@@ -196,9 +197,10 @@ export function LoginScreen() {
                   placeholderTextColor={withOpacity(textMuted, 0.5)}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  spellCheck={false}
                   keyboardType="email-address"
                   autoComplete="email"
-                  textContentType="emailAddress"
+                  textContentType={isIos ? 'emailAddress' : 'none'}
                   returnKeyType="next"
                   blurOnSubmit={false}
                   style={styles.input}
@@ -226,9 +228,10 @@ export function LoginScreen() {
                   placeholderTextColor={withOpacity(textMuted, 0.5)}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  spellCheck={false}
                   secureTextEntry={!showPassword}
                   autoComplete="password"
-                  textContentType="password"
+                  textContentType={isIos ? 'password' : 'none'}
                   returnKeyType="done"
                   blurOnSubmit={false}
                   style={[styles.input, styles.inputFlex]}

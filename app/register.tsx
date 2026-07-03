@@ -21,6 +21,7 @@ import { useUiStore } from '../src/store/uiStore';
 import { getOrbitAuthMeta } from '../utils/orbitAuth';
 
 const { bg, border, primary, textPrimary, textMuted } = AUTH_COLORS;
+const isIos = Platform.OS === 'ios';
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
@@ -127,7 +128,7 @@ export default function RegisterScreen() {
           <ScrollView
             bounces={false}
             showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+            keyboardShouldPersistTaps="always"
             keyboardDismissMode="none"
             contentContainerStyle={[
               styles.scrollContent,
@@ -201,7 +202,7 @@ export default function RegisterScreen() {
                     autoCapitalize="words"
                     autoCorrect={false}
                     autoComplete="name"
-                    textContentType="name"
+                    textContentType={isIos ? 'name' : 'none'}
                     returnKeyType="next"
                     blurOnSubmit={false}
                     style={styles.input}
@@ -222,9 +223,10 @@ export default function RegisterScreen() {
                     placeholderTextColor={withOpacity(textMuted, 0.5)}
                     autoCapitalize="none"
                     autoCorrect={false}
+                    spellCheck={false}
                     keyboardType="email-address"
                     autoComplete="email"
-                    textContentType="emailAddress"
+                    textContentType={isIos ? 'emailAddress' : 'none'}
                     returnKeyType="next"
                     blurOnSubmit={false}
                     style={styles.input}
@@ -245,9 +247,10 @@ export default function RegisterScreen() {
                     placeholderTextColor={withOpacity(textMuted, 0.5)}
                     autoCapitalize="none"
                     autoCorrect={false}
+                    spellCheck={false}
                     secureTextEntry={!showPassword}
                     autoComplete="new-password"
-                    textContentType="newPassword"
+                    textContentType={isIos ? 'newPassword' : 'none'}
                     returnKeyType="next"
                     blurOnSubmit={false}
                     style={[styles.input, styles.inputFlex]}
@@ -279,10 +282,12 @@ export default function RegisterScreen() {
                     placeholderTextColor={withOpacity(textMuted, 0.5)}
                     autoCapitalize="none"
                     autoCorrect={false}
+                    spellCheck={false}
                     secureTextEntry={!showConfirmPassword}
                     autoComplete="new-password"
-                    textContentType="newPassword"
+                    textContentType={isIos ? 'newPassword' : 'none'}
                     returnKeyType="done"
+                    blurOnSubmit={false}
                     style={[styles.input, styles.inputFlex]}
                     onSubmitEditing={() => {
                       if (!submitting && !successTarget) void runRegister();
