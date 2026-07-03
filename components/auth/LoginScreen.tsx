@@ -197,9 +197,8 @@ export function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType="email-address"
-                  autoComplete="off"
-                  textContentType="none"
-                  importantForAutofill="no"
+                  autoComplete="email"
+                  textContentType="emailAddress"
                   returnKeyType="next"
                   blurOnSubmit={false}
                   style={styles.input}
@@ -228,9 +227,8 @@ export function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   secureTextEntry={!showPassword}
-                  autoComplete="off"
-                  textContentType="none"
-                  importantForAutofill="no"
+                  autoComplete="password"
+                  textContentType="password"
                   returnKeyType="done"
                   blurOnSubmit={false}
                   style={[styles.input, styles.inputFlex]}

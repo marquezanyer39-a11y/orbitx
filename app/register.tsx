@@ -200,9 +200,8 @@ export default function RegisterScreen() {
                     placeholderTextColor={withOpacity(textMuted, 0.5)}
                     autoCapitalize="words"
                     autoCorrect={false}
-                    autoComplete="off"
-                    textContentType="none"
-                    importantForAutofill="no"
+                    autoComplete="name"
+                    textContentType="name"
                     returnKeyType="next"
                     blurOnSubmit={false}
                     style={styles.input}
@@ -224,9 +223,8 @@ export default function RegisterScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     keyboardType="email-address"
-                    autoComplete="off"
-                    textContentType="none"
-                    importantForAutofill="no"
+                    autoComplete="email"
+                    textContentType="emailAddress"
                     returnKeyType="next"
                     blurOnSubmit={false}
                     style={styles.input}
@@ -248,9 +246,8 @@ export default function RegisterScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     secureTextEntry={!showPassword}
-                    autoComplete="off"
-                    textContentType="none"
-                    importantForAutofill="no"
+                    autoComplete="new-password"
+                    textContentType="newPassword"
                     returnKeyType="next"
                     blurOnSubmit={false}
                     style={[styles.input, styles.inputFlex]}
@@ -283,9 +280,8 @@ export default function RegisterScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     secureTextEntry={!showConfirmPassword}
-                    autoComplete="off"
-                    textContentType="none"
-                    importantForAutofill="no"
+                    autoComplete="new-password"
+                    textContentType="newPassword"
                     returnKeyType="done"
                     style={[styles.input, styles.inputFlex]}
                     onSubmitEditing={() => {
