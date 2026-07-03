@@ -80,6 +80,8 @@ function OrbitLightweightChartComponent({
           showVolume,
           positiveColor: colors.profit,
           negativeColor: colors.loss,
+          positiveColorVolume: colorOverrides?.volumeProfit,
+          negativeColorVolume: colorOverrides?.volumeLoss,
         });
       }
 
@@ -91,6 +93,8 @@ function OrbitLightweightChartComponent({
         showVolume,
         positiveColor: colors.profit,
         negativeColor: colors.loss,
+        positiveColorVolume: colorOverrides?.volumeProfit,
+        negativeColorVolume: colorOverrides?.volumeLoss,
       });
     },
     [
@@ -103,6 +107,7 @@ function OrbitLightweightChartComponent({
       safeValues,
       showVolume,
       timeframe,
+      colorOverrides,
     ],
   );
 

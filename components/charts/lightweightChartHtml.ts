@@ -13,6 +13,16 @@ export interface OrbitChartHtmlColors {
   primary: string;
   profit: string;
   loss: string;
+  volumeProfit?: string;
+  volumeLoss?: string;
+  crosshair?: string;
+  priceLine?: string;
+  watermark?: string;
+  ma5?: string;
+  ma10?: string;
+  ma30?: string;
+  priceScaleBorder?: string;
+  timeScaleBorder?: string;
 }
 
 export interface OrbitLightweightChartRuntimeConfig {
@@ -86,9 +96,7 @@ export function buildLightweightChartHtml({
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background:
-          linear-gradient(106deg, transparent 0%, rgba(0, 229, 255, 0.04) 45%, transparent 72%),
-          linear-gradient(16deg, transparent 0%, rgba(0, 255, 178, 0.02) 40%, transparent 70%);
+        background: var(--qvex-chart-bg-overlay, linear-gradient(106deg, transparent 0%, rgba(0, 229, 255, 0.04) 45%, transparent 72%), linear-gradient(16deg, transparent 0%, rgba(0, 255, 178, 0.02) 40%, transparent 70%));
         z-index: 0;
       }
 
@@ -236,7 +244,7 @@ export function buildLightweightChartHtml({
           rightPriceScale: {
             visible: true,
             borderVisible: true,
-            borderColor: colors.borderStrong,
+            borderColor: colors.priceScaleBorder || colors.borderStrong,
             scaleMargins: { top: payload.compact ? 0.12 : 0.06, bottom: payload.compact ? 0.1 : 0.05 },
           },
           leftPriceScale: {
@@ -245,13 +253,13 @@ export function buildLightweightChartHtml({
           crosshair: {
             mode: 0,
             vertLine: {
-              color: colors.gridStrong,
+              color: colors.crosshair || colors.gridStrong,
               width: 1,
               labelBackgroundColor: colors.backgroundAlt,
               labelVisible: true,
             },
             horzLine: {
-              color: colors.gridStrong,
+              color: colors.crosshair || colors.gridStrong,
               width: 1,
               labelBackgroundColor: colors.backgroundAlt,
               labelVisible: true,
@@ -284,7 +292,7 @@ export function buildLightweightChartHtml({
           timeScale: {
             visible: true,
             borderVisible: true,
-            borderColor: colors.borderStrong,
+            borderColor: colors.timeScaleBorder || colors.borderStrong,
             timeVisible: true,
             secondsVisible: false,
             rightOffset: payload.compact ? 4 : 8,
@@ -336,7 +344,7 @@ export function buildLightweightChartHtml({
                   lastValueVisible: true,
                   priceLineVisible: true,
                   priceLineWidth: 1,
-                  priceLineColor: colors.primary,
+                  priceLineColor: colors.priceLine || colors.primary,
                   priceLineStyle: 2,
                 },
                 0
@@ -370,19 +378,19 @@ export function buildLightweightChartHtml({
           const maSeriesConfigs = [
             {
               data: Array.isArray(payload.maFast) && payload.maFast.length ? payload.maFast : payload.ma,
-              color: '#F6D365',
+              color: colors.ma5 || '#F6D365',
               lineWidth: 1,
               lineStyle: 0,
             },
             {
               data: Array.isArray(payload.maMid) ? payload.maMid : [],
-              color: '#58A6FF',
+              color: colors.ma10 || '#58A6FF',
               lineWidth: 1,
               lineStyle: 2,
             },
             {
               data: Array.isArray(payload.maSlow) ? payload.maSlow : [],
-              color: '#C58BFF',
+              color: colors.ma30 || '#C58BFF',
               lineWidth: 0.9,
               lineStyle: 1,
             },

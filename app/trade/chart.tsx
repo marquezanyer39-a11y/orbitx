@@ -16,6 +16,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OrbitLightweightChart } from '../../components/charts/OrbitLightweightChart';
+import { qvexDarkPro } from '../../components/charts/qvexChartThemes';
 import type { OrbitChartIndicator, OrbitChartTimeframe } from '../../components/charts/chartData';
 import type { OrbitChartHtmlColors } from '../../components/charts/lightweightChartHtml';
 import { RouteRedirect } from '../../components/common/RouteRedirect';
@@ -62,17 +63,7 @@ const COLORS = {
 };
 
 const CHART_COLORS: Partial<OrbitChartHtmlColors> = {
-  background: COLORS.background,
-  backgroundAlt: COLORS.surfaceSoft,
-  text: COLORS.textPrimary,
-  textMuted: COLORS.textSecondary,
-  border: withOpacity(COLORS.border, 0.6),
-  borderStrong: withOpacity(COLORS.border, 0.9),
-  grid: withOpacity(COLORS.border, 0.3),
-  gridStrong: withOpacity(COLORS.purpleSoft, 0.16),
-  primary: COLORS.purpleSoft,
-  profit: COLORS.green,
-  loss: COLORS.red,
+  ...qvexDarkPro,
 };
 
 const PRIMARY_TIMEFRAMES: OrbitChartTimeframe[] = ['1m', '5m', '15m', '1h', '4h', '1D'];

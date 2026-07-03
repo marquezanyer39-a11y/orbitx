@@ -59,6 +59,8 @@ interface BuildChartPayloadOptions {
   showVolume?: boolean;
   positiveColor: string;
   negativeColor: string;
+  positiveColorVolume?: string;
+  negativeColorVolume?: string;
 }
 
 const TIMEFRAME_MINUTES: Record<OrbitChartTimeframe, number> = {
@@ -136,13 +138,15 @@ function buildVolume(
   candles: OrbitChartCandlePoint[],
   positiveColor: string,
   negativeColor: string,
+  positiveColorVolume?: string,
+  negativeColorVolume?: string,
 ) {
   return candles.map((candle) => {
     const value = Math.max(Math.abs(candle.close - candle.open) * 1800, candle.close * 0.14);
     return {
       time: candle.time,
       value,
-      color: candle.close >= candle.open ? `${positiveColor}38` : `${negativeColor}38`,
+      color: candle.close >= candle.open ? (positiveColorVolume || `${positiveColor}38`) : (negativeColorVolume || `${negativeColor}38`),
     };
   });
 }
@@ -394,6 +398,8 @@ export function buildOrbitChartPayload(
     showVolume = true,
     positiveColor,
     negativeColor,
+    positiveColorVolume,
+    negativeColorVolume,
   }: BuildChartPayloadOptions,
 ): OrbitChartPayload {
   const sanitized = sanitizeSeries(values);
@@ -430,7 +436,7 @@ export function buildOrbitChartPayload(
   const times = timeline.map((point) => point.time);
   const closes = timeline.map((point) => point.value);
   const candles = buildCandles(timeline);
-  const volume = buildVolume(candles, positiveColor, negativeColor);
+  const volume = buildVolume(candles, positiveColor, negativeColor, positiveColorVolume, negativeColorVolume);
   const maFast = toLinePoints(times, movingAverage(closes, 5));
   const maMid = toLinePoints(times, movingAverage(closes, 10));
   const maSlow = toLinePoints(times, movingAverage(closes, 30));
@@ -480,6 +486,8 @@ export function buildOrbitChartPayloadFromHistory(
     showVolume = true,
     positiveColor,
     negativeColor,
+    positiveColorVolume,
+    negativeColorVolume,
   }: Omit<BuildChartPayloadOptions, 'timeframe'>,
 ): OrbitChartPayload {
   const safeIndicators = Array.isArray(indicators) ? indicators : [];
@@ -534,7 +542,7 @@ export function buildOrbitChartPayloadFromHistory(
               ? `${positiveColor}38`
               : `${negativeColor}38`,
         }))
-      : buildVolume(normalized.candles, positiveColor, negativeColor);
+      : buildVolume(normalized.candles, positiveColor, negativeColor, positiveColorVolume, negativeColorVolume);
   const vwap = buildVwap(times, normalized.candles, volume);
   const { precision, minMove } = inferPricePrecision(closes);
 
