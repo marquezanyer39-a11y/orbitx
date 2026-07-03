@@ -70,7 +70,7 @@ export function CinematicBackground({ variant = 'hero' }: CinematicBackgroundPro
     variant === 'hero' ? [0, 0.5, 0.9, 1] : [0, 0.28, 0.62, 1];
 
   return (
-    <>
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
       {/* Planet zoom — NO rotation */}
       <Animated.View
         style={[styles.bgLayer, { transform: [{ scale: planetScale }] }]}
@@ -117,7 +117,7 @@ export function CinematicBackground({ variant = 'hero' }: CinematicBackgroundPro
       </View>
 
       {/* Ambient glow orbs removed as they render as ugly circles without blur */}
-    </>
+    </View>
   );
 }
 

@@ -105,11 +105,12 @@ export function LoginScreen() {
     <View style={styles.root}>
       <CinematicBackground variant="form" />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
         <KeyboardAvoidingView
           style={styles.keyboardAvoider}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           enabled={Platform.OS === 'ios'}
+          pointerEvents="box-none"
         >
         <ScrollView
           bounces={false}
